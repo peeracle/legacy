@@ -1,0 +1,38 @@
+{
+  "name": "peeracle",
+  "version": "0.0.1",
+  "description": "Peer-to-peer on-demand multimedia streaming",
+  "main": "peeracle.js",
+  "scripts": {
+    "test": "NODE_ENV=test ./node_modules/jasmine/bin/jasmine.js",
+    "lint": "eslint lib/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/peeracle/peeracle.git"
+  },
+  "keywords": [
+    "p2p",
+    "peer",
+    "webrtc",
+    "multimedia",
+    "media",
+    "video",
+    "streaming",
+    "ondemand",
+    "audio"
+  ],
+  "author": "Axel Isouard",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/peeracle/peeracle/issues"
+  },
+  "homepage": "https://github.com/peeracle/peeracle",
+  "devDependencies": {
+    "eslint": "^0.15.1",
+    "jasmine": "^2.2.1"
+  },
+  "dependencies": {
+    "wrtc": "0.0.49"
+  }
+}
