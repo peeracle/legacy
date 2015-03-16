@@ -1,0 +1,34 @@
+{
+  "name": "peeracle",
+  "version": "0.0.1",
+  "homepage": "http://www.peeracle.org",
+  "authors": [
+    "Axel Isouard <axel.isouard@epitech.eu>"
+  ],
+  "description": "Peeracle Javascript Library",
+  "main": "lib/peeracle.js",
+  "moduleType": [
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "peer-to-peer",
+    "p2p",
+    "webrtc",
+    "rtc",
+    "video",
+    "audio",
+    "multimedia",
+    "streaming",
+    "vod",
+    "video-on-demand"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
