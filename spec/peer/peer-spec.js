@@ -1,9 +1,6 @@
 /* eslint-disable */
 'use strict';
 
-var Peeracle = {};
-Peeracle.Peer = require('./../../lib/peer');
-
 describe('Peeracle.Peer', function () {
   var pa = null;
   var pb = null;
@@ -159,5 +156,10 @@ describe('Peeracle.Peer', function () {
         done();
       });
     }
+  });
+
+  it('should close everything', function () {
+    pa.close();
+    pb.close();
   });
 });

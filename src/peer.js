@@ -179,13 +179,18 @@ if (typeof module === 'undefined') {
       );
     };
 
+    var close = function () {
+      peerConnection_.close();
+    };
+
     return {
       subscribe: subscribe,
       unsubscribe: unsubscribe,
       createOffer: createOffer,
       createAnswer: createAnswer,
       setAnswer: setAnswer,
-      addIceCandidate: addIceCandidate
+      addIceCandidate: addIceCandidate,
+      close: close
     };
   }
 
