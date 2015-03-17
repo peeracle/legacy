@@ -24,12 +24,11 @@ module.exports = function (config) {
 
     frameworks: ['jasmine'],
 
-    browsers: ['Chrome', 'Firefox', 'Opera'],
+    browsers: ['Chrome', 'Firefox'],
 
     plugins: [
       'karma-chrome-launcher',
       'karma-firefox-launcher',
-      'karma-opera-launcher',
       'karma-jasmine',
       'karma-junit-reporter'
     ],
