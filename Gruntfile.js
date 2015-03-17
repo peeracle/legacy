@@ -19,7 +19,13 @@ module.exports = function (grunt) {
 
     concat: {
       options: {
-        banner: '<%= banner %>\n',
+        banner: '<%= banner %>\n\'use strict\';\nvar Peeracle = Peeracle || {};\n',
+        process: function(src, filepath) {
+          var nostrict = src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1');
+          var nopeeracle = nostrict.replace(/(^|\n)[ \t]*(var Peeracle = Peeracle \|\| {});?\s*/g, '$1');
+          return '// Source: ' + filepath + '\n' +
+            nopeeracle;
+        },
         stripBanners: false
       },
       dist: {

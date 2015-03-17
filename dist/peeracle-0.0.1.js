@@ -5,8 +5,8 @@
  */
 
 'use strict';
-
 var Peeracle = Peeracle || {};
+// Source: src/mediachannel.js
 (function () {
   function MediaChannel(peerConnection) {
     var dataChannel_;
@@ -59,9 +59,7 @@ var Peeracle = Peeracle || {};
   }
 })();
 
-'use strict';
-
-var Peeracle = Peeracle || {};
+// Source: src/signalchannel.js
 (function () {
   function SignalChannel(peerConnection) {
     var dataChannel_;
@@ -114,9 +112,7 @@ var Peeracle = Peeracle || {};
   }
 })();
 
-'use strict';
-
-var Peeracle = Peeracle || {};
+// Source: src/peer.js
 (function () {
   var RTCIceCandidate;
   var RTCPeerConnection;
@@ -309,6 +305,7 @@ var Peeracle = Peeracle || {};
 
   if (typeof module === 'undefined') {
     Peeracle.Peer = Peer;
+    console.log('browser detected');
   } else {
     module.exports = Peer;
   }
