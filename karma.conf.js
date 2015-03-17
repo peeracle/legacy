@@ -17,6 +17,10 @@ module.exports = function (config) {
         pattern: 'src/peer.js',
         included: true
       },
+      {
+        pattern: 'src/tracker.js',
+        included: true
+      },
       'spec/**/*-spec.js'
     ],
 
