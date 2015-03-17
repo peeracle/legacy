@@ -6,7 +6,7 @@
     "Axel Isouard <axel.isouard@epitech.eu>"
   ],
   "description": "Peeracle Javascript Library",
-  "main": "lib/peeracle.js",
+  "main": "dist/peeracle.min.js",
   "moduleType": [
     "globals",
     "node"
