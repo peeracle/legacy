@@ -6,10 +6,7 @@
 
 'use strict';
 
-if (typeof module === 'undefined') {
-  var Peeracle = (Peeracle || {});
-}
-
+var Peeracle = Peeracle || {};
 (function () {
   function MediaChannel(peerConnection) {
     var dataChannel_;
@@ -64,10 +61,7 @@ if (typeof module === 'undefined') {
 
 'use strict';
 
-if (typeof module === 'undefined') {
-  var Peeracle = (Peeracle || {});
-}
-
+var Peeracle = Peeracle || {};
 (function () {
   function SignalChannel(peerConnection) {
     var dataChannel_;
@@ -122,10 +116,7 @@ if (typeof module === 'undefined') {
 
 'use strict';
 
-if (typeof module === 'undefined') {
-  var Peeracle = (Peeracle || {});
-}
-
+var Peeracle = Peeracle || {};
 (function () {
   var RTCIceCandidate;
   var RTCPeerConnection;
