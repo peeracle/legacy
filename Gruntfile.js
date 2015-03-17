@@ -32,7 +32,8 @@ module.exports = function (grunt) {
         src: [
           'src/mediachannel.js',
           'src/signalchannel.js',
-          'src/peer.js'
+          'src/peer.js',
+          'src/tracker.js'
         ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
