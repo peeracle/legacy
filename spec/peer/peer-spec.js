@@ -44,21 +44,23 @@ describe('Peeracle.Peer', function () {
           return;
         }
         paice.push(ice);
+      },
+      onConnectionStateChange: function (state) {
+
       }
     };
-    pa.subscribe(subscriber);
 
+    pa.subscribe(subscriber);
     pa.createOffer(function (sdp) {
       expect(typeof sdp).toBe('string');
       pasdp = sdp;
-      done();
     }, function (error) {
       console.error(error);
       pasdp = null;
       expect(typeof pasdp).toBe('string');
       done();
     });
-  });
+  }, 10000);
 
   it('should create another peer', function () {
     pb = new Peeracle.Peer();
@@ -74,10 +76,14 @@ describe('Peeracle.Peer', function () {
           return;
         }
         pbice.push(ice);
+      },
+
+      onConnectionStateChange: function (state) {
+
       }
     };
-    pb.subscribe(subscriber);
 
+    pb.subscribe(subscriber);
     pb.createAnswer(pasdp, function (sdp) {
       expect(typeof sdp).toBe('string');
       pbsdp = sdp;
@@ -87,7 +93,7 @@ describe('Peeracle.Peer', function () {
       expect(typeof pbsdp).toBe('string');
       done();
     });
-  });
+  }, 10000);
 
   it('should set the answer', function (done) {
     pa.setAnswer(pbsdp, function () {
@@ -105,6 +111,9 @@ describe('Peeracle.Peer', function () {
     var pbstate = false;
 
     var pasubscriber = {
+      onIceCandidate: function (ice) {
+
+      },
       onConnectionStateChange: function (state) {
         if (state === 'completed' || state === 'connected') {
           pastate = true;
@@ -119,6 +128,9 @@ describe('Peeracle.Peer', function () {
     pa.subscribe(pasubscriber);
 
     var pbsubscriber = {
+      onIceCandidate: function (ice) {
+
+      },
       onConnectionStateChange: function (state) {
         if (state === 'completed' || state === 'connected') {
           pbstate = true;
