@@ -305,8 +305,21 @@ var Peeracle = Peeracle || {};
 
   if (typeof module === 'undefined') {
     Peeracle.Peer = Peer;
-    console.log('browser detected');
   } else {
     module.exports = Peer;
+  }
+})();
+
+// Source: src/tracker.js
+(function () {
+  function Tracker() {
+    return {
+    };
+  }
+
+  if (typeof module === 'undefined') {
+    Peeracle.Tracker = Tracker;
+  } else {
+    module.exports = Tracker;
   }
 })();
