@@ -1,9 +1,6 @@
 'use strict';
 
-if (typeof module === 'undefined') {
-  var Peeracle = (Peeracle || {});
-}
-
+var Peeracle = Peeracle || {};
 (function () {
   function MediaChannel(peerConnection) {
     var dataChannel_;

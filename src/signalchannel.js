@@ -1,9 +1,6 @@
 'use strict';
 
-if (typeof module === 'undefined') {
-  var Peeracle = (Peeracle || {});
-}
-
+var Peeracle = Peeracle || {};
 (function () {
   function SignalChannel(peerConnection) {
     var dataChannel_;
