@@ -23,8 +23,9 @@ module.exports = function (grunt) {
         process: function(src, filepath) {
           var nostrict = src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1');
           var nopeeracle = nostrict.replace(/(^|\n)[ \t]*(var Peeracle = Peeracle \|\| {});?\s*/g, '$1');
+          var nocheck = nopeeracle.replace(/\s*if \(typeof module === 'undefined'\) {\s*(Peeracle..* = .*;)\s*} else {\s*module.exports = .*;\s*}\s*/g, '\n\n  $1\n');
           return '// Source: ' + filepath + '\n' +
-            nopeeracle;
+            nocheck;
         },
         stripBanners: false
       },
@@ -57,4 +58,6 @@ module.exports = function (grunt) {
 
   // Default task(s).
   grunt.registerTask('default', ['karma', 'concat', 'uglify']);
+
+  grunt.registerTask('build', ['concat', 'uglify']);
 };

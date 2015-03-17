@@ -52,11 +52,7 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.MediaChannel = MediaChannel;
-  } else {
-    module.exports = MediaChannel;
-  }
+  Peeracle.MediaChannel = MediaChannel;
 })();
 
 // Source: src/signalchannel.js
@@ -105,11 +101,7 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.SignalChannel = SignalChannel;
-  } else {
-    module.exports = SignalChannel;
-  }
+  Peeracle.SignalChannel = SignalChannel;
 })();
 
 // Source: src/peer.js
@@ -303,11 +295,7 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.Peer = Peer;
-  } else {
-    module.exports = Peer;
-  }
+  Peeracle.Peer = Peer;
 })();
 
 // Source: src/tracker.js
@@ -317,9 +305,5 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.Tracker = Tracker;
-  } else {
-    module.exports = Tracker;
-  }
+  Peeracle.Tracker = Tracker;
 })();
