@@ -1,6 +1,5 @@
 'use strict';
 
-var Peeracle = Peeracle || {};
 (function () {
   function MediaChannel(peerConnection) {
     var dataChannel_;
@@ -46,9 +45,5 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.MediaChannel = MediaChannel;
-  } else {
-    module.exports = MediaChannel;
-  }
+  module.exports = MediaChannel;
 })();

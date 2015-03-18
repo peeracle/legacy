@@ -1,6 +1,5 @@
 'use strict';
 
-var Peeracle = Peeracle || {};
 (function () {
   function SignalChannel(peerConnection) {
     var dataChannel_;
@@ -46,9 +45,5 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.SignalChannel = SignalChannel;
-  } else {
-    module.exports = SignalChannel;
-  }
+  module.exports = SignalChannel;
 })();

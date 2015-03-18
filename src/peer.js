@@ -1,6 +1,5 @@
 'use strict';
 
-var Peeracle = Peeracle || {};
 (function () {
   var RTCIceCandidate;
   var RTCPeerConnection;
@@ -191,9 +190,5 @@ var Peeracle = Peeracle || {};
     };
   }
 
-  if (typeof module === 'undefined') {
-    Peeracle.Peer = Peer;
-  } else {
-    module.exports = Peer;
-  }
+  module.exports = Peer;
 })();
