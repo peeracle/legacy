@@ -1,12 +1,11 @@
 /*!
  * peeracle v0.0.1 (https://github.com/peeracle/peeracle)
- * Copyright 2015 Axel Isouard
+ * Copyright 2015
  * Licensed under MIT
  */
 
 'use strict';
 var Peeracle = Peeracle || {};
-// Source: src/mediachannel.js
 (function () {
   function MediaChannel(peerConnection) {
     var dataChannel_;

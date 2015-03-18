@@ -7,7 +7,7 @@ module.exports = function (grunt) {
 
     banner: '/*!\n' +
     ' * peeracle v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
-    ' * Copyright 2015 <%= pkg.author %>\n' +
+    ' * Copyright 2015\n' +
     ' * Licensed under <%= pkg.license %>\n' +
     ' */\n',
 
