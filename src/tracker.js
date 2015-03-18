@@ -1,7 +1,9 @@
 'use strict';
 
 (function () {
-  function Tracker() {
+  function Tracker(url) {
+    var _url = url;
+
     return {
     };
   }

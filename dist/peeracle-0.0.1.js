@@ -8,40 +8,40 @@
 var Peeracle = Peeracle || {};
 (function () {
   function MediaChannel(peerConnection) {
-    var dataChannel_;
-    var peerConnection_ = peerConnection;
+    var _dataChannel;
+    var _peerConnection = peerConnection;
 
-    var onError_ = function (error) {
+    var _onError = function (error) {
       console.log('Peeracle.MediaChannel onerror', error);
     };
 
-    var onMessage_ = function (event) {
+    var _onMessage = function (event) {
       console.log('Peeracle.MediaChannel onmessage', event.data);
     };
 
-    var onOpen_ = function () {
+    var _onOpen = function () {
       console.log('Peeracle.MediaChannel onopen');
     };
 
-    var onClose_ = function () {
+    var _onClose = function () {
       console.log('Peeracle.MediaChannel onclose');
     };
 
     var setDataChannel = function (dataChannel) {
-      dataChannel_ = dataChannel;
-      dataChannel_.onerror = onError_;
-      dataChannel_.onmessage = onMessage_;
-      dataChannel_.onopen = onOpen_;
-      dataChannel_.onclose = onClose_;
+      _dataChannel = dataChannel;
+      _dataChannel.onerror = _onError;
+      _dataChannel.onmessage = _onMessage;
+      _dataChannel.onopen = _onOpen;
+      _dataChannel.onclose = _onClose;
     };
 
     var createDataChannel = function () {
-      dataChannel_ = peerConnection_.createDataChannel('media');
-      setDataChannel(dataChannel_);
+      _dataChannel = _peerConnection.createDataChannel('media');
+      setDataChannel(_dataChannel);
     };
 
     var getReadyState = function () {
-      return dataChannel_.readyState;
+      return _dataChannel.readyState;
     };
 
     return {
@@ -56,40 +56,40 @@ var Peeracle = Peeracle || {};
 
 (function () {
   function SignalChannel(peerConnection) {
-    var dataChannel_;
-    var peerConnection_ = peerConnection;
+    var _dataChannel;
+    var _peerConnection = peerConnection;
 
-    var onError_ = function (error) {
+    var _onError = function (error) {
       console.log('Peeracle.SignalChannel onerror', error);
     };
 
-    var onMessage_ = function (event) {
+    var _onMessage = function (event) {
       console.log('Peeracle.SignalChannel onmessage', event.data);
     };
 
-    var onOpen_ = function () {
+    var _onOpen = function () {
       console.log('Peeracle.SignalChannel onopen');
     };
 
-    var onClose_ = function () {
+    var _onClose = function () {
       console.log('Peeracle.SignalChannel onclose');
     };
 
     var setDataChannel = function (dataChannel) {
-      dataChannel_ = dataChannel;
-      dataChannel_.onerror = onError_;
-      dataChannel_.onmessage = onMessage_;
-      dataChannel_.onopen = onOpen_;
-      dataChannel_.onclose = onClose_;
+      _dataChannel = dataChannel;
+      _dataChannel.onerror = _onError;
+      _dataChannel.onmessage = _onMessage;
+      _dataChannel.onopen = _onOpen;
+      _dataChannel.onclose = _onClose;
     };
 
     var createDataChannel = function () {
-      dataChannel_ = peerConnection_.createDataChannel('signal');
-      setDataChannel(dataChannel_);
+      _dataChannel = _peerConnection.createDataChannel('signal');
+      setDataChannel(_dataChannel);
     };
 
     var getReadyState = function () {
-      return dataChannel_.readyState;
+      return _dataChannel.readyState;
     };
 
     return {
@@ -138,13 +138,13 @@ var Peeracle = Peeracle || {};
   }
 
   function Peer() {
-    var subscribers_ = [];
-    var peerConnection_;
-    var signalChannel_;
-    var mediaChannel_;
+    var _subscribers = [];
+    var _peerConnection;
+    var _signalChannel;
+    var _mediaChannel;
 
-    var onIceCandidate_ = function (event) {
-      if (!peerConnection_ || !event) {
+    var _onIceCandidate = function (event) {
+      if (!_peerConnection || !event) {
         return;
       }
 
@@ -153,41 +153,41 @@ var Peeracle = Peeracle || {};
         ice = JSON.stringify(ice);
       }
 
-      for (var i = 0; i < subscribers_.length; i++) {
-        subscribers_[i].onIceCandidate(ice);
+      for (var i = 0; i < _subscribers.length; i++) {
+        _subscribers[i].onIceCandidate(ice);
       }
     };
 
-    var onIceConnectionStateChange_ = function (event) {
-      if (!peerConnection_) {
+    var _onIceConnectionStateChange = function (event) {
+      if (!_peerConnection) {
         return;
       }
 
-      for (var i = 0; i < subscribers_.length; i++) {
-        subscribers_[i].onConnectionStateChange(peerConnection_.iceConnectionState);
+      for (var i = 0; i < _subscribers.length; i++) {
+        _subscribers[i].onConnectionStateChange(_peerConnection.iceConnectionState);
       }
     };
 
-    var onIceGatheringStateChange_ = function () {
+    var _onIceGatheringStateChange = function () {
     };
 
-    var onReadyStateChange_ = function () {
-      console.log('onReadyStateChange_');
+    var _onReadyStateChange = function () {
+      console.log('_onReadyStateChange');
     };
 
-    var onDataChannel_ = function (event) {
+    var _onDataChannel = function (event) {
       if (!event || !event.channel) {
         return;
       }
 
       if (event.channel.label === 'signal') {
-        signalChannel_.setDataChannel(event.channel);
+        _signalChannel.setDataChannel(event.channel);
       } else if (event.channel.label === 'media') {
-        mediaChannel_.setDataChannel(event.channel);
+        _mediaChannel.setDataChannel(event.channel);
       }
     };
 
-    var createPeerConnection_ = function () {
+    var _createPeerConnection = function () {
       var configuration = {
         iceServers: [
           {
@@ -196,30 +196,30 @@ var Peeracle = Peeracle || {};
         ]
       };
 
-      peerConnection_ = new RTCPeerConnection(configuration);
-      peerConnection_.onicecandidate = onIceCandidate_;
-      peerConnection_.oniceconnectionstatechange = onIceConnectionStateChange_;
-      peerConnection_.onicegatheringstatechange = onIceGatheringStateChange_;
-      peerConnection_.ondatachannel = onDataChannel_;
-      peerConnection_.onreadystatechange = onReadyStateChange_;
+      _peerConnection = new RTCPeerConnection(configuration);
+      _peerConnection.onicecandidate = _onIceCandidate;
+      _peerConnection.oniceconnectionstatechange = _onIceConnectionStateChange;
+      _peerConnection.onicegatheringstatechange = _onIceGatheringStateChange;
+      _peerConnection.ondatachannel = _onDataChannel;
+      _peerConnection.onreadystatechange = _onReadyStateChange;
 
-      signalChannel_ = new SignalChannel(peerConnection_);
-      mediaChannel_ = new MediaChannel(peerConnection_);
+      _signalChannel = new SignalChannel(_peerConnection);
+      _mediaChannel = new MediaChannel(_peerConnection);
     };
 
     var subscribe = function (subscriber) {
-      var index = subscribers_.indexOf(subscriber);
+      var index = _subscribers.indexOf(subscriber);
 
       if (!~index) {
-        subscribers_.push(subscriber);
+        _subscribers.push(subscriber);
       }
     };
 
     var unsubscribe = function (subscriber) {
-      var index = subscribers_.indexOf(subscriber);
+      var index = _subscribers.indexOf(subscriber);
 
       if (~index) {
-        subscribers_.splice(index, 1);
+        _subscribers.splice(index, 1);
       }
     };
 
@@ -228,12 +228,12 @@ var Peeracle = Peeracle || {};
         failureCb(error);
       };
 
-      createPeerConnection_();
+      _createPeerConnection();
 
-      mediaChannel_.createDataChannel();
-      signalChannel_.createDataChannel();
-      peerConnection_.createOffer(function (sdp) {
-        peerConnection_.setLocalDescription(sdp, function () {
+      _mediaChannel.createDataChannel();
+      _signalChannel.createDataChannel();
+      _peerConnection.createOffer(function (sdp) {
+        _peerConnection.setLocalDescription(sdp, function () {
           successCb(JSON.stringify(sdp));
         }, errorFunction);
       }, errorFunction);
@@ -244,12 +244,12 @@ var Peeracle = Peeracle || {};
         failureCb(error);
       };
 
-      createPeerConnection_();
+      _createPeerConnection();
 
       var realSdp = new RTCSessionDescription(JSON.parse(offerSdp));
-      peerConnection_.setRemoteDescription(realSdp, function () {
-        peerConnection_.createAnswer(function (sdp) {
-          peerConnection_.setLocalDescription(sdp, function () {
+      _peerConnection.setRemoteDescription(realSdp, function () {
+        _peerConnection.createAnswer(function (sdp) {
+          _peerConnection.setLocalDescription(sdp, function () {
             successCb(JSON.stringify(sdp));
           }, errorFunction);
         }, errorFunction);
@@ -262,13 +262,13 @@ var Peeracle = Peeracle || {};
       };
 
       var realSdp = new RTCSessionDescription(JSON.parse(answerSdp));
-      peerConnection_.setRemoteDescription(realSdp, function () {
+      _peerConnection.setRemoteDescription(realSdp, function () {
         successCb();
       }, errorFunction);
     };
 
     var addIceCandidate = function (ice, successCb, failureCb) {
-      peerConnection_.addIceCandidate(new RTCIceCandidate(JSON.parse(ice)),
+      _peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(ice)),
         function () {
           successCb();
         }, function (error) {
@@ -278,7 +278,7 @@ var Peeracle = Peeracle || {};
     };
 
     var close = function () {
-      peerConnection_.close();
+      _peerConnection.close();
     };
 
     return {
@@ -296,7 +296,9 @@ var Peeracle = Peeracle || {};
 })();
 
 (function () {
-  function Tracker() {
+  function Tracker(url) {
+    var _url = url;
+
     return {
     };
   }

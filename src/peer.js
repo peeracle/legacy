@@ -36,13 +36,13 @@
   }
 
   function Peer() {
-    var subscribers_ = [];
-    var peerConnection_;
-    var signalChannel_;
-    var mediaChannel_;
+    var _subscribers = [];
+    var _peerConnection;
+    var _signalChannel;
+    var _mediaChannel;
 
-    var onIceCandidate_ = function (event) {
-      if (!peerConnection_ || !event) {
+    var _onIceCandidate = function (event) {
+      if (!_peerConnection || !event) {
         return;
       }
 
@@ -51,41 +51,41 @@
         ice = JSON.stringify(ice);
       }
 
-      for (var i = 0; i < subscribers_.length; i++) {
-        subscribers_[i].onIceCandidate(ice);
+      for (var i = 0; i < _subscribers.length; i++) {
+        _subscribers[i].onIceCandidate(ice);
       }
     };
 
-    var onIceConnectionStateChange_ = function (event) {
-      if (!peerConnection_) {
+    var _onIceConnectionStateChange = function (event) {
+      if (!_peerConnection) {
         return;
       }
 
-      for (var i = 0; i < subscribers_.length; i++) {
-        subscribers_[i].onConnectionStateChange(peerConnection_.iceConnectionState);
+      for (var i = 0; i < _subscribers.length; i++) {
+        _subscribers[i].onConnectionStateChange(_peerConnection.iceConnectionState);
       }
     };
 
-    var onIceGatheringStateChange_ = function () {
+    var _onIceGatheringStateChange = function () {
     };
 
-    var onReadyStateChange_ = function () {
-      console.log('onReadyStateChange_');
+    var _onReadyStateChange = function () {
+      console.log('_onReadyStateChange');
     };
 
-    var onDataChannel_ = function (event) {
+    var _onDataChannel = function (event) {
       if (!event || !event.channel) {
         return;
       }
 
       if (event.channel.label === 'signal') {
-        signalChannel_.setDataChannel(event.channel);
+        _signalChannel.setDataChannel(event.channel);
       } else if (event.channel.label === 'media') {
-        mediaChannel_.setDataChannel(event.channel);
+        _mediaChannel.setDataChannel(event.channel);
       }
     };
 
-    var createPeerConnection_ = function () {
+    var _createPeerConnection = function () {
       var configuration = {
         iceServers: [
           {
@@ -94,30 +94,30 @@
         ]
       };
 
-      peerConnection_ = new RTCPeerConnection(configuration);
-      peerConnection_.onicecandidate = onIceCandidate_;
-      peerConnection_.oniceconnectionstatechange = onIceConnectionStateChange_;
-      peerConnection_.onicegatheringstatechange = onIceGatheringStateChange_;
-      peerConnection_.ondatachannel = onDataChannel_;
-      peerConnection_.onreadystatechange = onReadyStateChange_;
+      _peerConnection = new RTCPeerConnection(configuration);
+      _peerConnection.onicecandidate = _onIceCandidate;
+      _peerConnection.oniceconnectionstatechange = _onIceConnectionStateChange;
+      _peerConnection.onicegatheringstatechange = _onIceGatheringStateChange;
+      _peerConnection.ondatachannel = _onDataChannel;
+      _peerConnection.onreadystatechange = _onReadyStateChange;
 
-      signalChannel_ = new SignalChannel(peerConnection_);
-      mediaChannel_ = new MediaChannel(peerConnection_);
+      _signalChannel = new SignalChannel(_peerConnection);
+      _mediaChannel = new MediaChannel(_peerConnection);
     };
 
     var subscribe = function (subscriber) {
-      var index = subscribers_.indexOf(subscriber);
+      var index = _subscribers.indexOf(subscriber);
 
       if (!~index) {
-        subscribers_.push(subscriber);
+        _subscribers.push(subscriber);
       }
     };
 
     var unsubscribe = function (subscriber) {
-      var index = subscribers_.indexOf(subscriber);
+      var index = _subscribers.indexOf(subscriber);
 
       if (~index) {
-        subscribers_.splice(index, 1);
+        _subscribers.splice(index, 1);
       }
     };
 
@@ -126,12 +126,12 @@
         failureCb(error);
       };
 
-      createPeerConnection_();
+      _createPeerConnection();
 
-      mediaChannel_.createDataChannel();
-      signalChannel_.createDataChannel();
-      peerConnection_.createOffer(function (sdp) {
-        peerConnection_.setLocalDescription(sdp, function () {
+      _mediaChannel.createDataChannel();
+      _signalChannel.createDataChannel();
+      _peerConnection.createOffer(function (sdp) {
+        _peerConnection.setLocalDescription(sdp, function () {
           successCb(JSON.stringify(sdp));
         }, errorFunction);
       }, errorFunction);
@@ -142,12 +142,12 @@
         failureCb(error);
       };
 
-      createPeerConnection_();
+      _createPeerConnection();
 
       var realSdp = new RTCSessionDescription(JSON.parse(offerSdp));
-      peerConnection_.setRemoteDescription(realSdp, function () {
-        peerConnection_.createAnswer(function (sdp) {
-          peerConnection_.setLocalDescription(sdp, function () {
+      _peerConnection.setRemoteDescription(realSdp, function () {
+        _peerConnection.createAnswer(function (sdp) {
+          _peerConnection.setLocalDescription(sdp, function () {
             successCb(JSON.stringify(sdp));
           }, errorFunction);
         }, errorFunction);
@@ -160,13 +160,13 @@
       };
 
       var realSdp = new RTCSessionDescription(JSON.parse(answerSdp));
-      peerConnection_.setRemoteDescription(realSdp, function () {
+      _peerConnection.setRemoteDescription(realSdp, function () {
         successCb();
       }, errorFunction);
     };
 
     var addIceCandidate = function (ice, successCb, failureCb) {
-      peerConnection_.addIceCandidate(new RTCIceCandidate(JSON.parse(ice)),
+      _peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(ice)),
         function () {
           successCb();
         }, function (error) {
@@ -176,7 +176,7 @@
     };
 
     var close = function () {
-      peerConnection_.close();
+      _peerConnection.close();
     };
 
     return {

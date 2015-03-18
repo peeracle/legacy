@@ -2,40 +2,40 @@
 
 (function () {
   function SignalChannel(peerConnection) {
-    var dataChannel_;
-    var peerConnection_ = peerConnection;
+    var _dataChannel;
+    var _peerConnection = peerConnection;
 
-    var onError_ = function (error) {
+    var _onError = function (error) {
       console.log('Peeracle.SignalChannel onerror', error);
     };
 
-    var onMessage_ = function (event) {
+    var _onMessage = function (event) {
       console.log('Peeracle.SignalChannel onmessage', event.data);
     };
 
-    var onOpen_ = function () {
+    var _onOpen = function () {
       console.log('Peeracle.SignalChannel onopen');
     };
 
-    var onClose_ = function () {
+    var _onClose = function () {
       console.log('Peeracle.SignalChannel onclose');
     };
 
     var setDataChannel = function (dataChannel) {
-      dataChannel_ = dataChannel;
-      dataChannel_.onerror = onError_;
-      dataChannel_.onmessage = onMessage_;
-      dataChannel_.onopen = onOpen_;
-      dataChannel_.onclose = onClose_;
+      _dataChannel = dataChannel;
+      _dataChannel.onerror = _onError;
+      _dataChannel.onmessage = _onMessage;
+      _dataChannel.onopen = _onOpen;
+      _dataChannel.onclose = _onClose;
     };
 
     var createDataChannel = function () {
-      dataChannel_ = peerConnection_.createDataChannel('signal');
-      setDataChannel(dataChannel_);
+      _dataChannel = _peerConnection.createDataChannel('signal');
+      setDataChannel(_dataChannel);
     };
 
     var getReadyState = function () {
-      return dataChannel_.readyState;
+      return _dataChannel.readyState;
     };
 
     return {

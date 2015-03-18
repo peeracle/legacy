@@ -2,40 +2,40 @@
 
 (function () {
   function MediaChannel(peerConnection) {
-    var dataChannel_;
-    var peerConnection_ = peerConnection;
+    var _dataChannel;
+    var _peerConnection = peerConnection;
 
-    var onError_ = function (error) {
+    var _onError = function (error) {
       console.log('Peeracle.MediaChannel onerror', error);
     };
 
-    var onMessage_ = function (event) {
+    var _onMessage = function (event) {
       console.log('Peeracle.MediaChannel onmessage', event.data);
     };
 
-    var onOpen_ = function () {
+    var _onOpen = function () {
       console.log('Peeracle.MediaChannel onopen');
     };
 
-    var onClose_ = function () {
+    var _onClose = function () {
       console.log('Peeracle.MediaChannel onclose');
     };
 
     var setDataChannel = function (dataChannel) {
-      dataChannel_ = dataChannel;
-      dataChannel_.onerror = onError_;
-      dataChannel_.onmessage = onMessage_;
-      dataChannel_.onopen = onOpen_;
-      dataChannel_.onclose = onClose_;
+      _dataChannel = dataChannel;
+      _dataChannel.onerror = _onError;
+      _dataChannel.onmessage = _onMessage;
+      _dataChannel.onopen = _onOpen;
+      _dataChannel.onclose = _onClose;
     };
 
     var createDataChannel = function () {
-      dataChannel_ = peerConnection_.createDataChannel('media');
-      setDataChannel(dataChannel_);
+      _dataChannel = _peerConnection.createDataChannel('media');
+      setDataChannel(_dataChannel);
     };
 
     var getReadyState = function () {
-      return dataChannel_.readyState;
+      return _dataChannel.readyState;
     };
 
     return {
