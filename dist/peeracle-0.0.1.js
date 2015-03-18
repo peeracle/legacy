@@ -54,7 +54,6 @@ var Peeracle = Peeracle || {};
   Peeracle.MediaChannel = MediaChannel;
 })();
 
-// Source: src/signalchannel.js
 (function () {
   function SignalChannel(peerConnection) {
     var dataChannel_;
@@ -103,7 +102,6 @@ var Peeracle = Peeracle || {};
   Peeracle.SignalChannel = SignalChannel;
 })();
 
-// Source: src/peer.js
 (function () {
   var RTCIceCandidate;
   var RTCPeerConnection;
@@ -297,7 +295,6 @@ var Peeracle = Peeracle || {};
   Peeracle.Peer = Peer;
 })();
 
-// Source: src/tracker.js
 (function () {
   function Tracker() {
     return {
