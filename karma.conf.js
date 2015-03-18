@@ -6,19 +6,7 @@ module.exports = function (config) {
 
     files: [
       {
-        pattern: 'src/mediachannel.js',
-        included: true
-      },
-      {
-        pattern: 'src/signalchannel.js',
-        included: true
-      },
-      {
-        pattern: 'src/peer.js',
-        included: true
-      },
-      {
-        pattern: 'src/tracker.js',
+        pattern: 'dist/peeracle-0.0.1.js',
         included: true
       },
       'spec/**/*-spec.js'
