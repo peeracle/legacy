@@ -15,9 +15,9 @@
       console.log('Peeracle.Tracker: onOpen');
 
       _ws.send('');
-      /*_subscribers.forEach(function(subscriber) {
+      _subscribers.forEach(function(subscriber) {
         subscriber.onConnect();
-      });*/
+      });
     };
 
     var _onMessage = function () {
