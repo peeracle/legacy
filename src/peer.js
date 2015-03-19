@@ -51,19 +51,19 @@
         ice = JSON.stringify(ice);
       }
 
-      for (var i = 0; i < _subscribers.length; i++) {
-        _subscribers[i].onIceCandidate(ice);
-      }
+      _subscribers.forEach(function(subscriber) {
+        subscriber.onIceCandidate(ice);
+      });
     };
 
     var _onIceConnectionStateChange = function (event) {
-      if (!_peerConnection) {
+      if (!_peerConnection || !event) {
         return;
       }
 
-      for (var i = 0; i < _subscribers.length; i++) {
-        _subscribers[i].onConnectionStateChange(_peerConnection.iceConnectionState);
-      }
+      _subscribers.forEach(function(subscriber) {
+        subscriber.onConnectionStateChange(_peerConnection.iceConnectionState);
+      });
     };
 
     var _onIceGatheringStateChange = function () {
