@@ -35,7 +35,6 @@ module.exports = function (grunt) {
         src: [
           'src/utils.js',
           'src/file.js',
-          'src/media.js',
           'src/media.webm.js',
           'src/metadata.js',
           'src/mediachannel.js',
