@@ -53,12 +53,16 @@ module.exports = function (grunt) {
   });
 
   // Load the plugin that provides the "uglify" task.
-  grunt.loadNpmTasks('grunt-karma');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-preprocess');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat', 'karma', 'uglify']);
+  grunt.registerTask('default', ['concat', 'preprocess', 'karma', 'uglify']);
 
-  grunt.registerTask('build', ['concat', 'uglify']);
+  // Build only task
+  grunt.registerTask('dist', ['concat', 'preprocess', 'uglify']);
 };
