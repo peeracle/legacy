@@ -149,9 +149,6 @@ Peeracle.Media = {};
 })();
 
 (function () {
-})();
-
-(function () {
   var getFileHeader = function () {
     return [0x1A, 0x45, 0xDF, 0xA3];
   };
