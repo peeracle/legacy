@@ -41,6 +41,18 @@ module.exports = function (grunt) {
       }
     },
 
+    preprocess: {
+      inline: {
+        src: ['dist/*.js'],
+        options: {
+          inline: true,
+          context: {
+            DEBUG: false
+          }
+        }
+      }
+    },
+
     uglify: {
       options: {
         preserveComments: 'some'
