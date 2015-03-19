@@ -5,7 +5,7 @@
     return [0x1A, 0x45, 0xDF, 0xA3];
   };
 
-  var WebM = function (file) {
+  var _object = function (file) {
     var _file = file;
     var _cluster = null;
 
@@ -173,11 +173,15 @@
   };
 
   var create = function (file) {
-    return new WebM(file);
+    return new _object(file);
   };
 
-  module.exports = {
-    getFileHeader: getFileHeader,
-    create: create
+  var Media = {
+    WebM: {
+      getFileHeader: getFileHeader,
+      create: create
+    }
   };
+
+  module.exports = Media.WebM;
 })();
