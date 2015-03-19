@@ -46,6 +46,7 @@
     "karma-opera-launcher": "^0.1.0"
   },
   "dependencies": {
+    "websocket": "^1.0.17",
     "wrtc": "0.0.49"
   }
 }
