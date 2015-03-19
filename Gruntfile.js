@@ -32,6 +32,11 @@ module.exports = function (grunt) {
       },
       dist: {
         src: [
+          'src/utils.js',
+          'src/file.js',
+          'src/media.js',
+          'src/media.webm.js',
+          'src/metadata.js',
           'src/mediachannel.js',
           'src/signalchannel.js',
           'src/peer.js',
