@@ -21,9 +21,10 @@ module.exports = function (grunt) {
       options: {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n' +
-        'var Peeracle = Peeracle || {};\n',
+        'var Peeracle = {};\n' +
+        'Peeracle.Media = {};\n',
 
-        process: function(src, filepath) {
+        process: function (src, filepath) {
           return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1')
             .replace(/(^|\n)[ \t]*(var Peeracle = Peeracle \|\| {});?\s*/g, '$1')
             .replace(/module.exports = (.*);/g, 'Peeracle.$1 = $1;');
