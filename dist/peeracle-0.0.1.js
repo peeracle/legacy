@@ -7,6 +7,7 @@
 'use strict';
 var Peeracle = {};
 Peeracle.Media = {};
+Peeracle.Tracker = {};
 (function () {
   var _crc32Table = null;
 
@@ -25,7 +26,7 @@ Peeracle.Media = {};
 
     var crc = 0 ^ (-1);
 
-    for (var i = 0; i < array.length; i++) {
+    for (var i = 0, len = array.length; i < len; i++) {
       crc = (crc >>> 8) ^ _crc32Table[(crc ^ array[i]) & 0xFF];
     }
 
@@ -40,108 +41,49 @@ Peeracle.Media = {};
 })();
 
 (function () {
-  function File(blob) {
-    var _blob = blob;
-    var _length = _blob ? _blob.size : 0;
+  function File(handle) {
+    var _handle = handle;
     var _offset = 0;
-    var _index = 0;
-    var _buffer = null;
+    var _length = (typeof handle === 'Blob') ? handle.size : -1;
 
-    var _getBytes = function (start, end, doneCallback) {
-      if (!_blob) {
-        doneCallback(null, 0);
+    var getOffset = function () {
+      return _offset;
+    };
+
+    var read = function (length) {
+      _offset += length;
+    };
+
+    var seek = function (position) {
+      _offset = position;
+    };
+
+    var fetchBytes = function (length, cb) {
+      if (_length > -1 && _offset + length > _length) {
+        cb(null);
         return;
       }
 
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        var content = new Uint8Array(e.target.result);
-        doneCallback(content, _blob.size);
-      };
-      reader.readAsArrayBuffer(_blob.slice(start, end));
-    };
-
-    var getIndex = function () {
-      return _index;
-    };
-
-    var getBuffer = function () {
-      return _buffer;
-    };
-
-    var getCurrentOffset = function () {
-      return _offset + _index;
-    };
-
-    var getBytesAvailable = function () {
-      return _buffer ? _buffer.length - _index : 0;
-    };
-
-    var getFileLength = function () {
-      return _length;
-    };
-
-    var seek = function (offset) {
-      if (_buffer && (offset >= _offset) && (offset < _offset + _buffer.length)) {
-        _index = offset - _offset;
+      if (typeof module === 'undefined') {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          cb(new Uint8Array(e.target.result));
+        };
+        reader.readAsArrayBuffer(_handle.slice(_offset, _offset + length));
+      } else if (typeof _handle === 'string') {
+        _nodeOpen(function () {
+          _nodeFetchBytes(length, cb);
+        });
       } else {
-        _offset = offset;
-        _index = 0;
-        _buffer = null;
+        _nodeFetchBytes(length, cb);
       }
-    };
-
-    var read = function (size) {
-      seek(getCurrentOffset() + size);
-    };
-
-    var fetchBytes = function (size, doneCallback) {
-      if (size < getBytesAvailable()) {
-        doneCallback(null);
-        return;
-      }
-
-      var start = getCurrentOffset();
-      var end = start + size;
-
-      if (end > _length) {
-        end = _length;
-      }
-
-      _getBytes(start, end, function (buf, len) {
-        if (!buf) {
-          doneCallback(null);
-          return;
-        }
-
-        _offset = start;
-        _index = getCurrentOffset() - start;
-        _buffer = buf;
-        _length = len;
-
-        doneCallback(buf);
-      });
-    };
-
-    var ensureEnoughBytes = function (size, doneCallback) {
-      if (size < getBytesAvailable()) {
-        doneCallback(false);
-        return;
-      }
-
-      doneCallback(true);
     };
 
     return {
-      getIndex: getIndex,
-      getBuffer: getBuffer,
-      getCurrentOffset: getCurrentOffset,
-      getBytesAvailable: getBytesAvailable,
-      getFileLength: getFileLength,
-      read: read,
-      seek: seek,
+      getOffset: getOffset,
       fetchBytes: fetchBytes,
-      ensureEnoughBytes: ensureEnoughBytes
+      read: read,
+      seek: seek
     };
   }
 
@@ -158,7 +100,7 @@ Peeracle.Media = {};
     var _cluster = null;
 
     var _readVariableInt = function (buffer, start, maxSize) {
-      var length = 0;
+      var length;
       var readBytes = 1;
       var lengthMask = 0x80;
       var n = 1;
@@ -199,12 +141,11 @@ Peeracle.Media = {};
       result = _readVariableInt(buffer, start + tag.headerSize, 8);
       tag.dataSize = result.value;
       tag.headerSize += result.length;
-
       return tag;
     };
 
     var _readTag = function (doneCallback) {
-      var headerOffset = _file.getCurrentOffset();
+      var headerOffset = _file.getOffset();
 
       _file.fetchBytes(12, function (bytes) {
         if (!bytes) {
@@ -212,9 +153,7 @@ Peeracle.Media = {};
           return;
         }
 
-        var start = _file.getIndex();
-        var tag = _readBufferedTag(start, bytes);
-
+        var tag = _readBufferedTag(0, bytes);
         _file.read(tag.headerSize);
         tag.headerOffset = headerOffset;
         doneCallback(tag);
@@ -491,6 +430,196 @@ Peeracle.Media = {};
 })();
 
 (function () {
+  function MetadataSerializer() {
+    var _writeAsciiString = function (value, buffer) {
+      for (var i = 0; i < value.length; ++i) {
+        var c = value.charCodeAt(i);
+        buffer.push(c);
+      }
+      buffer.push(0);
+    };
+
+    var _writeUInt32 = function (value, buffer) {
+      var l = 0;
+      var bytes = [];
+
+      value = value >>> 0;
+      while (l < 4) {
+        bytes.push(value & 0xFF);
+        value = value >> 8;
+        ++l;
+      }
+
+      bytes = bytes.reverse();
+      for (var i = 0; i < bytes.length; ++i) {
+        buffer.push(bytes[i]);
+      }
+    };
+
+    var _writeChar = function (value, buffer) {
+      buffer.push(value & 0xFF);
+    };
+
+    var _serializeMediaSegments = function (metadata, buffer) {
+      var mediaSegments = metadata.getMediaSegments();
+
+      for (var i = 0, len = mediaSegments.length; i < len; ++i) {
+        _writeUInt32(mediaSegments[i][0], buffer);
+        _writeUInt32(mediaSegments[i][1], buffer);
+        _writeUInt32(mediaSegments[i][2], buffer);
+      }
+    };
+
+    var _serializeInitSegment = function (metadata, buffer) {
+      var initSegment = metadata.getInitSegment();
+
+      _writeUInt32(initSegment.length, buffer);
+      for (var i = 0, len = initSegment.length; i < len; ++i) {
+        buffer.push(initSegment[i]);
+      }
+    };
+
+    var _serializeTrackers = function (metadata, buffer) {
+      var trackers = metadata.getTrackers();
+
+      for (var t = 0; t < trackers.length; ++t) {
+        _writeAsciiString(trackers[t], buffer);
+      }
+      _writeChar(0, buffer);
+    };
+
+    var _serializeHeader = function (metadata, buffer) {
+      var header = metadata.getHeader();
+
+      _writeAsciiString(header.magic, buffer);
+      _writeUInt32(header.version, buffer);
+      _writeAsciiString(header.checksum, buffer);
+    };
+
+    var serialize = function (metadata) {
+      var bytes = [];
+
+      _serializeHeader(metadata, bytes);
+      _serializeTrackers(metadata, bytes);
+      _serializeInitSegment(metadata, bytes);
+      _serializeMediaSegments(metadata, bytes);
+      return bytes;
+    };
+
+    return {
+      serialize: serialize
+    };
+  }
+
+  Peeracle.MetadataSerializer = MetadataSerializer;
+})();
+
+(function () {
+  function MetadataUnserializer() {
+    var _peekChar = function (bytes) {
+      return bytes[0];
+    };
+
+    var _readChar = function (bytes) {
+      var value = bytes.splice(0, 1);
+      return value[0];
+    };
+
+    var _readUInt32 = function (bytes) {
+      var number = [];
+      for (var i = 0; i < 4; ++i) {
+        number.push(_readChar(bytes));
+      }
+      return (number[0] << 24) +
+        (number[1] << 16) +
+        (number[2] << 8) +
+        number[3] >>> 0;
+    };
+
+    var _readString = function (bytes) {
+      var c;
+      var str = '';
+
+      do {
+        c = _readChar(bytes);
+        if (!c) {
+          break;
+        }
+        str += String.fromCharCode(c);
+      } while (c);
+
+      return str;
+    };
+
+    var _unserializeTrackers = function (bytes) {
+      var trackers = [];
+      var c;
+
+      do {
+        var str = '';
+        c = _readChar(bytes);
+        if (!c) {
+          break;
+        }
+        str += String.fromCharCode(c) + _readString(bytes);
+        trackers.push(str);
+      } while (c);
+
+      return trackers;
+    };
+
+    var _unserializeHeader = function (bytes) {
+      var header = {};
+
+      header.magic = _readString(bytes);
+      header.version = _readUInt32(bytes);
+      header.checksum = _readString(bytes);
+
+      return header;
+    };
+
+    var _unserializeInitSegment = function (bytes) {
+      var len = _readUInt32(bytes);
+      return bytes.splice(0, len);
+    };
+
+    var _unserializeMediaSegments = function (bytes) {
+      var segments = [];
+
+      do {
+        var segment = [];
+        segment.push(_readUInt32(bytes));
+        segment.push(_readUInt32(bytes));
+        segment.push(_readUInt32(bytes));
+        segments.push(segment);
+      } while (bytes.length);
+
+      return segments;
+    };
+
+    var unserialize = function (bytes) {
+      var header = _unserializeHeader(bytes);
+      var trackers = _unserializeTrackers(bytes);
+      var init = _unserializeInitSegment(bytes);
+      var media = _unserializeMediaSegments(bytes);
+
+      return {
+        header: header,
+        trackers: trackers,
+        init: init,
+        media: media
+      };
+    };
+
+    return {
+      unserialize: unserialize
+    };
+  }
+
+  Peeracle.MetadataUnserializer = MetadataUnserializer;
+})();
+
+(function () {
   function MediaChannel(peerConnection) {
     var _dataChannel;
     var _peerConnection = peerConnection;
@@ -633,10 +762,6 @@ Peeracle.Media = {};
       }
 
       var ice = event.candidate;
-      if (ice) {
-        ice = JSON.stringify(ice);
-      }
-
       _subscribers.forEach(function(subscriber) {
         subscriber.onIceCandidate(ice);
       });
@@ -718,7 +843,7 @@ Peeracle.Media = {};
       _signalChannel.createDataChannel();
       _peerConnection.createOffer(function (sdp) {
         _peerConnection.setLocalDescription(sdp, function () {
-          successCb(JSON.stringify(sdp));
+          successCb(sdp);
         }, errorFunction);
       }, errorFunction);
     };
@@ -730,11 +855,11 @@ Peeracle.Media = {};
 
       _createPeerConnection();
 
-      var realSdp = new RTCSessionDescription(JSON.parse(offerSdp));
+      var realSdp = new RTCSessionDescription(offerSdp);
       _peerConnection.setRemoteDescription(realSdp, function () {
         _peerConnection.createAnswer(function (sdp) {
           _peerConnection.setLocalDescription(sdp, function () {
-            successCb(JSON.stringify(sdp));
+            successCb(sdp);
           }, errorFunction);
         }, errorFunction);
       }, errorFunction);
@@ -745,14 +870,14 @@ Peeracle.Media = {};
         failureCb(error);
       };
 
-      var realSdp = new RTCSessionDescription(JSON.parse(answerSdp));
+      var realSdp = new RTCSessionDescription(answerSdp);
       _peerConnection.setRemoteDescription(realSdp, function () {
         successCb();
       }, errorFunction);
     };
 
     var addIceCandidate = function (ice, successCb, failureCb) {
-      _peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(ice)),
+      _peerConnection.addIceCandidate(new RTCIceCandidate(ice),
         function () {
           successCb();
         }, function (error) {
@@ -780,8 +905,8 @@ Peeracle.Media = {};
 })();
 
 (function () {
-  function Tracker(url) {
-    var _url = url;
+  function Client() {
+    var _url;
     var _ws;
     var _hashes = {};
     var _subscribers = [];
@@ -789,14 +914,66 @@ Peeracle.Media = {};
     var _onOpen = function () {
       console.log('Peeracle.Tracker: onOpen');
 
-      _ws.send('');
-      _subscribers.forEach(function(subscriber) {
-        subscriber.onConnect();
-      });
+      _ws.send(JSON.stringify({type: 'hello'}));
     };
 
-    var _onMessage = function () {
-      console.log('Peeracle.Tracker: _onMessage');
+    var _onMessage = function (event) {
+      console.log('Peeracle.Tracker: _onMessage', event.data);
+
+      var welcome = function (msg) {
+        if (!msg.id) {
+          return;
+        }
+
+        _subscribers.forEach(function (subscriber) {
+          subscriber.onConnect(msg.id);
+        });
+      };
+
+      var enter = function (msg) {
+        if (!msg.hash || !msg.peers || !_hashes[msg.hash]) {
+          return;
+        }
+
+        msg.peers.forEach(function (peer) {
+          _hashes[msg.hash].onEnter(peer);
+        });
+      };
+
+      var leave = function (msg) {
+        if (!msg.hash || !msg.id || !_hashes[msg.hash]) {
+          return;
+        }
+
+        _hashes[msg.hash].onLeave(msg.id);
+      };
+
+      var sdp = function (msg) {
+        if (!msg.hash || !msg.from || !msg.data || !_hashes[msg.hash]) {
+          return;
+        }
+
+        _hashes[msg.hash].onSdp(msg.from, msg.data);
+      };
+
+      var _messageHandlers = {
+        welcome: welcome,
+        enter: enter,
+        leave: leave,
+        sdp: sdp
+      };
+
+      var jmessage;
+
+      try {
+        jmessage = JSON.parse(event.data);
+      } catch (e) {
+        return;
+      }
+
+      if (_messageHandlers[jmessage.type]) {
+        _messageHandlers[jmessage.type](jmessage);
+      }
     };
 
     var _onError = function () {
@@ -807,24 +984,44 @@ Peeracle.Media = {};
       console.log('Peeracle.Tracker: _onClose');
     };
 
-    var connect = function () {
-      _ws = new WebSocket(_url);
+    var connect = function (url) {
+      _url = url;
+      _ws = new WebSocket(_url, 'prcl', _url);
       _ws.onopen = _onOpen;
       _ws.onmessage = _onMessage;
       _ws.onerror = _onError;
       _ws.onclose = _onClose;
     };
 
+    var disconnect = function () {
+      _subscribers.forEach(function (subscriber, index) {
+        subscriber.onDisconnect();
+        _subscribers.splice(index, 1);
+      });
+
+      _ws.close();
+    };
+
     var announce = function (hash, got, subscriber) {
-      if (!(_hashes[hash] in undefined)) {
+      if (!_hashes[hash]) {
         _hashes[hash] = subscriber;
       }
+
+      _ws.send(JSON.stringify({type: 'announce', hash: hash, got: got}));
     };
 
     var remove = function (hash) {
-      if (_hashes[hash] in undefined) {
+      if (_hashes[hash]) {
         delete _hashes[hash];
       }
+    };
+
+    var sendSdp = function (hash, peer, sdp) {
+      if (!_hashes[hash]) {
+        return;
+      }
+
+      _ws.send(JSON.stringify({type: 'sdp', hash: hash, peer: peer, data: sdp}));
     };
 
     var subscribe = function (subscriber) {
@@ -845,12 +1042,18 @@ Peeracle.Media = {};
 
     return {
       connect: connect,
+      disconnect: disconnect,
       announce: announce,
       remove: remove,
+      sendSdp: sendSdp,
       subscribe: subscribe,
       unsubscribe: unsubscribe
     };
   }
 
-  Peeracle.Tracker = Tracker;
+  var Tracker = {
+    Client: Client
+  };
+
+  Peeracle.Tracker.Client = Tracker.Client;
 })();
