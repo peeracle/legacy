@@ -10,7 +10,7 @@
     var _cluster = null;
 
     var _readVariableInt = function (buffer, start, maxSize) {
-      var length = 0;
+      var length;
       var readBytes = 1;
       var lengthMask = 0x80;
       var n = 1;
@@ -51,12 +51,11 @@
       result = _readVariableInt(buffer, start + tag.headerSize, 8);
       tag.dataSize = result.value;
       tag.headerSize += result.length;
-
       return tag;
     };
 
     var _readTag = function (doneCallback) {
-      var headerOffset = _file.getCurrentOffset();
+      var headerOffset = _file.getOffset();
 
       _file.fetchBytes(12, function (bytes) {
         if (!bytes) {
@@ -64,9 +63,7 @@
           return;
         }
 
-        var start = _file.getIndex();
-        var tag = _readBufferedTag(start, bytes);
-
+        var tag = _readBufferedTag(0, bytes);
         _file.read(tag.headerSize);
         tag.headerOffset = headerOffset;
         doneCallback(tag);
