@@ -1,108 +1,89 @@
 'use strict';
 
 (function () {
-  function File(blob) {
-    var _blob = blob;
-    var _length = _blob ? _blob.size : 0;
+  function File(handle) {
+    // @exclude
+    var fs = require('fs');
+    // @endexclude
+
+    var _handle = handle;
     var _offset = 0;
-    var _index = 0;
-    var _buffer = null;
+    var _length = (typeof handle === 'Blob') ? handle.size : -1;
 
-    var _getBytes = function (start, end, doneCallback) {
-      if (!_blob) {
-        doneCallback(null, 0);
-        return;
-      }
-
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        var content = new Uint8Array(e.target.result);
-        doneCallback(content, _blob.size);
-      };
-      reader.readAsArrayBuffer(_blob.slice(start, end));
+    var getOffset = function () {
+      return _offset;
     };
 
-    var getIndex = function () {
-      return _index;
+    var read = function (length) {
+      _offset += length;
     };
 
-    var getBuffer = function () {
-      return _buffer;
+    var seek = function (position) {
+      _offset = position;
     };
 
-    var getCurrentOffset = function () {
-      return _offset + _index;
-    };
-
-    var getBytesAvailable = function () {
-      return _buffer ? _buffer.length - _index : 0;
-    };
-
-    var getFileLength = function () {
-      return _length;
-    };
-
-    var seek = function (offset) {
-      if (_buffer && (offset >= _offset) && (offset < _offset + _buffer.length)) {
-        _index = offset - _offset;
-      } else {
-        _offset = offset;
-        _index = 0;
-        _buffer = null;
-      }
-    };
-
-    var read = function (size) {
-      seek(getCurrentOffset() + size);
-    };
-
-    var fetchBytes = function (size, doneCallback) {
-      if (size < getBytesAvailable()) {
-        doneCallback(null);
-        return;
-      }
-
-      var start = getCurrentOffset();
-      var end = start + size;
-
-      if (end > _length) {
-        end = _length;
-      }
-
-      _getBytes(start, end, function (buf, len) {
-        if (!buf) {
-          doneCallback(null);
-          return;
+    // @exclude
+    var _nodeOpen = function (cb) {
+      fs.stat(_handle, function (err, stats) {
+        if (err) {
+          throw err;
         }
-
-        _offset = start;
-        _index = getCurrentOffset() - start;
-        _buffer = buf;
-        _length = len;
-
-        doneCallback(buf);
+        _length = stats.size;
+        fs.open(_handle, 'r', function (err, fd) {
+          if (err) {
+            throw err;
+          }
+          _handle = fd;
+          cb();
+        });
       });
     };
 
-    var ensureEnoughBytes = function (size, doneCallback) {
-      if (size < getBytesAvailable()) {
-        doneCallback(false);
+    var _nodeFetchBytes = function (length, cb) {
+      var bytes = new Buffer(length);
+      var count = 0;
+
+      fs.read(_handle, bytes, count, length, _offset, function doRead(err, bytesRead, buffer) {
+        if (err) {
+          throw err;
+        }
+
+        count += bytesRead;
+        if (count >= length) {
+          cb(new Uint8Array(bytes));
+          return;
+        }
+        fs.read(_handle, bytes, count, length, _offset + count, doRead);
+      });
+    };
+    // @endexclude
+
+    var fetchBytes = function (length, cb) {
+      if (_length > -1 && _offset + length > _length) {
+        cb(null);
         return;
       }
 
-      doneCallback(true);
+      if (typeof module === 'undefined') {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          cb(new Uint8Array(e.target.result));
+        };
+        reader.readAsArrayBuffer(_handle.slice(_offset, _offset + length));
+      } else if (typeof _handle === 'string') {
+        _nodeOpen(function () {
+          _nodeFetchBytes(length, cb);
+        });
+      } else {
+        _nodeFetchBytes(length, cb);
+      }
     };
 
     return {
-      getIndex: getIndex,
-      getBuffer: getBuffer,
-      getCurrentOffset: getCurrentOffset,
-      getBytesAvailable: getBytesAvailable,
-      getFileLength: getFileLength,
-      read: read,
-      seek: seek,
+      getOffset: getOffset,
       fetchBytes: fetchBytes,
-      ensureEnoughBytes: ensureEnoughBytes
+      read: read,
+      seek: seek
     };
   }
 
