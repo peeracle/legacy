@@ -53,7 +53,6 @@ describe('Peeracle.Peer', function () {
 
     pa.subscribe(subscriber);
     pa.createOffer(function (sdp) {
-      expect(typeof sdp).toBe('string');
       pasdp = sdp;
     }, function (error) {
       console.error(error);
@@ -86,7 +85,6 @@ describe('Peeracle.Peer', function () {
 
     pb.subscribe(subscriber);
     pb.createAnswer(pasdp, function (sdp) {
-      expect(typeof sdp).toBe('string');
       pbsdp = sdp;
     }, function (error) {
       console.error(error);
