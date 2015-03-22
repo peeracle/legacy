@@ -47,10 +47,6 @@
       }
 
       var ice = event.candidate;
-      if (ice) {
-        ice = JSON.stringify(ice);
-      }
-
       _subscribers.forEach(function(subscriber) {
         subscriber.onIceCandidate(ice);
       });
@@ -132,7 +128,7 @@
       _signalChannel.createDataChannel();
       _peerConnection.createOffer(function (sdp) {
         _peerConnection.setLocalDescription(sdp, function () {
-          successCb(JSON.stringify(sdp));
+          successCb(sdp);
         }, errorFunction);
       }, errorFunction);
     };
@@ -144,11 +140,11 @@
 
       _createPeerConnection();
 
-      var realSdp = new RTCSessionDescription(JSON.parse(offerSdp));
+      var realSdp = new RTCSessionDescription(offerSdp);
       _peerConnection.setRemoteDescription(realSdp, function () {
         _peerConnection.createAnswer(function (sdp) {
           _peerConnection.setLocalDescription(sdp, function () {
-            successCb(JSON.stringify(sdp));
+            successCb(sdp);
           }, errorFunction);
         }, errorFunction);
       }, errorFunction);
@@ -159,14 +155,14 @@
         failureCb(error);
       };
 
-      var realSdp = new RTCSessionDescription(JSON.parse(answerSdp));
+      var realSdp = new RTCSessionDescription(answerSdp);
       _peerConnection.setRemoteDescription(realSdp, function () {
         successCb();
       }, errorFunction);
     };
 
     var addIceCandidate = function (ice, successCb, failureCb) {
-      _peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(ice)),
+      _peerConnection.addIceCandidate(new RTCIceCandidate(ice),
         function () {
           successCb();
         }, function (error) {
