@@ -10,6 +10,16 @@
     var _offset = 0;
     var _length = (typeof handle === 'Blob') ? handle.size : -1;
 
+    if (typeof module !== 'undefined') {
+      var stats = fs.statSync(_handle);
+      _length = stats.size;
+      _handle = fs.openSync(handle, 'r');
+    }
+
+    var getLength = function () {
+      return _length;
+    };
+
     var getOffset = function () {
       return _offset;
     };
@@ -23,22 +33,6 @@
     };
 
     // @exclude
-    var _nodeOpen = function (cb) {
-      fs.stat(_handle, function (err, stats) {
-        if (err) {
-          throw err;
-        }
-        _length = stats.size;
-        fs.open(_handle, 'r', function (err, fd) {
-          if (err) {
-            throw err;
-          }
-          _handle = fd;
-          cb();
-        });
-      });
-    };
-
     var _nodeFetchBytes = function (length, cb) {
       var bytes = new Buffer(length);
       var count = 0;
@@ -70,16 +64,13 @@
           cb(new Uint8Array(e.target.result));
         };
         reader.readAsArrayBuffer(_handle.slice(_offset, _offset + length));
-      } else if (typeof _handle === 'string') {
-        _nodeOpen(function () {
-          _nodeFetchBytes(length, cb);
-        });
       } else {
         _nodeFetchBytes(length, cb);
       }
     };
 
     return {
+      getLength: getLength,
       getOffset: getOffset,
       fetchBytes: fetchBytes,
       read: read,
