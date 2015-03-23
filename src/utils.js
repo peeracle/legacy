@@ -18,7 +18,7 @@
 
     var crc = 0 ^ (-1);
 
-    for (var i = 0; i < array.length; i++) {
+    for (var i = 0, len = array.length; i < len; i++) {
       crc = (crc >>> 8) ^ _crc32Table[(crc ^ array[i]) & 0xFF];
     }
 
