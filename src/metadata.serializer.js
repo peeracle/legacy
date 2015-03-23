@@ -31,23 +31,14 @@
       buffer.push(value & 0xFF);
     };
 
-    var _serializeMediaSegments = function (metadata, buffer) {
-      var mediaSegments = metadata.getMediaSegments();
+    var _serializeHeader = function (metadata, buffer) {
+      var checksum = metadata.getChecksum();
+      var chunksize = metadata.getChunkSize();
 
-      for (var i = 0, len = mediaSegments.length; i < len; ++i) {
-        _writeUInt32(mediaSegments[i][0], buffer);
-        _writeUInt32(mediaSegments[i][1], buffer);
-        _writeUInt32(mediaSegments[i][2], buffer);
-      }
-    };
-
-    var _serializeInitSegment = function (metadata, buffer) {
-      var initSegment = metadata.getInitSegment();
-
-      _writeUInt32(initSegment.length, buffer);
-      for (var i = 0, len = initSegment.length; i < len; ++i) {
-        buffer.push(initSegment[i]);
-      }
+      _writeAsciiString('PRCL', buffer);
+      _writeUInt32(1, buffer);
+      _writeAsciiString(checksum, buffer);
+      _writeUInt32(chunksize, buffer);
     };
 
     var _serializeTrackers = function (metadata, buffer) {
@@ -59,12 +50,27 @@
       _writeChar(0, buffer);
     };
 
-    var _serializeHeader = function (metadata, buffer) {
-      var header = metadata.getHeader();
+    var _serializeInitSegment = function (metadata, buffer) {
+      var initSegment = metadata.getInitSegment();
 
-      _writeAsciiString(header.magic, buffer);
-      _writeUInt32(header.version, buffer);
-      _writeAsciiString(header.checksum, buffer);
+      _writeUInt32(initSegment.length, buffer);
+      for (var i = 0, len = initSegment.length; i < len; ++i) {
+        buffer.push(initSegment[i]);
+      }
+    };
+
+    var _serializeMediaSegments = function (metadata, buffer) {
+      var mediaSegments = metadata.getMediaSegments();
+
+      for (var m in mediaSegments) {
+        _writeUInt32(m, buffer);
+        _writeUInt32(mediaSegments[m][0], buffer);
+        _writeUInt32(mediaSegments[m][1], buffer);
+        _writeUInt32(mediaSegments[m][1].length, buffer);
+        for (var i = 0, l = mediaSegments[m][1].length; i < l; ++i) {
+          _writeUInt32(mediaSegments[m][1][i], buffer);
+        }
+      }
     };
 
     var serialize = function (metadata) {

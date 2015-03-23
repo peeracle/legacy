@@ -2,10 +2,6 @@
 
 (function () {
   function MetadataUnserializer() {
-    var _peekChar = function (bytes) {
-      return bytes[0];
-    };
-
     var _readChar = function (bytes) {
       var value = bytes.splice(0, 1);
       return value[0];
@@ -37,6 +33,22 @@
       return str;
     };
 
+    var _unserializeInitSegment = function (bytes) {
+      var len = _readUInt32(bytes);
+      return bytes.splice(0, len);
+    };
+
+    var _unserializeHeader = function (bytes) {
+      var header = {};
+
+      header.magic = _readString(bytes);
+      header.version = _readUInt32(bytes);
+      header.checksum = _readString(bytes);
+      header.chunksize = _readUInt32(bytes);
+
+      return header;
+    };
+
     var _unserializeTrackers = function (bytes) {
       var trackers = [];
       var c;
@@ -54,30 +66,23 @@
       return trackers;
     };
 
-    var _unserializeHeader = function (bytes) {
-      var header = {};
-
-      header.magic = _readString(bytes);
-      header.version = _readUInt32(bytes);
-      header.checksum = _readString(bytes);
-
-      return header;
-    };
-
-    var _unserializeInitSegment = function (bytes) {
-      var len = _readUInt32(bytes);
-      return bytes.splice(0, len);
-    };
-
     var _unserializeMediaSegments = function (bytes) {
-      var segments = [];
+      var segments = {};
 
       do {
+        var timecode = _readUInt32(bytes);
         var segment = [];
+        var chunks = [];
+        var num;
+
         segment.push(_readUInt32(bytes));
         segment.push(_readUInt32(bytes));
-        segment.push(_readUInt32(bytes));
-        segments.push(segment);
+
+        num = _readUInt32(bytes);
+        for (var i = 0; i < num; ++i) {
+          chunks.push(_readUInt32(bytes));
+        }
+        segments[timecode] = segment;
       } while (bytes.length);
 
       return segments;
