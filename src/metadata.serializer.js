@@ -1,7 +1,17 @@
 'use strict';
 
 (function () {
+  var Checksum;
+
+  if (typeof module === 'undefined') {
+    Checksum = Peeracle.Checksum;
+  } else {
+    Checksum = require('./checksum');
+  }
+
   function MetadataSerializer() {
+    var _checksum;
+
     var _writeAsciiString = function (value, buffer) {
       for (var i = 0; i < value.length; ++i) {
         var c = value.charCodeAt(i);
@@ -31,9 +41,24 @@
       buffer.push(value & 0xFF);
     };
 
+    var _writeChecksum = function (value, buffer) {
+      _checksum.serialize(value, buffer);
+    };
+
     var _serializeHeader = function (metadata, buffer) {
       var checksum = metadata.getChecksum();
       var chunksize = metadata.getChunkSize();
+
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === checksum) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + checksum;
+      }
 
       _writeAsciiString('PRCL', buffer);
       _writeUInt32(1, buffer);
@@ -65,10 +90,12 @@
       for (var m in mediaSegments) {
         _writeUInt32(m, buffer);
         _writeUInt32(mediaSegments[m][0], buffer);
-        _writeUInt32(mediaSegments[m][1], buffer);
+        //_writeUInt32(mediaSegments[m][1], buffer);
+        _writeChecksum(mediaSegments[m][1], buffer);
         _writeUInt32(mediaSegments[m][1].length, buffer);
         for (var i = 0, l = mediaSegments[m][1].length; i < l; ++i) {
-          _writeUInt32(mediaSegments[m][1][i], buffer);
+          //_writeUInt32(mediaSegments[m][1][i], buffer);
+          _writeChecksum(mediaSegments[m][1][i], buffer);
         }
       }
     };

@@ -1,7 +1,17 @@
 'use strict';
 
 (function () {
+  var Checksum;
+
+  if (typeof module === 'undefined') {
+    Checksum = Peeracle.Checksum;
+  } else {
+    Checksum = require('./checksum');
+  }
+
   function MetadataUnserializer() {
+    var _checksum;
+
     var _readChar = function (bytes) {
       var value = bytes.splice(0, 1);
       return value[0];
@@ -33,6 +43,11 @@
       return str;
     };
 
+    var _readChecksum = function (bytes) {
+      var result = _checksum.unserialize(bytes);
+      return result;
+    };
+
     var _unserializeInitSegment = function (bytes) {
       var len = _readUInt32(bytes);
       return bytes.splice(0, len);
@@ -45,6 +60,17 @@
       header.version = _readUInt32(bytes);
       header.checksum = _readString(bytes);
       header.chunksize = _readUInt32(bytes);
+
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === header.checksum) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + header.checksum;
+      }
 
       return header;
     };
@@ -76,7 +102,7 @@
         var num;
 
         segment.push(_readUInt32(bytes));
-        segment.push(_readUInt32(bytes));
+        segment.push(_readChecksum(bytes));
 
         num = _readUInt32(bytes);
         for (var i = 0; i < num; ++i) {

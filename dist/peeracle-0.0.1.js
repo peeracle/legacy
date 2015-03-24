@@ -6,13 +6,18 @@
 
 'use strict';
 var Peeracle = {};
+Peeracle.Checksum = {};
 Peeracle.Media = {};
 Peeracle.Tracker = {};
 (function () {
-  var _crc32Table = null;
+  var getIdentifier = function () {
+    return 'crc32';
+  };
 
-  var Crc32 = function (array) {
-    if (!_crc32Table) {
+  var _object = function () {
+    var _crc32Table = null;
+
+    var _generateCrc32Table = function () {
       var c;
       _crc32Table = [];
       for (var n = 0; n < 256; n++) {
@@ -22,19 +27,73 @@ Peeracle.Tracker = {};
         }
         _crc32Table[n] = c;
       }
-    }
+    };
 
-    var crc = 0 ^ (-1);
+    var checksum = function (array) {
+      if (!_crc32Table) {
+        _generateCrc32Table();
+      }
 
-    for (var i = 0, len = array.length; i < len; i++) {
-      crc = (crc >>> 8) ^ _crc32Table[(crc ^ array[i]) & 0xFF];
-    }
+      var crc = 0 ^ (-1);
 
-    return (crc ^ (-1)) >>> 0;
+      for (var i = 0, len = array.length; i < len; i++) {
+        crc = (crc >>> 8) ^ _crc32Table[(crc ^ array[i]) & 0xFF];
+      }
+
+      return (crc ^ (-1)) >>> 0;
+    };
+
+    var serialize = function (value, buffer) {
+      var l = 0;
+      var bytes = [];
+
+      value = value >>> 0;
+      while (l < 4) {
+        bytes.push(value & 0xFF);
+        value = value >> 8;
+        ++l;
+      }
+
+      bytes = bytes.reverse();
+      for (var i = 0; i < bytes.length; ++i) {
+        buffer.push(bytes[i]);
+      }
+    };
+
+    var unserialize = function (bytes) {
+      var number = [];
+      for (var i = 0; i < 4; ++i) {
+        var char = bytes.splice(0, 1);
+        number.push(char);
+      }
+      return (number[0] << 24) +
+        (number[1] << 16) +
+        (number[2] << 8) +
+        number[3] >>> 0;
+    };
+
+    return {
+      checksum: checksum,
+      serialize: serialize,
+      unserialize: unserialize
+    };
   };
 
+  var create = function () {
+    return new _object();
+  };
+
+  var Checksum = {
+    Crc32: {
+      getIdentifier: getIdentifier,
+      create: create
+    }
+  };
+  Peeracle.Checksum.Crc32 = Checksum.Crc32;
+})();
+
+(function () {
   var Utils = {
-    Crc32: Crc32
   };
 
   Peeracle.Utils = Utils;
@@ -45,6 +104,10 @@ Peeracle.Tracker = {};
     var _handle = handle;
     var _offset = 0;
     var _length = (typeof handle === 'Blob') ? handle.size : -1;
+
+    var getLength = function () {
+      return _length;
+    };
 
     var getOffset = function () {
       return _offset;
@@ -70,16 +133,13 @@ Peeracle.Tracker = {};
           cb(new Uint8Array(e.target.result));
         };
         reader.readAsArrayBuffer(_handle.slice(_offset, _offset + length));
-      } else if (typeof _handle === 'string') {
-        _nodeOpen(function () {
-          _nodeFetchBytes(length, cb);
-        });
       } else {
         _nodeFetchBytes(length, cb);
       }
     };
 
     return {
+      getLength: getLength,
       getOffset: getOffset,
       fetchBytes: fetchBytes,
       read: read,
@@ -247,6 +307,7 @@ Peeracle.Tracker = {};
 
           doneCallback({
             timecode: _getClusterTimecode(bytes),
+            offset: tag.headerOffset,
             bytes: bytes
           });
         });
@@ -274,49 +335,108 @@ Peeracle.Tracker = {};
 })();
 
 (function () {
-  var Media;
+  var Checksum;
   var Utils;
 
   if (typeof module === 'undefined') {
-    Media = Peeracle.Media;
+    Checksum = Peeracle.Checksum;
     Utils = Peeracle.Utils;
   } else {
-    Media = require('./media');
+    Checksum = require('./checksum');
     Utils = require('./utils');
   }
 
   function Metadata() {
-    var _getMediaFormat = function (file, doneCallback) {
-      file.fetchBytes(4, function (bytes) {
-        if (!bytes || bytes.length !== 4) {
-          doneCallback(null);
-          return;
-        }
+    var _checksum;
+    var _checksumId = 'crc32';
+    var _chunksize = 0;
+    var _trackers = [];
+    var _initSegment = [];
+    var _mediaSegments = {};
 
-        var mediaFormat = null;
-
-        file.seek(0);
-        for (var fileFormat in Media) {
-          var header = Media[fileFormat].getFileHeader();
-          if (header[0] === bytes[0] &&
-            header[1] === bytes[1] &&
-            header[2] === bytes[2] &&
-            header[3] === bytes[3]) {
-            mediaFormat = Media[fileFormat].create(file);
-            break;
-          }
-        }
-
-        if (!mediaFormat) {
-          doneCallback(null);
-          return;
-        }
-
-        doneCallback(mediaFormat);
-      });
+    var getChecksum = function () {
+      return _checksumId;
     };
 
-    var _calculateChunkSize = function (fileLength) {
+    var getChunkSize = function () {
+      return _chunksize;
+    };
+
+    var getTrackers = function () {
+      return _trackers;
+    };
+
+    var getInitSegment = function () {
+      return _initSegment;
+    };
+
+    var getMediaSegments = function () {
+      return _mediaSegments;
+    };
+
+    var setChecksum = function (checksum) {
+      _checksumId = checksum;
+    };
+
+    var setTrackers = function (trackers) {
+      _trackers = trackers;
+    };
+
+    var setInitSegment = function (initSegment) {
+      _initSegment = initSegment;
+    };
+
+    var _loadChecksum = function () {
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === _checksumId) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + _checksumId;
+      }
+    };
+
+    var addMediaSegment = function (timecode, mediaSegment, progressCallback) {
+      var clusterLength = mediaSegment.length;
+      var chunkLength = _chunksize;
+
+      if (!_checksum) {
+        _loadChecksum();
+      }
+
+      _mediaSegments[timecode] = [clusterLength, _checksum.checksum(mediaSegment), []];
+
+      for (var i = 0; i < clusterLength; i += chunkLength) {
+        var chunk = mediaSegment.subarray(i, i + chunkLength);
+
+        _mediaSegments[timecode][2].push(_checksum.checksum(chunk));
+
+        if (progressCallback) {
+          progressCallback(chunk);
+        }
+
+        if (clusterLength - i < chunkLength) {
+          chunkLength = clusterLength - i;
+        }
+      }
+
+      if (progressCallback) {
+        progressCallback(null);
+      }
+    };
+
+    var validateMediaSegment = function (timecode, mediaSegment) {
+      if (!_checksum) {
+        _loadChecksum();
+      }
+
+      return _mediaSegments[timecode][1] === _checksum.checksum(mediaSegment);
+    };
+
+    var calculateChunkSize = function (fileLength) {
       var i;
       var targetLength = 40 * 1024;
       var chunkSize = fileLength / (targetLength / 20);
@@ -327,102 +447,23 @@ Peeracle.Tracker = {};
         }
         break;
       }
-      return i;
-    };
-
-    var create = function (file, doneCallback, progressCallback) {
-      _getMediaFormat(file, function (mediaFormat) {
-        if (!mediaFormat) {
-          doneCallback(null);
-          return;
-        }
-
-        var metadata = {
-          hash: null,
-          tracker: 'ws://tracker.dotstar.fr:8080',
-          init: null,
-          chunksize: _calculateChunkSize(file.getFileLength()),
-          clusters: []
-        };
-
-        mediaFormat.getInitSegment(function (bytes) {
-          // var warray = CryptoJS.lib.WordArray.create(bytes);
-          // var worker = new Worker('static/peeracle.metadata.worker.js');
-
-          metadata.init = bytes;
-          metadata.hash = Utils.Crc32(bytes);
-          // metadata.hash = CryptoJS.SHA3(warray) + '';
-
-          mediaFormat.getNextMediaSegment(function addCluster(segment) {
-            if (!segment) {
-              console.log(metadata.hash);
-              doneCallback(metadata);
-              return;
-            }
-
-            var cluster = {
-              timecode: segment.timecode,
-              size: segment.bytes.length,
-              chunks: []
-            };
-
-            var clusterLength = segment.bytes.length;
-            var chunkLength = metadata.chunksize;
-
-            /*var i = 0;
-             worker.onmessage = function (event) {
-             cluster.chunks.push(event.data);
-
-             if (clusterLength - i < chunkLength)
-             chunkLength = clusterLength - i;
-
-             i += chunkLength;
-
-             if (progressCallback) {
-             progressCallback(chunkLength);
-             }
-
-             if (i < clusterLength) {
-             var chunk = segment.bytes.subarray(i, i + chunkLength);
-             worker.postMessage(chunk);
-             } else {
-             metadata.clusters.push(cluster);
-             media.getNextMediaSegment(addCluster);
-             }
-             };
-
-             var chunk = segment.bytes.subarray(i, i + chunkLength);
-             worker.postMessage(chunk);*/
-
-            for (var i = 0; i < clusterLength; i += chunkLength) {
-              var chunk = segment.bytes.subarray(i, i + chunkLength);
-
-              cluster.chunks.push(Utils.Crc32(chunk));
-
-              if (progressCallback) {
-                progressCallback(chunk.length);
-              }
-
-              if (clusterLength - i < chunkLength) {
-                chunkLength = clusterLength - i;
-              }
-            }
-
-            metadata.clusters.push(cluster);
-            mediaFormat.getNextMediaSegment(addCluster);
-            //});
-          });
-        });
-      });
-    };
-
-    var load = function (file) {
-
+      _chunksize = i;
     };
 
     return {
-      create: create,
-      load: load
+      getChecksum: getChecksum,
+      getChunkSize: getChunkSize,
+      getTrackers: getTrackers,
+      getInitSegment: getInitSegment,
+      getMediaSegments: getMediaSegments,
+
+      setChecksum: setChecksum,
+      setTrackers: setTrackers,
+      setInitSegment: setInitSegment,
+      addMediaSegment: addMediaSegment,
+
+      validateMediaSegment: validateMediaSegment,
+      calculateChunkSize: calculateChunkSize
     };
   }
 
@@ -430,7 +471,17 @@ Peeracle.Tracker = {};
 })();
 
 (function () {
+  var Checksum;
+
+  if (typeof module === 'undefined') {
+    Checksum = Peeracle.Checksum;
+  } else {
+    Checksum = require('./checksum');
+  }
+
   function MetadataSerializer() {
+    var _checksum;
+
     var _writeAsciiString = function (value, buffer) {
       for (var i = 0; i < value.length; ++i) {
         var c = value.charCodeAt(i);
@@ -460,23 +511,29 @@ Peeracle.Tracker = {};
       buffer.push(value & 0xFF);
     };
 
-    var _serializeMediaSegments = function (metadata, buffer) {
-      var mediaSegments = metadata.getMediaSegments();
-
-      for (var i = 0, len = mediaSegments.length; i < len; ++i) {
-        _writeUInt32(mediaSegments[i][0], buffer);
-        _writeUInt32(mediaSegments[i][1], buffer);
-        _writeUInt32(mediaSegments[i][2], buffer);
-      }
+    var _writeChecksum = function (value, buffer) {
+      _checksum.serialize(value, buffer);
     };
 
-    var _serializeInitSegment = function (metadata, buffer) {
-      var initSegment = metadata.getInitSegment();
+    var _serializeHeader = function (metadata, buffer) {
+      var checksum = metadata.getChecksum();
+      var chunksize = metadata.getChunkSize();
 
-      _writeUInt32(initSegment.length, buffer);
-      for (var i = 0, len = initSegment.length; i < len; ++i) {
-        buffer.push(initSegment[i]);
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === checksum) {
+          _checksum = Checksum[c].create();
+          break;
+        }
       }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + checksum;
+      }
+
+      _writeAsciiString('PRCL', buffer);
+      _writeUInt32(1, buffer);
+      _writeAsciiString(checksum, buffer);
+      _writeUInt32(chunksize, buffer);
     };
 
     var _serializeTrackers = function (metadata, buffer) {
@@ -488,12 +545,29 @@ Peeracle.Tracker = {};
       _writeChar(0, buffer);
     };
 
-    var _serializeHeader = function (metadata, buffer) {
-      var header = metadata.getHeader();
+    var _serializeInitSegment = function (metadata, buffer) {
+      var initSegment = metadata.getInitSegment();
 
-      _writeAsciiString(header.magic, buffer);
-      _writeUInt32(header.version, buffer);
-      _writeAsciiString(header.checksum, buffer);
+      _writeUInt32(initSegment.length, buffer);
+      for (var i = 0, len = initSegment.length; i < len; ++i) {
+        buffer.push(initSegment[i]);
+      }
+    };
+
+    var _serializeMediaSegments = function (metadata, buffer) {
+      var mediaSegments = metadata.getMediaSegments();
+
+      for (var m in mediaSegments) {
+        _writeUInt32(m, buffer);
+        _writeUInt32(mediaSegments[m][0], buffer);
+        //_writeUInt32(mediaSegments[m][1], buffer);
+        _writeChecksum(mediaSegments[m][1], buffer);
+        _writeUInt32(mediaSegments[m][1].length, buffer);
+        for (var i = 0, l = mediaSegments[m][1].length; i < l; ++i) {
+          //_writeUInt32(mediaSegments[m][1][i], buffer);
+          _writeChecksum(mediaSegments[m][1][i], buffer);
+        }
+      }
     };
 
     var serialize = function (metadata) {
@@ -515,10 +589,16 @@ Peeracle.Tracker = {};
 })();
 
 (function () {
+  var Checksum;
+
+  if (typeof module === 'undefined') {
+    Checksum = Peeracle.Checksum;
+  } else {
+    Checksum = require('./checksum');
+  }
+
   function MetadataUnserializer() {
-    var _peekChar = function (bytes) {
-      return bytes[0];
-    };
+    var _checksum;
 
     var _readChar = function (bytes) {
       var value = bytes.splice(0, 1);
@@ -551,6 +631,38 @@ Peeracle.Tracker = {};
       return str;
     };
 
+    var _readChecksum = function (bytes) {
+      var result = _checksum.unserialize(bytes);
+      return result;
+    };
+
+    var _unserializeInitSegment = function (bytes) {
+      var len = _readUInt32(bytes);
+      return bytes.splice(0, len);
+    };
+
+    var _unserializeHeader = function (bytes) {
+      var header = {};
+
+      header.magic = _readString(bytes);
+      header.version = _readUInt32(bytes);
+      header.checksum = _readString(bytes);
+      header.chunksize = _readUInt32(bytes);
+
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === header.checksum) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + header.checksum;
+      }
+
+      return header;
+    };
+
     var _unserializeTrackers = function (bytes) {
       var trackers = [];
       var c;
@@ -568,30 +680,23 @@ Peeracle.Tracker = {};
       return trackers;
     };
 
-    var _unserializeHeader = function (bytes) {
-      var header = {};
-
-      header.magic = _readString(bytes);
-      header.version = _readUInt32(bytes);
-      header.checksum = _readString(bytes);
-
-      return header;
-    };
-
-    var _unserializeInitSegment = function (bytes) {
-      var len = _readUInt32(bytes);
-      return bytes.splice(0, len);
-    };
-
     var _unserializeMediaSegments = function (bytes) {
-      var segments = [];
+      var segments = {};
 
       do {
+        var timecode = _readUInt32(bytes);
         var segment = [];
+        var chunks = [];
+        var num;
+
         segment.push(_readUInt32(bytes));
-        segment.push(_readUInt32(bytes));
-        segment.push(_readUInt32(bytes));
-        segments.push(segment);
+        segment.push(_readChecksum(bytes));
+
+        num = _readUInt32(bytes);
+        for (var i = 0; i < num; ++i) {
+          chunks.push(_readUInt32(bytes));
+        }
+        segments[timecode] = segment;
       } while (bytes.length);
 
       return segments;

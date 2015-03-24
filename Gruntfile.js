@@ -22,6 +22,7 @@ module.exports = function (grunt) {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n' +
         'var Peeracle = {};\n' +
+        'Peeracle.Checksum = {};\n' +
         'Peeracle.Media = {};\n' +
         'Peeracle.Tracker = {};\n',
 
@@ -33,6 +34,7 @@ module.exports = function (grunt) {
       },
       dist: {
         src: [
+          'src/checksum.crc32.js',
           'src/utils.js',
           'src/file.js',
           'src/media.webm.js',

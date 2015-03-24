@@ -1,23 +1,27 @@
 'use strict';
 
 (function () {
+  var Checksum;
   var Utils;
 
   if (typeof module === 'undefined') {
+    Checksum = Peeracle.Checksum;
     Utils = Peeracle.Utils;
   } else {
+    Checksum = require('./checksum');
     Utils = require('./utils');
   }
 
   function Metadata() {
-    var _checksum = 'crc32';
+    var _checksum;
+    var _checksumId = 'crc32';
     var _chunksize = 0;
     var _trackers = [];
     var _initSegment = [];
     var _mediaSegments = {};
 
     var getChecksum = function () {
-      return _checksum;
+      return _checksumId;
     };
 
     var getChunkSize = function () {
@@ -36,8 +40,8 @@
       return _mediaSegments;
     };
 
-    var setChecksum = function (header) {
-      _checksum = header;
+    var setChecksum = function (checksum) {
+      _checksumId = checksum;
     };
 
     var setTrackers = function (trackers) {
@@ -48,29 +52,54 @@
       _initSegment = initSegment;
     };
 
+    var _loadChecksum = function () {
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === _checksumId) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + _checksumId;
+      }
+    };
+
     var addMediaSegment = function (timecode, mediaSegment, progressCallback) {
       var clusterLength = mediaSegment.length;
       var chunkLength = _chunksize;
 
-      _mediaSegments[timecode] = [clusterLength, Utils.Crc32(mediaSegment), []];
+      if (!_checksum) {
+        _loadChecksum();
+      }
+
+      _mediaSegments[timecode] = [clusterLength, _checksum.checksum(mediaSegment), []];
 
       for (var i = 0; i < clusterLength; i += chunkLength) {
         var chunk = mediaSegment.subarray(i, i + chunkLength);
 
-        _mediaSegments[timecode][2].push(Utils.Crc32(chunk));
+        _mediaSegments[timecode][2].push(_checksum.checksum(chunk));
 
         if (progressCallback) {
-          progressCallback(chunk.length);
+          progressCallback(chunk);
         }
 
         if (clusterLength - i < chunkLength) {
           chunkLength = clusterLength - i;
         }
       }
+
+      if (progressCallback) {
+        progressCallback(null);
+      }
     };
 
     var validateMediaSegment = function (timecode, mediaSegment) {
-      return _mediaSegments[timecode][1] === Utils.Crc32(mediaSegment);
+      if (!_checksum) {
+        _loadChecksum();
+      }
+
+      return _mediaSegments[timecode][1] === _checksum.checksum(mediaSegment);
     };
 
     var calculateChunkSize = function (fileLength) {
