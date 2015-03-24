@@ -10,12 +10,28 @@
   }
 
   function Metadata() {
+    var _id;
     var _checksum;
     var _checksumId = 'crc32';
     var _chunksize = 0;
     var _trackers = [];
     var _initSegment = [];
     var _mediaSegments = {};
+
+    var getId = function () {
+      if (!_id) {
+        _checksum.init();
+        _checksum.update(_initSegment);
+        for (var m in _mediaSegments) {
+          _checksum.update(_mediaSegments[m][1]);
+          for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
+            _checksum.update(_mediaSegments[m][2][c]);
+          }
+        }
+        _id = _checksum.final();
+      }
+      return _id;
+    };
 
     var getChecksum = function () {
       return _checksumId;
@@ -114,6 +130,7 @@
     };
 
     return {
+      getId: getId,
       getChecksum: getChecksum,
       getChunkSize: getChunkSize,
       getTrackers: getTrackers,
