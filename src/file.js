@@ -2,19 +2,9 @@
 
 (function () {
   function File(handle) {
-    // @exclude
-    var fs = require('fs');
-    // @endexclude
-
     var _handle = handle;
     var _offset = 0;
     var _length = (typeof handle === 'Blob') ? handle.size : -1;
-
-    if (typeof module !== 'undefined') {
-      var stats = fs.statSync(_handle);
-      _length = stats.size;
-      _handle = fs.openSync(handle, 'r');
-    }
 
     var getLength = function () {
       return _length;
@@ -33,6 +23,11 @@
     };
 
     // @exclude
+    var fs = require('fs');
+    var stats = fs.statSync(_handle);
+    _length = stats.size;
+    _handle = fs.openSync(handle, 'r');
+
     var _nodeFetchBytes = function (length, cb) {
       var bytes = new Buffer(length);
       var count = 0;
