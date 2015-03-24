@@ -6,6 +6,7 @@
   };
 
   var _object = function () {
+    var _crc;
     var _crc32Table = null;
 
     var _generateCrc32Table = function () {
@@ -20,18 +21,28 @@
       }
     };
 
-    var checksum = function (array) {
+    var init = function () {
       if (!_crc32Table) {
         _generateCrc32Table();
       }
 
-      var crc = 0 ^ (-1);
+      _crc = 0 ^ (-1);
+    };
 
+    var update = function (array) {
       for (var i = 0, len = array.length; i < len; i++) {
-        crc = (crc >>> 8) ^ _crc32Table[(crc ^ array[i]) & 0xFF];
+        _crc = (_crc >>> 8) ^ _crc32Table[(_crc ^ array[i]) & 0xFF];
       }
+    };
 
-      return (crc ^ (-1)) >>> 0;
+    var final = function () {
+      return (_crc ^ (-1)) >>> 0;
+    };
+
+    var checksum = function (array) {
+      init();
+      update(array);
+      return final();
     };
 
     var serialize = function (value, buffer) {
@@ -65,6 +76,9 @@
 
     return {
       checksum: checksum,
+      init: init,
+      update: update,
+      final: final,
       serialize: serialize,
       unserialize: unserialize
     };
