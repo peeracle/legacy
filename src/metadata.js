@@ -2,14 +2,11 @@
 
 (function () {
   var Checksum;
-  var Utils;
 
   if (typeof module === 'undefined') {
     Checksum = Peeracle.Checksum;
-    Utils = Peeracle.Utils;
   } else {
     Checksum = require('./checksum');
-    Utils = require('./utils');
   }
 
   function Metadata() {
