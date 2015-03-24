@@ -15,6 +15,7 @@ Peeracle.Tracker = {};
   };
 
   var _object = function () {
+    var _crc;
     var _crc32Table = null;
 
     var _generateCrc32Table = function () {
@@ -29,18 +30,28 @@ Peeracle.Tracker = {};
       }
     };
 
-    var checksum = function (array) {
+    var init = function () {
       if (!_crc32Table) {
         _generateCrc32Table();
       }
 
-      var crc = 0 ^ (-1);
+      _crc = 0 ^ (-1);
+    };
 
+    var update = function (array) {
       for (var i = 0, len = array.length; i < len; i++) {
-        crc = (crc >>> 8) ^ _crc32Table[(crc ^ array[i]) & 0xFF];
+        _crc = (_crc >>> 8) ^ _crc32Table[(_crc ^ array[i]) & 0xFF];
       }
+    };
 
-      return (crc ^ (-1)) >>> 0;
+    var final = function () {
+      return (_crc ^ (-1)) >>> 0;
+    };
+
+    var checksum = function (array) {
+      init();
+      update(array);
+      return final();
     };
 
     var serialize = function (value, buffer) {
@@ -74,6 +85,9 @@ Peeracle.Tracker = {};
 
     return {
       checksum: checksum,
+      init: init,
+      update: update,
+      final: final,
       serialize: serialize,
       unserialize: unserialize
     };
@@ -307,7 +321,6 @@ Peeracle.Tracker = {};
 
           doneCallback({
             timecode: _getClusterTimecode(bytes),
-            offset: tag.headerOffset,
             bytes: bytes
           });
         });
@@ -336,23 +349,38 @@ Peeracle.Tracker = {};
 
 (function () {
   var Checksum;
-  var Utils;
 
   if (typeof module === 'undefined') {
     Checksum = Peeracle.Checksum;
-    Utils = Peeracle.Utils;
   } else {
     Checksum = require('./checksum');
-    Utils = require('./utils');
   }
 
   function Metadata() {
+    var _id;
     var _checksum;
     var _checksumId = 'crc32';
     var _chunksize = 0;
     var _trackers = [];
     var _initSegment = [];
     var _mediaSegments = {};
+
+    var getId = function () {
+      if (!_id) {
+        console.log('compute id start');
+        _checksum.init();
+        _checksum.update(_initSegment);
+        for (var m in _mediaSegments) {
+          _checksum.update(_mediaSegments[m][1]);
+          for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
+            _checksum.update(_mediaSegments[m][2][c]);
+          }
+        }
+        _id = _checksum.final();
+      }
+      console.log('id', _id);
+      return _id;
+    };
 
     var getChecksum = function () {
       return _checksumId;
@@ -451,6 +479,7 @@ Peeracle.Tracker = {};
     };
 
     return {
+      getId: getId,
       getChecksum: getChecksum,
       getChunkSize: getChunkSize,
       getTrackers: getTrackers,
