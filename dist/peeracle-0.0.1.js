@@ -75,7 +75,7 @@ Peeracle.Tracker = {};
       var number = [];
       for (var i = 0; i < 4; ++i) {
         var char = bytes.splice(0, 1);
-        number.push(char);
+        number.push(char[0]);
       }
       return (number[0] << 24) +
         (number[1] << 16) +
@@ -367,6 +367,10 @@ Peeracle.Tracker = {};
 
     var getId = function () {
       if (!_id) {
+        if (!_checksum) {
+          _loadChecksum();
+        }
+
         _checksum.init();
         _checksum.update(_initSegment);
         for (var m in _mediaSegments) {
@@ -404,12 +408,20 @@ Peeracle.Tracker = {};
       _checksumId = checksum;
     };
 
+    var setChunkSize = function (chunksize) {
+      _chunksize = chunksize;
+    };
+
     var setTrackers = function (trackers) {
       _trackers = trackers;
     };
 
     var setInitSegment = function (initSegment) {
       _initSegment = initSegment;
+    };
+
+    var setMediaSegments = function (mediaSegments) {
+      _mediaSegments = mediaSegments;
     };
 
     var _loadChecksum = function () {
@@ -485,10 +497,12 @@ Peeracle.Tracker = {};
       getMediaSegments: getMediaSegments,
 
       setChecksum: setChecksum,
+      setChunkSize: setChunkSize,
       setTrackers: setTrackers,
       setInitSegment: setInitSegment,
-      addMediaSegment: addMediaSegment,
+      setMediaSegments: setMediaSegments,
 
+      addMediaSegment: addMediaSegment,
       validateMediaSegment: validateMediaSegment,
       calculateChunkSize: calculateChunkSize
     };
@@ -719,26 +733,26 @@ Peeracle.Tracker = {};
 
         num = _readUInt32(bytes);
         for (var i = 0; i < num; ++i) {
-          chunks.push(_readUInt32(bytes));
+          chunks.push(_readChecksum(bytes));
         }
+        segment.push(chunks);
         segments[timecode] = segment;
       } while (bytes.length);
 
       return segments;
     };
 
-    var unserialize = function (bytes) {
+    var unserialize = function (bytes, metadata) {
       var header = _unserializeHeader(bytes);
       var trackers = _unserializeTrackers(bytes);
       var init = _unserializeInitSegment(bytes);
       var media = _unserializeMediaSegments(bytes);
 
-      return {
-        header: header,
-        trackers: trackers,
-        init: init,
-        media: media
-      };
+      metadata.setChecksum(header.checksum);
+      metadata.setChunkSize(header.chunksize);
+      metadata.setTrackers(trackers);
+      metadata.setInitSegment(init);
+      metadata.setMediaSegments(media);
     };
 
     return {
