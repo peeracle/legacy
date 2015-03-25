@@ -115,18 +115,17 @@
       return segments;
     };
 
-    var unserialize = function (bytes) {
+    var unserialize = function (bytes, metadata) {
       var header = _unserializeHeader(bytes);
       var trackers = _unserializeTrackers(bytes);
       var init = _unserializeInitSegment(bytes);
       var media = _unserializeMediaSegments(bytes);
 
-      return {
-        header: header,
-        trackers: trackers,
-        init: init,
-        media: media
-      };
+      metadata.setChecksum(header.checksum);
+      metadata.setChunkSize(header.chunksize);
+      metadata.setTrackers(trackers);
+      metadata.setInitSegment(init);
+      metadata.setMediaSegments(media);
     };
 
     return {

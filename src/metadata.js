@@ -20,6 +20,10 @@
 
     var getId = function () {
       if (!_id) {
+        if (!_checksum) {
+          _loadChecksum();
+        }
+
         _checksum.init();
         _checksum.update(_initSegment);
         for (var m in _mediaSegments) {
@@ -57,12 +61,20 @@
       _checksumId = checksum;
     };
 
+    var setChunkSize = function (chunksize) {
+      _chunksize = chunksize;
+    };
+
     var setTrackers = function (trackers) {
       _trackers = trackers;
     };
 
     var setInitSegment = function (initSegment) {
       _initSegment = initSegment;
+    };
+
+    var setMediaSegments = function (mediaSegments) {
+      _mediaSegments = mediaSegments;
     };
 
     var _loadChecksum = function () {
@@ -138,10 +150,12 @@
       getMediaSegments: getMediaSegments,
 
       setChecksum: setChecksum,
+      setChunkSize: setChunkSize,
       setTrackers: setTrackers,
       setInitSegment: setInitSegment,
-      addMediaSegment: addMediaSegment,
+      setMediaSegments: setMediaSegments,
 
+      addMediaSegment: addMediaSegment,
       validateMediaSegment: validateMediaSegment,
       calculateChunkSize: calculateChunkSize
     };
