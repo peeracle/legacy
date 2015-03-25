@@ -117,7 +117,7 @@ Peeracle.Tracker = {};
   function File(handle) {
     var _handle = handle;
     var _offset = 0;
-    var _length = (typeof handle === 'Blob') ? handle.size : -1;
+    var _length = (typeof handle !== 'string') ? handle.size : -1;
 
     var getLength = function () {
       return _length;
@@ -367,18 +367,16 @@ Peeracle.Tracker = {};
 
     var getId = function () {
       if (!_id) {
-        console.log('compute id start');
         _checksum.init();
         _checksum.update(_initSegment);
         for (var m in _mediaSegments) {
-          _checksum.update(_mediaSegments[m][1]);
+          _checksum.update([_mediaSegments[m][1]]);
           for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
-            _checksum.update(_mediaSegments[m][2][c]);
+            _checksum.update([_mediaSegments[m][2][c]]);
           }
         }
         _id = _checksum.final();
       }
-      console.log('id', _id);
       return _id;
     };
 
@@ -589,12 +587,10 @@ Peeracle.Tracker = {};
       for (var m in mediaSegments) {
         _writeUInt32(m, buffer);
         _writeUInt32(mediaSegments[m][0], buffer);
-        //_writeUInt32(mediaSegments[m][1], buffer);
         _writeChecksum(mediaSegments[m][1], buffer);
-        _writeUInt32(mediaSegments[m][1].length, buffer);
-        for (var i = 0, l = mediaSegments[m][1].length; i < l; ++i) {
-          //_writeUInt32(mediaSegments[m][1][i], buffer);
-          _writeChecksum(mediaSegments[m][1][i], buffer);
+        _writeUInt32(mediaSegments[m][2].length, buffer);
+        for (var i = 0, l = mediaSegments[m][2].length; i < l; ++i) {
+          _writeChecksum(mediaSegments[m][2][i], buffer);
         }
       }
     };

@@ -90,12 +90,10 @@
       for (var m in mediaSegments) {
         _writeUInt32(m, buffer);
         _writeUInt32(mediaSegments[m][0], buffer);
-        //_writeUInt32(mediaSegments[m][1], buffer);
         _writeChecksum(mediaSegments[m][1], buffer);
-        _writeUInt32(mediaSegments[m][1].length, buffer);
-        for (var i = 0, l = mediaSegments[m][1].length; i < l; ++i) {
-          //_writeUInt32(mediaSegments[m][1][i], buffer);
-          _writeChecksum(mediaSegments[m][1][i], buffer);
+        _writeUInt32(mediaSegments[m][2].length, buffer);
+        for (var i = 0, l = mediaSegments[m][2].length; i < l; ++i) {
+          _writeChecksum(mediaSegments[m][2][i], buffer);
         }
       }
     };

@@ -23,9 +23,9 @@
         _checksum.init();
         _checksum.update(_initSegment);
         for (var m in _mediaSegments) {
-          _checksum.update(_mediaSegments[m][1]);
+          _checksum.update([_mediaSegments[m][1]]);
           for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
-            _checksum.update(_mediaSegments[m][2][c]);
+            _checksum.update([_mediaSegments[m][2][c]]);
           }
         }
         _id = _checksum.final();
