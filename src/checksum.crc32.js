@@ -66,7 +66,7 @@
       var number = [];
       for (var i = 0; i < 4; ++i) {
         var char = bytes.splice(0, 1);
-        number.push(char);
+        number.push(char[0]);
       }
       return (number[0] << 24) +
         (number[1] << 16) +
