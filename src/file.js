@@ -4,7 +4,7 @@
   function File(handle) {
     var _handle = handle;
     var _offset = 0;
-    var _length = (typeof handle === 'Blob') ? handle.size : -1;
+    var _length = (typeof handle !== 'string') ? handle.size : -1;
 
     var getLength = function () {
       return _length;
