@@ -106,8 +106,9 @@
 
         num = _readUInt32(bytes);
         for (var i = 0; i < num; ++i) {
-          chunks.push(_readUInt32(bytes));
+          chunks.push(_readChecksum(bytes));
         }
+        segment.push(chunks);
         segments[timecode] = segment;
       } while (bytes.length);
 
