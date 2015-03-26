@@ -149,15 +149,14 @@
       }
 
       _readTagBytes(_cluster, function (bytes) {
+        var timecode = _getClusterTimecode(bytes);
+        _clusters[timecode] = _cluster;
         _readTag(function (tag) {
           if (!tag || tag.str !== '1f43b675') {
             _cluster = null;
           } else {
             _cluster = tag;
           }
-
-          var timecode = _getClusterTimecode(bytes);
-          _clusters[timecode] = tag;
           doneCallback({
             timecode: timecode,
             bytes: bytes
