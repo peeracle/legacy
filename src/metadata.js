@@ -18,6 +18,19 @@
     var _initSegment = [];
     var _mediaSegments = {};
 
+    var _loadChecksum = function () {
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === _checksumId) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + _checksumId;
+      }
+    };
+
     var getId = function () {
       if (!_id) {
         if (!_checksum) {
@@ -75,19 +88,6 @@
 
     var setMediaSegments = function (mediaSegments) {
       _mediaSegments = mediaSegments;
-    };
-
-    var _loadChecksum = function () {
-      for (var c in Checksum) {
-        if (Checksum[c].getIdentifier() === _checksumId) {
-          _checksum = Checksum[c].create();
-          break;
-        }
-      }
-
-      if (!_checksum) {
-        throw 'Unknown checksum ' + _checksumId;
-      }
     };
 
     var addMediaSegment = function (timecode, mediaSegment, progressCallback) {
