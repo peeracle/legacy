@@ -8,6 +8,7 @@
   var _object = function (file) {
     var _file = file;
     var _cluster = null;
+    var _clusters = {};
 
     var _readVariableInt = function (buffer, start, maxSize) {
       var length;
@@ -155,17 +156,35 @@
             _cluster = tag;
           }
 
+          var timecode = _getClusterTimecode(bytes);
+          _clusters[timecode] = tag;
           doneCallback({
-            timecode: _getClusterTimecode(bytes),
+            timecode: timecode,
             bytes: bytes
           });
         });
       });
     };
 
+    var getMediaSegmentAt = function (timecode, doneCallback) {
+      if (!(timecode in _clusters)) {
+        doneCallback(null);
+        return;
+      }
+
+      var tag = _clusters[timecode];
+      _readTagBytes(tag, function (bytes) {
+        doneCallback({
+          timecode: timecode,
+          bytes: bytes
+        });
+      });
+    };
+
     return {
       getInitSegment: getInitSegment,
-      getNextMediaSegment: getNextMediaSegment
+      getNextMediaSegment: getNextMediaSegment,
+      getMediaSegmentAt: getMediaSegmentAt
     };
   };
 
