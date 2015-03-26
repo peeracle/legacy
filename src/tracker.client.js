@@ -84,6 +84,10 @@
       console.log('Peeracle.Tracker: _onClose');
     };
 
+    var getUrl = function () {
+      return _url;
+    };
+
     var connect = function (url) {
       _url = url;
       _ws = new WebSocket(_url, 'prcl', _url);
@@ -141,6 +145,7 @@
     };
 
     return {
+      getUrl: getUrl,
       connect: connect,
       disconnect: disconnect,
       announce: announce,
