@@ -57,8 +57,6 @@ module.exports = function (grunt) {
           'src/metadata.js',
           'src/metadata.serializer.js',
           'src/metadata.unserializer.js',
-          'src/mediachannel.js',
-          'src/signalchannel.js',
           'src/peer.js',
           'src/tracker.client.js'
         ],
