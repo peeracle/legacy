@@ -41,7 +41,7 @@
       });
     };
 
-    var _onIceConnectionStateChange = function (event) {
+    /*var _onIceConnectionStateChange = function (event) {
       if (!_peerConnection || !event) {
         return;
       }
@@ -56,6 +56,8 @@
 
     var _onReadyStateChange = function () {
       console.log('_onReadyStateChange');
+    };*/
+
     var _onMediaError = function (error) {
       console.log('Peeracle.MediaChannel onerror', error);
     };
@@ -135,10 +137,10 @@
 
       _peerConnection = new RTCPeerConnection(configuration);
       _peerConnection.onicecandidate = _onIceCandidate;
-      _peerConnection.oniceconnectionstatechange = _onIceConnectionStateChange;
-      _peerConnection.onicegatheringstatechange = _onIceGatheringStateChange;
+      /*_peerConnection.oniceconnectionstatechange = _onIceConnectionStateChange;
+      _peerConnection.onicegatheringstatechange = _onIceGatheringStateChange;*/
       _peerConnection.ondatachannel = _onDataChannel;
-      _peerConnection.onreadystatechange = _onReadyStateChange;
+      // _peerConnection.onreadystatechange = _onReadyStateChange;
 
       createDataChannels();
     };
