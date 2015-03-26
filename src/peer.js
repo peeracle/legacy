@@ -140,7 +140,7 @@
       }
     };
 
-    var createDataChannels = function () {
+    var _createDataChannels = function () {
       _signalDataChannel = _peerConnection.createDataChannel('signal');
       _mediaDataChannel = _peerConnection.createDataChannel('media');
 
@@ -163,8 +163,6 @@
       _peerConnection.onicegatheringstatechange = _onIceGatheringStateChange;*/
       _peerConnection.ondatachannel = _onDataChannel;
       // _peerConnection.onreadystatechange = _onReadyStateChange;
-
-      createDataChannels();
     };
 
     var subscribe = function (subscriber) {
@@ -189,6 +187,7 @@
       };
 
       _createPeerConnection();
+      _createDataChannels();
       _peerConnection.createOffer(function (sdp) {
         _peerConnection.setLocalDescription(sdp, function () {
           successCb(sdp);
