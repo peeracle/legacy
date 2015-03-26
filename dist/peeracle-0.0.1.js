@@ -490,12 +490,6 @@ Peeracle.Tracker = {};
         _loadChecksum();
       }
 
-      var i = 0;
-      var arr = [];
-      for (var t in mediaSegment) {
-        arr[i++] = mediaSegment[t];
-      }
-
       return _mediaSegments[timecode][1] === _checksum.checksum(mediaSegment);
     };
 
