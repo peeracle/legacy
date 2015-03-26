@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+'use strict';
+
+var program = require('commander');
+
+program
+  .version('0.0.1');
+
+program
+  .command('create-metadata [file]', 'generate a metadata file from a media file');
+
+program.parse(process.argv);
+
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
+}
