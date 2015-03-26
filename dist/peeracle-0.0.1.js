@@ -172,6 +172,7 @@ Peeracle.Tracker = {};
   var _object = function (file) {
     var _file = file;
     var _cluster = null;
+    var _clusters = {};
 
     var _readVariableInt = function (buffer, start, maxSize) {
       var length;
@@ -319,17 +320,35 @@ Peeracle.Tracker = {};
             _cluster = tag;
           }
 
+          var timecode = _getClusterTimecode(bytes);
+          _clusters[timecode] = tag;
           doneCallback({
-            timecode: _getClusterTimecode(bytes),
+            timecode: timecode,
             bytes: bytes
           });
         });
       });
     };
 
+    var getMediaSegmentAt = function (timecode, doneCallback) {
+      if (!(timecode in _clusters)) {
+        doneCallback(null);
+        return;
+      }
+
+      var tag = _clusters[timecode];
+      _readTagBytes(tag, function (bytes) {
+        doneCallback({
+          timecode: timecode,
+          bytes: bytes
+        });
+      });
+    };
+
     return {
       getInitSegment: getInitSegment,
-      getNextMediaSegment: getNextMediaSegment
+      getNextMediaSegment: getNextMediaSegment,
+      getMediaSegmentAt: getMediaSegmentAt
     };
   };
 
@@ -364,6 +383,19 @@ Peeracle.Tracker = {};
     var _trackers = [];
     var _initSegment = [];
     var _mediaSegments = {};
+
+    var _loadChecksum = function () {
+      for (var c in Checksum) {
+        if (Checksum[c].getIdentifier() === _checksumId) {
+          _checksum = Checksum[c].create();
+          break;
+        }
+      }
+
+      if (!_checksum) {
+        throw 'Unknown checksum ' + _checksumId;
+      }
+    };
 
     var getId = function () {
       if (!_id) {
@@ -422,19 +454,6 @@ Peeracle.Tracker = {};
 
     var setMediaSegments = function (mediaSegments) {
       _mediaSegments = mediaSegments;
-    };
-
-    var _loadChecksum = function () {
-      for (var c in Checksum) {
-        if (Checksum[c].getIdentifier() === _checksumId) {
-          _checksum = Checksum[c].create();
-          break;
-        }
-      }
-
-      if (!_checksum) {
-        throw 'Unknown checksum ' + _checksumId;
-      }
     };
 
     var addMediaSegment = function (timecode, mediaSegment, progressCallback) {
