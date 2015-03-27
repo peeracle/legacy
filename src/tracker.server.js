@@ -32,13 +32,13 @@
     var _wsServer;
     var _hashes = {};
 
-    var listen = function (port) {
+    var listen = function (host, port) {
       _server = http.createServer(function (request, response) {
         console.log((new Date()) + ' Received request for ' + request.url);
         response.writeHead(404);
         response.end();
-      }).listen(port, function () {
-        console.log((new Date()) + ' Server is listening on port 8080');
+      }).listen(port, host, function () {
+        console.log((new Date()) + ' Server is listening on ' + host + ':' + parseInt(port));
       });
 
       _wsServer = new WebSocketServer({
