@@ -7,7 +7,8 @@ program
   .version('0.0.1');
 
 program
-  .command('create-metadata [file]', 'generate a metadata file from a media file');
+  .command('create-metadata', 'generate a metadata file from a media file')
+  .command('start-tracker', 'start a tracker server');
 
 program.parse(process.argv);
 

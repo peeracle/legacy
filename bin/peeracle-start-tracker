@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var program = require('commander');
+var Peeracle = require('../src/peeracle');
+
+program
+  .option('-h, --host', 'Set the host to listen to')
+  .option('-p, --port <n>', 'Set the port to listen to', parseInt)
+  .parse(process.argv);
+
+var host = program.host || '127.0.0.1';
+var port = program.port || 8080;
+
+var server = new Peeracle.Tracker.Server();
+server.listen(host, port);
