@@ -16,6 +16,7 @@ program
   .option('-o, --output <filename>', 'Output filename for the resulting metadata file')
   .parse(process.argv);
 
+var metadata;
 var files = program.args;
 
 if (!files.length) {
@@ -26,7 +27,6 @@ if (!program.output) {
   throw 'output filename required';
 }
 
-var metadata;
 var trackers = program.trackers || ['ws://127.0.0.1:8080'];
 
 function dumpMetadata() {
