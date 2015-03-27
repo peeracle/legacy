@@ -6,8 +6,13 @@ var program = require('commander');
 var fs = require('fs');
 var Peeracle = require('../src/peeracle');
 
+function list(val) {
+  return val.split(',');
+}
+
 program
   .usage('[options] -o <output> <filename>')
+  .option('-t, --trackers <urlA,urlB,...>', 'List of trackers urls, splitted with commas', list)
   .option('-o, --output <filename>', 'Output filename for the resulting metadata file')
   .parse(process.argv);
 
@@ -22,8 +27,10 @@ if (!program.output) {
 }
 
 var metadata;
+var trackers = program.trackers || ['ws://127.0.0.1:8080'];
+
 function dumpMetadata() {
-  metadata.setTrackers(['ws://127.0.0.1:8080', 'ws://tracker.dotstar.fr']);
+  metadata.setTrackers(trackers);
   var serializer = new Peeracle.MetadataSerializer();
   var bytes = serializer.serialize(metadata);
   fs.writeFileSync(program.output, new Buffer(bytes));
