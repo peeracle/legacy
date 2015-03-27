@@ -18,13 +18,14 @@ program
 
 var metadata;
 var files = program.args;
-
 if (!files.length) {
-  throw 'input file required';
+  program.outputHelp();
+  process.exit(1);
 }
 
 if (!program.output) {
-  throw 'output filename required';
+  program.outputHelp();
+  process.exit(1);
 }
 
 var trackers = program.trackers || ['ws://127.0.0.1:8080'];
