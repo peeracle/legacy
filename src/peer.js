@@ -51,6 +51,7 @@
     var _peerConnection;
     var _signalDataChannel;
     var _mediaDataChannel;
+    var _ready;
 
     var _onIceCandidate = function (event) {
       if (!_peerConnection || !event) {
@@ -72,8 +73,17 @@
       console.log('Peeracle.MediaChannel onmessage', event.data);
     };
 
-    var _onMediaOpen = function () {
-      console.log('Peeracle.MediaChannel onopen');
+    var _onMediaOpen = function (event) {
+      console.log('Peeracle.MediaChannel onopen', event.target.readyState);
+      if (event.target.readyState.toLowerCase() === 'open') {
+        _ready++;
+        if (_ready === 2) {
+          console.log('we are ready.');
+          _subscribers.forEach(function(subscriber) {
+            subscriber.onReady();
+          });
+        }
+      }
     };
 
     var _onMediaClose = function () {
@@ -95,8 +105,17 @@
       console.log('Peeracle.SignalChannel onmessage', event.data);
     };
 
-    var _onSignalOpen = function () {
-      console.log('Peeracle.SignalChannel onopen');
+    var _onSignalOpen = function (event) {
+      console.log('Peeracle.SignalChannel onopen', event.target.readyState);
+      if (event.target.readyState.toLowerCase() === 'open') {
+        _ready++;
+        if (_ready === 2) {
+          console.log('we are ready.');
+          _subscribers.forEach(function(subscriber) {
+            subscriber.onReady();
+          });
+        }
+      }
     };
 
     var _onSignalClose = function () {
@@ -144,6 +163,7 @@
       _peerConnection = new RTCPeerConnection(configuration);
       _peerConnection.onicecandidate = _onIceCandidate;
       _peerConnection.ondatachannel = _onDataChannel;
+      _ready = 0;
     };
 
     var subscribe = function (subscriber) {
