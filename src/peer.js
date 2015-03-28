@@ -91,10 +91,10 @@
     };
 
     var _setSignalDataChannel = function (dataChannel) {
-      dataChannel.onerror = _onMediaError;
-      dataChannel.onmessage = _onMediaMessage;
-      dataChannel.onopen = _onMediaOpen;
-      dataChannel.onclose = _onMediaClose;
+      dataChannel.onerror = _onSignalError;
+      dataChannel.onmessage = _onSignalMessage;
+      dataChannel.onopen = _onSignalOpen;
+      dataChannel.onclose = _onSignalClose;
     };
 
     var _onSignalError = function (error) {
@@ -123,10 +123,10 @@
     };
 
     var _setMediaDataChannel = function (dataChannel) {
-      dataChannel.onerror = _onSignalError;
-      dataChannel.onmessage = _onSignalMessage;
-      dataChannel.onopen = _onSignalOpen;
-      dataChannel.onclose = _onSignalClose;
+      dataChannel.onerror = _onMediaError;
+      dataChannel.onmessage = _onMediaMessage;
+      dataChannel.onopen = _onMediaOpen;
+      dataChannel.onclose = _onMediaClose;
     };
 
     var _onDataChannel = function (event) {
