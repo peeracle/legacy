@@ -26,7 +26,7 @@
   var Checksum;
 
   if (typeof module === 'undefined') {
-    Checksum = Peeracle.Checksum;
+    Checksum = Peeracle.Crypto;
   } else {
     Checksum = require('./checksum');
   }
@@ -143,7 +143,7 @@
       var init = _unserializeInitSegment(bytes);
       var media = _unserializeMediaSegments(bytes);
 
-      metadata.setChecksum(header.checksum);
+      metadata.setCryptoId(header.checksum);
       metadata.setChunkSize(header.chunksize);
       metadata.setTrackers(trackers);
       metadata.setInitSegment(init);

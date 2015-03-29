@@ -23,57 +23,57 @@
 'use strict';
 
 (function () {
-  var Checksum;
+  var Crypto;
 
   if (typeof module === 'undefined') {
-    Checksum = Peeracle.Checksum;
+    Crypto = Peeracle.Crypto;
   } else {
-    Checksum = require('./checksum');
+    Crypto = require('./crypto');
   }
 
   function Metadata() {
     var _id;
-    var _checksum;
-    var _checksumId = 'crc32';
+    var _crypto;
+    var _cryptoId = 'crc32';
     var _chunksize = 0;
     var _trackers = [];
     var _initSegment = [];
-    var _mediaSegments = {};
+    var _mediaSegments = [];
 
-    var _loadChecksum = function () {
-      for (var c in Checksum) {
-        if (Checksum[c].getIdentifier() === _checksumId) {
-          _checksum = Checksum[c].create();
+    var _loadCrypto = function () {
+      for (var c in Crypto) {
+        if (Crypto[c].getIdentifier() === _cryptoId) {
+          _crypto = Crypto[c].create();
           break;
         }
       }
 
-      if (!_checksum) {
-        throw 'Unknown checksum ' + _checksumId;
+      if (!_crypto) {
+        throw 'Unknown checksum ' + _cryptoId;
       }
     };
 
     var getId = function () {
       if (!_id) {
-        if (!_checksum) {
-          _loadChecksum();
+        if (!_crypto) {
+          _loadCrypto();
         }
 
-        _checksum.init();
-        _checksum.update(_initSegment);
+        _crypto.init();
+        _crypto.update(_initSegment);
         for (var m in _mediaSegments) {
-          _checksum.update([_mediaSegments[m][1]]);
+          _crypto.update([_mediaSegments[m][1]]);
           for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
-            _checksum.update([_mediaSegments[m][2][c]]);
+            _crypto.update([_mediaSegments[m][2][c]]);
           }
         }
-        _id = _checksum.final();
+        _id = _crypto.final();
       }
       return _id;
     };
 
-    var getChecksum = function () {
-      return _checksumId;
+    var getCryptoId = function () {
+      return _cryptoId;
     };
 
     var getChunkSize = function () {
@@ -92,8 +92,8 @@
       return _mediaSegments;
     };
 
-    var setChecksum = function (checksum) {
-      _checksumId = checksum;
+    var setCryptoId = function (checksum) {
+      _cryptoId = checksum;
     };
 
     var setChunkSize = function (chunksize) {
@@ -116,8 +116,8 @@
       var clusterLength = mediaSegment.length;
       var chunkLength = _chunksize;
 
-      if (!_checksum) {
-        _loadChecksum();
+      if (!_crypto) {
+        _loadCrypto();
       }
 
       _mediaSegments[timecode] = [clusterLength, _checksum.checksum(mediaSegment), []];
@@ -142,8 +142,8 @@
     };
 
     var validateMediaSegment = function (timecode, mediaSegment) {
-      if (!_checksum) {
-        _loadChecksum();
+      if (!_crypto) {
+        _loadCrypto();
       }
 
       return _mediaSegments[timecode][1] === _checksum.checksum(mediaSegment);
@@ -165,13 +165,13 @@
 
     return {
       getId: getId,
-      getChecksum: getChecksum,
+      getCryptoId: getCryptoId,
       getChunkSize: getChunkSize,
       getTrackers: getTrackers,
       getInitSegment: getInitSegment,
       getMediaSegments: getMediaSegments,
 
-      setChecksum: setChecksum,
+      setCryptoId: setCryptoId,
       setChunkSize: setChunkSize,
       setTrackers: setTrackers,
       setInitSegment: setInitSegment,

@@ -110,11 +110,11 @@
     return new _object();
   };
 
-  var Checksum = {
+  var Crypto = {
     Crc32: {
       getIdentifier: getIdentifier,
       create: create
     }
   };
-  module.exports = Checksum.Crc32;
+  module.exports = Crypto.Crc32;
 })();
