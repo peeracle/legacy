@@ -2,8 +2,8 @@
 
 'use strict';
 
-var program = require('commander');
 var fs = require('fs');
+var program = require('commander');
 var Peeracle = require('../src/peeracle');
 
 function list(val) {
