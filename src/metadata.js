@@ -112,7 +112,7 @@
       _mediaSegments = mediaSegments;
     };
 
-    var addMediaSegment = function (timecode, mediaSegment, progressCallback) {
+    var addMediaSegment = function (timecode, mediaSegment) {
       var clusterLength = mediaSegment.length;
       var chunkLength = _chunksize;
 
@@ -120,25 +120,24 @@
         _loadCrypto();
       }
 
-      _mediaSegments[timecode] = [clusterLength, _checksum.checksum(mediaSegment), []];
+      var cluster = {
+        timecode: timecode,
+        length: clusterLength,
+        checksum: _crypto.checksum(mediaSegment),
+        chunks: []
+      };
 
       for (var i = 0; i < clusterLength; i += chunkLength) {
         var chunk = mediaSegment.subarray(i, i + chunkLength);
 
-        _mediaSegments[timecode][2].push(_checksum.checksum(chunk));
-
-        if (progressCallback) {
-          progressCallback(chunk);
-        }
+        cluster.chunks.push(_crypto.checksum(chunk));
 
         if (clusterLength - i < chunkLength) {
           chunkLength = clusterLength - i;
         }
       }
 
-      if (progressCallback) {
-        progressCallback(null);
-      }
+      _mediaSegments.push(cluster);
     };
 
     var validateMediaSegment = function (timecode, mediaSegment) {
@@ -146,7 +145,13 @@
         _loadCrypto();
       }
 
-      return _mediaSegments[timecode][1] === _checksum.checksum(mediaSegment);
+      for (var i = 0, l = _mediaSegments.length; i < l; ++i) {
+        if (_mediaSegments[i].timecode === timecode) {
+          return _mediaSegments[i].checksum === _crypto.checksum(mediaSegment);
+        }
+      }
+
+      return false;
     };
 
     var calculateChunkSize = function (fileLength) {
