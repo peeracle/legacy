@@ -22,7 +22,7 @@
 
 'use strict';
 var Peeracle = {};
-Peeracle.Checksum = {};
+Peeracle.Crypto = {};
 Peeracle.Media = {};
 Peeracle.Tracker = {};
 (function () {
@@ -113,13 +113,13 @@ Peeracle.Tracker = {};
     return new _object();
   };
 
-  var Checksum = {
+  var Crypto = {
     Crc32: {
       getIdentifier: getIdentifier,
       create: create
     }
   };
-  Peeracle.Checksum.Crc32 = Checksum.Crc32;
+  Peeracle.Crypto.Crc32 = Crypto.Crc32;
 })();
 
 (function () {
@@ -382,57 +382,57 @@ Peeracle.Tracker = {};
 })();
 
 (function () {
-  var Checksum;
+  var Crypto;
 
   if (typeof module === 'undefined') {
-    Checksum = Peeracle.Checksum;
+    Crypto = Peeracle.Crypto;
   } else {
-    Checksum = require('./checksum');
+    Crypto = require('./crypto');
   }
 
   function Metadata() {
     var _id;
-    var _checksum;
-    var _checksumId = 'crc32';
+    var _crypto;
+    var _cryptoId = 'crc32';
     var _chunksize = 0;
     var _trackers = [];
     var _initSegment = [];
-    var _mediaSegments = {};
+    var _mediaSegments = [];
 
-    var _loadChecksum = function () {
-      for (var c in Checksum) {
-        if (Checksum[c].getIdentifier() === _checksumId) {
-          _checksum = Checksum[c].create();
+    var _loadCrypto = function () {
+      for (var c in Crypto) {
+        if (Crypto[c].getIdentifier() === _cryptoId) {
+          _crypto = Crypto[c].create();
           break;
         }
       }
 
-      if (!_checksum) {
-        throw 'Unknown checksum ' + _checksumId;
+      if (!_crypto) {
+        throw 'Unknown checksum ' + _cryptoId;
       }
     };
 
     var getId = function () {
       if (!_id) {
-        if (!_checksum) {
-          _loadChecksum();
+        if (!_crypto) {
+          _loadCrypto();
         }
 
-        _checksum.init();
-        _checksum.update(_initSegment);
+        _crypto.init();
+        _crypto.update(_initSegment);
         for (var m in _mediaSegments) {
-          _checksum.update([_mediaSegments[m][1]]);
+          _crypto.update([_mediaSegments[m][1]]);
           for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
-            _checksum.update([_mediaSegments[m][2][c]]);
+            _crypto.update([_mediaSegments[m][2][c]]);
           }
         }
-        _id = _checksum.final();
+        _id = _crypto.final();
       }
       return _id;
     };
 
-    var getChecksum = function () {
-      return _checksumId;
+    var getCryptoId = function () {
+      return _cryptoId;
     };
 
     var getChunkSize = function () {
@@ -451,8 +451,8 @@ Peeracle.Tracker = {};
       return _mediaSegments;
     };
 
-    var setChecksum = function (checksum) {
-      _checksumId = checksum;
+    var setCryptoId = function (checksum) {
+      _cryptoId = checksum;
     };
 
     var setChunkSize = function (chunksize) {
@@ -471,41 +471,46 @@ Peeracle.Tracker = {};
       _mediaSegments = mediaSegments;
     };
 
-    var addMediaSegment = function (timecode, mediaSegment, progressCallback) {
+    var addMediaSegment = function (timecode, mediaSegment) {
       var clusterLength = mediaSegment.length;
       var chunkLength = _chunksize;
 
-      if (!_checksum) {
-        _loadChecksum();
+      if (!_crypto) {
+        _loadCrypto();
       }
 
-      _mediaSegments[timecode] = [clusterLength, _checksum.checksum(mediaSegment), []];
+      var cluster = {
+        timecode: timecode,
+        length: clusterLength,
+        checksum: _crypto.checksum(mediaSegment),
+        chunks: []
+      };
 
       for (var i = 0; i < clusterLength; i += chunkLength) {
         var chunk = mediaSegment.subarray(i, i + chunkLength);
 
-        _mediaSegments[timecode][2].push(_checksum.checksum(chunk));
-
-        if (progressCallback) {
-          progressCallback(chunk);
-        }
+        cluster.chunks.push(_crypto.checksum(chunk));
 
         if (clusterLength - i < chunkLength) {
           chunkLength = clusterLength - i;
         }
       }
 
-      if (progressCallback) {
-        progressCallback(null);
-      }
+      _mediaSegments.push(cluster);
     };
 
     var validateMediaSegment = function (timecode, mediaSegment) {
-      if (!_checksum) {
-        _loadChecksum();
+      if (!_crypto) {
+        _loadCrypto();
       }
 
-      return _mediaSegments[timecode][1] === _checksum.checksum(mediaSegment);
+      for (var i = 0, l = _mediaSegments.length; i < l; ++i) {
+        if (_mediaSegments[i].timecode === timecode) {
+          return _mediaSegments[i].checksum === _crypto.checksum(mediaSegment);
+        }
+      }
+
+      return false;
     };
 
     var calculateChunkSize = function (fileLength) {
@@ -524,13 +529,13 @@ Peeracle.Tracker = {};
 
     return {
       getId: getId,
-      getChecksum: getChecksum,
+      getCryptoId: getCryptoId,
       getChunkSize: getChunkSize,
       getTrackers: getTrackers,
       getInitSegment: getInitSegment,
       getMediaSegments: getMediaSegments,
 
-      setChecksum: setChecksum,
+      setCryptoId: setCryptoId,
       setChunkSize: setChunkSize,
       setTrackers: setTrackers,
       setInitSegment: setInitSegment,
@@ -549,7 +554,7 @@ Peeracle.Tracker = {};
   var Checksum;
 
   if (typeof module === 'undefined') {
-    Checksum = Peeracle.Checksum;
+    Checksum = Peeracle.Crypto;
   } else {
     Checksum = require('./checksum');
   }
@@ -591,7 +596,7 @@ Peeracle.Tracker = {};
     };
 
     var _serializeHeader = function (metadata, buffer) {
-      var checksum = metadata.getChecksum();
+      var checksum = metadata.getCryptoId();
       var chunksize = metadata.getChunkSize();
 
       for (var c in Checksum) {
@@ -665,7 +670,7 @@ Peeracle.Tracker = {};
   var Checksum;
 
   if (typeof module === 'undefined') {
-    Checksum = Peeracle.Checksum;
+    Checksum = Peeracle.Crypto;
   } else {
     Checksum = require('./checksum');
   }
@@ -782,7 +787,7 @@ Peeracle.Tracker = {};
       var init = _unserializeInitSegment(bytes);
       var media = _unserializeMediaSegments(bytes);
 
-      metadata.setChecksum(header.checksum);
+      metadata.setCryptoId(header.checksum);
       metadata.setChunkSize(header.chunksize);
       metadata.setTrackers(trackers);
       metadata.setInitSegment(init);
@@ -826,6 +831,7 @@ Peeracle.Tracker = {};
     var _peerConnection;
     var _signalDataChannel;
     var _mediaDataChannel;
+    var _ready;
 
     var _onIceCandidate = function (event) {
       if (!_peerConnection || !event) {
@@ -838,22 +844,6 @@ Peeracle.Tracker = {};
       });
     };
 
-    /*var _onIceConnectionStateChange = function (event) {
-      if (!_peerConnection || !event) {
-        return;
-      }
-
-      _subscribers.forEach(function(subscriber) {
-        subscriber.onConnectionStateChange(_peerConnection.iceConnectionState);
-      });
-    };
-
-    var _onIceGatheringStateChange = function () {
-    };
-
-    var _onReadyStateChange = function () {
-      console.log('_onReadyStateChange');
-    };*/
 
     var _onMediaError = function (error) {
       console.log('Peeracle.MediaChannel onerror', error);
@@ -863,8 +853,17 @@ Peeracle.Tracker = {};
       console.log('Peeracle.MediaChannel onmessage', event.data);
     };
 
-    var _onMediaOpen = function () {
-      console.log('Peeracle.MediaChannel onopen');
+    var _onMediaOpen = function (event) {
+      console.log('Peeracle.MediaChannel onopen', event.target.readyState);
+      if (event.target.readyState.toLowerCase() === 'open') {
+        _ready++;
+        if (_ready === 2) {
+          console.log('we are ready.');
+          _subscribers.forEach(function(subscriber) {
+            subscriber.onReady();
+          });
+        }
+      }
     };
 
     var _onMediaClose = function () {
@@ -872,10 +871,10 @@ Peeracle.Tracker = {};
     };
 
     var _setSignalDataChannel = function (dataChannel) {
-      dataChannel.onerror = _onMediaError;
-      dataChannel.onmessage = _onMediaMessage;
-      dataChannel.onopen = _onMediaOpen;
-      dataChannel.onclose = _onMediaClose;
+      dataChannel.onerror = _onSignalError;
+      dataChannel.onmessage = _onSignalMessage;
+      dataChannel.onopen = _onSignalOpen;
+      dataChannel.onclose = _onSignalClose;
     };
 
     var _onSignalError = function (error) {
@@ -886,8 +885,17 @@ Peeracle.Tracker = {};
       console.log('Peeracle.SignalChannel onmessage', event.data);
     };
 
-    var _onSignalOpen = function () {
-      console.log('Peeracle.SignalChannel onopen');
+    var _onSignalOpen = function (event) {
+      console.log('Peeracle.SignalChannel onopen', event.target.readyState);
+      if (event.target.readyState.toLowerCase() === 'open') {
+        _ready++;
+        if (_ready === 2) {
+          console.log('we are ready.');
+          _subscribers.forEach(function(subscriber) {
+            subscriber.onReady();
+          });
+        }
+      }
     };
 
     var _onSignalClose = function () {
@@ -895,10 +903,10 @@ Peeracle.Tracker = {};
     };
 
     var _setMediaDataChannel = function (dataChannel) {
-      dataChannel.onerror = _onSignalError;
-      dataChannel.onmessage = _onSignalMessage;
-      dataChannel.onopen = _onSignalOpen;
-      dataChannel.onclose = _onSignalClose;
+      dataChannel.onerror = _onMediaError;
+      dataChannel.onmessage = _onMediaMessage;
+      dataChannel.onopen = _onMediaOpen;
+      dataChannel.onclose = _onMediaClose;
     };
 
     var _onDataChannel = function (event) {
@@ -934,10 +942,8 @@ Peeracle.Tracker = {};
 
       _peerConnection = new RTCPeerConnection(configuration);
       _peerConnection.onicecandidate = _onIceCandidate;
-      /*_peerConnection.oniceconnectionstatechange = _onIceConnectionStateChange;
-      _peerConnection.onicegatheringstatechange = _onIceGatheringStateChange;*/
       _peerConnection.ondatachannel = _onDataChannel;
-      // _peerConnection.onreadystatechange = _onReadyStateChange;
+      _ready = 0;
     };
 
     var subscribe = function (subscriber) {
