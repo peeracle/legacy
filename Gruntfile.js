@@ -15,8 +15,8 @@ module.exports = function (grunt) {
     ' * copies of the Software, and to permit persons to whom the Software is\n' +
     ' * furnished to do so, subject to the following conditions:\n' +
     ' *\n' +
-    ' * The above copyright notice and this permission notice shall be included in all\n' +
-    ' * copies or substantial portions of the Software.\n' +
+    ' * The above copyright notice and this permission notice shall be included in\n' +
+    ' * all copies or substantial portions of the Software.\n' +
     ' *\n' +
     ' * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n' +
     ' * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n' +
@@ -36,29 +36,35 @@ module.exports = function (grunt) {
     concat: {
       options: {
         banner: '<%= banner %>\n' +
-        '\'use strict\';\n' +
-        'var Peeracle = {};\n' +
-        'Peeracle.Crypto = {};\n' +
-        'Peeracle.Media = {};\n' +
-        'Peeracle.Tracker = {};\n',
+        '\'use strict\';\n\n' +
+        'var Peeracle = {};\n',
 
         process: function (src, filepath) {
-          return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\s*/g, '$1')
-            .replace(/module.exports = (.*);/g, 'Peeracle.$1 = $1;');
+          return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\n/g, '$1');
+            //.replace(/module.exports = (.*);/g, 'Peeracle.$1 = $1;');
         },
         stripBanners: true
       },
       dist: {
         src: [
+          'src/binarystream.js',
+          'src/crypto.js',
           'src/crypto.crc32.js',
-          'src/utils.js',
-          'src/file.js',
+          'src/datasource.js',
+          'src/datasource.file.js',
+          'src/datasource.http.js',
+          'src/listenable.js',
+          'src/media.js',
           'src/media.webm.js',
           'src/metadata.js',
           'src/metadata.serializer.js',
           'src/metadata.unserializer.js',
           'src/peer.js',
-          'src/tracker.client.js'
+          'src/peerconnection.js',
+          'src/tracker.js',
+          'src/tracker.client.js',
+          'src/tracker.message.js',
+          'src/utils.js'
         ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }

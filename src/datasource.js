@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   /**
@@ -65,5 +65,5 @@
   DataSource.prototype.fetchBytes = function (length, cb) {
   };
 
-  module.exports = DataSource;
-})();
+  global.DataSource = DataSource;
+})(Peeracle || this);

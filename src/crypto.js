@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   /**
@@ -88,5 +88,5 @@
   Crypto.prototype.unserialize = function (binaryStream) {
   };
 
-  module.exports = Crypto;
-})();
+  global.Crypto = Crypto;
+})(Peeracle || this);

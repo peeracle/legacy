@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
-  var BinaryStream = require('./binarystream');
+  var BinaryStream = Peeracle.BinaryStream || require('./binarystream');
 
   /**
    * @class
@@ -57,5 +57,5 @@
     Welcome: 2
   };
 
-  module.exports = Message;
-})();
+  global.Message = Message;
+})(Peeracle.Tracker || this.Tracker);

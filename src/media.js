@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   /**
@@ -113,5 +113,5 @@
     throw 'Media: method getMediaSegment(cb) not implemented';
   };
 
-  module.exports = Media;
-})();
+  global.Media = Media;
+})(Peeracle || this);

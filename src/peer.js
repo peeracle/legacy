@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
-  var Listenable = require('./listenable');
+  var Listenable = Peeracle.Listenable || require('./listenable');
 
   /**
    * @class
@@ -36,7 +36,7 @@
 
   Peer.prototype = Object.create(Listenable.prototype);
 
-  module.exports = Peer;
+  global.Peer = Peer;
 
   /*
   function Peer() {
@@ -269,4 +269,4 @@
       close: close
     };
   }*/
-})();
+})(Peeracle || this);

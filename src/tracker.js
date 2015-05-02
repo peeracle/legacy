@@ -20,12 +20,14 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
-  module.exports = {
+  global.Tracker = {
+    // @exclude
     Client: require('./tracker.client'),
     Message: require('./tracker.message'),
     Server: require('./tracker.server')
+    // @endexclude
   };
-})();
+})(Peeracle || this);

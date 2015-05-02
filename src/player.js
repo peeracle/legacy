@@ -22,7 +22,7 @@
 
 'use strict';
 
-(function () {
+(function (global) {
   /*function Player(mediaId) {
     var _player = document.getElementById(mediaId);
     var _metadata;
@@ -274,4 +274,4 @@
   }
 
   module.exports = Player;
-})();
+})(Peeracle || this);

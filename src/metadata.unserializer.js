@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
-  var Crypto = require('./crypto');
+  var Crypto = Peeracle.Crypto || require('./crypto');
 
   /**
    * @class
@@ -178,5 +178,5 @@
     metadata.streams = streams;
   };
 
-  module.exports = MetadataUnserializer;
-})();
+  global.MetadataUnserializer = MetadataUnserializer;
+})(Peeracle || this);

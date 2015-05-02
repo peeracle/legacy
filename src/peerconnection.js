@@ -20,14 +20,25 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
-  var Listenable = require('./listenable');
+  var Listenable = Peeracle.Listenable || require('./listenable');
 
-  var RTCPeerConnection = require('wrtc').RTCPeerConnection;
-  var RTCSessionDescription = require('wrtc').RTCSessionDescription;
-  var RTCIceCandidate = require('wrtc').RTCIceCandidate;
+  var RTCPeerConnection = window.mozRTCPeerConnection ||
+    window.webkitRTCPeerConnection ||
+    window.RTCPeerConnection ||
+    require('wrtc').RTCPeerConnection;
+
+  var RTCSessionDescription = window.mozRTCSessionDescription ||
+    window.webkitRTCSessionDescription ||
+    window.RTCSessionDescription ||
+    require('wrtc').RTCSessionDescription;
+
+  var RTCIceCandidate = window.mozRTCIceCandidate ||
+    window.webkitRTCIceCandidate ||
+    window.RTCIceCandidate ||
+    require('wrtc').RTCIceCandidate;
 
   /**
    * @class
@@ -40,5 +51,5 @@
   PeerConnection.prototype = Object.create(Listenable.prototype);
   PeerConnection.prototype.constructor = PeerConnection;
 
-  module.exports = PeerConnection;
-})();
+  global.PeerConnection = PeerConnection;
+})(Peeracle || this);

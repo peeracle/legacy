@@ -20,11 +20,13 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
-  var Listenable = require('./listenable');
-  var WebSocket = require('websocket').w3cwebsocket;
+  var Listenable = Peeracle.Listenable || require('./listenable');
+  // @exclude
+  var WebSocket = WebSocket || require('websocket').w3cwebsocket;
+  // @endexclude
 
   /**
    * @class
@@ -70,5 +72,5 @@
     this.ws_.onclose = onClose_.bind(this);
   };
 
-  module.exports = Client;
-})();
+  global.Client = Client;
+})(Peeracle.Tracker || this.Tracker);

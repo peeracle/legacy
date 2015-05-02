@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   /**
@@ -33,7 +33,7 @@
    */
 
   /** @type {Media} **/
-  var Media = require('./media');
+  var Media = Peeracle.Media || require('./media');
 
   /**
    *
@@ -797,6 +797,5 @@
     }.bind(this));
   };
 
-  Media.WebM = WebM;
-  module.exports = WebM;
-})();
+  global.WebM = WebM;
+})(Peeracle.Media || this.Media);

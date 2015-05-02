@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   Math.trunc = Math.trunc || function (x) {
@@ -43,5 +43,5 @@
     return Math.trunc(x);
   };
 
-  module.exports = Utils;
-})();
+  global.Utils = Utils;
+})(Peeracle || this);

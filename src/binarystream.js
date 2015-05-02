@@ -20,13 +20,13 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   /**
    * @class
    * @memberof Peeracle
-   * @param {Uint8Array} buffer
+   * @param {!Uint8Array} buffer
    * @constructor
    */
   function BinaryStream(buffer) {
@@ -271,5 +271,5 @@
     this.writeBytes(bytes);
   };
 
-  module.exports = BinaryStream;
-})();
+  global.BinaryStream = BinaryStream;
+})(Peeracle || this);

@@ -20,6 +20,6 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
-})();
+})(Peeracle || this);

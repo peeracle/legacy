@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function () {
+(function (global) {
   'use strict';
 
   var http = require('http');
@@ -108,5 +108,5 @@
     }.bind(this));
   };
 
-  module.exports = Server;
-})();
+  global.Server = Server;
+})(Peeracle.Tracker || this.Tracker);
