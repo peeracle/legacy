@@ -23,25 +23,39 @@
 (function () {
   'use strict';
 
-  Math.trunc = Math.trunc || function (x) {
-      return x < 0 ? Math.ceil(x) : Math.floor(x);
-    };
+  var BinaryStream = require('./binarystream');
 
   /**
    * @class
+   * @param {Uint8Array?} bytes
    * @constructor
    */
-  function Utils() {
+  function Message(bytes) {
+    /**
+     * @member {Message.Type}
+     */
+    this.type = Message.Type.None;
+
+    /**
+     * @member {?BinaryStream}
+     * @private
+     */
+    this.stream_ = null;
+
+    if (bytes && typeof bytes === ArrayBuffer) {
+      this.stream_ = new BinaryStream(bytes);
+      this.readFromBytes_(bytes);
+    }
   }
 
   /**
-   *
-   * @param x
-   * @returns {number}
+   * @enum {number}
    */
-  Utils.trunc = function (x) {
-    return Math.trunc(x);
+  Message.Type = {
+    None: 0,
+    Hello: 1,
+    Welcome: 2
   };
 
-  module.exports = Utils;
+  module.exports = Message;
 })();

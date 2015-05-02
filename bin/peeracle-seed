@@ -1,0 +1,105 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var fs = require('fs');
+var sha3 = require('../sha3');
+var program = require('commander');
+var observatory = require('observatory').settings({
+  prefix: ' - '
+});
+var Peeracle = require('../src/peeracle');
+
+program
+  .usage('[options] <metadataFile>')
+  .option('-m, --media <filename>', 'Media file associated to the metadata file')
+  .parse(process.argv);
+
+var metadataFilename = program.args;
+if (!metadataFilename.length) {
+  program.outputHelp();
+  process.exit(1);
+}
+
+try {
+  var metadataBytes = fs.readFileSync(metadataFilename[0]);
+} catch (e) {
+  console.error('Cannot read file \'' + metadataFilename[0] + '\': ' + e.message);
+  process.exit(1);
+}
+
+var metadataTask = observatory.add('Loading metadata file');
+var metadata = new Peeracle.Metadata();
+var unserializer = new Peeracle.MetadataUnserializer();
+
+metadataTask.status('Reading');
+var metadataStream = new Peeracle.BinaryStream(metadataBytes);
+
+metadataTask.details(i + ' / ' + l + ' bytes');
+metadataTask.status('Unserializing');
+unserializer.unserialize(metadataStream, metadata);
+metadataTask.done('Done');
+
+var node = new Peeracle.Node(metadata);
+var media = null;
+var mediaFile = null;
+
+var mediaTask;
+function initCallback(init) {
+  var i = 0;
+  var numClusters = metadata.getMediaSegments().length;
+  mediaTask.status('Checking media segments');
+  media.getNextMediaSegment(function getCluster(cluster) {
+    if (!cluster) {
+      mediaTask.done('Done');
+      node.start(function (clusterIndex, chunkIndex, doneCb) {
+        media.getMediaSegmentAtIndex(clusterIndex, function (mediaSegment) {
+          var cluster = metadata.getMediaSegmentAt(clusterIndex);
+          var chunkSize = metadata.getChunkSize();
+          var start = chunkIndex * chunkSize;
+          var end = start + chunkSize;
+          if (end > cluster.length) {
+            end = cluster.length;
+          }
+
+          doneCb(mediaSegment.bytes.subarray(start, end));
+        });
+      });
+      return;
+    }
+
+    node.check(i, cluster.bytes);
+    mediaTask.details(++i + ' / ' + numClusters + ' clusters');
+    media.getNextMediaSegment(getCluster);
+  });
+}
+
+if (program.media) {
+  mediaTask = observatory.add('Loading media file');
+  mediaFile = new Peeracle.File(program.media);
+  mediaFile.fetchBytes(4, function (bytes) {
+    for (var mediaFormat in Peeracle.Media) {
+      var header = Peeracle.Media[mediaFormat].getFileHeader();
+      if (header[0] === bytes[0] &&
+        header[1] === bytes[1] &&
+        header[2] === bytes[2] &&
+        header[3] === bytes[3]) {
+        media = Peeracle.Media[mediaFormat].create(mediaFile);
+        mediaTask.status('Getting init segment');
+        media.getInitSegment(initCallback);
+        break;
+      }
+    }
+  });
+} else {
+  node.start();
+  var ci = 0;
+  node.retrieveCluster(ci, function () {
+  }, function received(bytes) {
+    bytes = null;
+    console.log('received cluster', ci++);
+    if (ci < metadata.getMediaSegments().length) {
+      node.retrieveCluster(ci, null, received);
+    }
+  });
+}

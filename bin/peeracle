@@ -8,7 +8,9 @@ program
 
 program
   .command('create-metadata', 'generate a metadata file from a media file')
-  .command('start-tracker', 'start a tracker server');
+  .command('start-tracker', 'start a tracker server')
+  .command('seed', 'retrieve or broadcast a media file')
+  .command('split', 'split a video');
 
 program.parse(process.argv);
 

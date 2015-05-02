@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+
+'use strict';
+
+var fs = require('fs');
+var program = require('commander');
+var Peeracle = require('../src/peeracle');
+var observatory = require('observatory').settings({
+  prefix: ' - '
+});
+
+function list(val) {
+  return val.split(',');
+}
+
+program
+  .usage('<filename> <prefix>')
+  .parse(process.argv);
+
+var files = program.args;
+if (files.length < 2) {
+  program.outputHelp();
+  process.exit(1);
+}
+
+var mediaFilename = files[0];
+var prefix = files[1];
+
+function processMedia(mediaFormat, file) {
+  var media = Peeracle.Media[mediaFormat].create(file);
+  var i = 0;
+  media.getInitSegment(function (init) {
+    fs.writeFileSync(prefix + '_init.segment', new Buffer(init))
+    /*media.getNextMediaSegment(function getCluster(cluster) {
+      if (!cluster) {
+        return;
+      }
+      fs.writeFileSync(prefix + '_media_' + ('0000' + i++).substr(-4, 4) + '.segment', new Buffer(cluster.bytes));
+      media.getNextMediaSegment(getCluster);
+    });*/
+  });
+}
+
+var file = new Peeracle.File(mediaFilename);
+file.fetchBytes(4, function (bytes) {
+  for (var mediaFormat in Peeracle.Media) {
+    if (Peeracle.Media[mediaFormat].checkHeader(bytes)) {
+      processMedia(mediaFormat, file);
+      break;
+    }
+  }
+});

@@ -20,140 +20,163 @@
  * SOFTWARE.
  */
 
-'use strict';
-
 (function () {
-  var Checksum;
+  'use strict';
 
-  if (typeof module === 'undefined') {
-    Checksum = Peeracle.Crypto;
-  } else {
-    Checksum = require('./checksum');
-  }
+  var Crypto = require('./crypto');
 
+  /**
+   * @class
+   * @memberof Peeracle
+   * @constructor
+   */
   function MetadataUnserializer() {
-    var _checksum;
+    /**
+     * @type {Crypto}
+     * @private
+     */
+    this.crypto_ = null;
 
-    var _readChar = function (bytes) {
-      var value = bytes.splice(0, 1);
-      return value[0];
-    };
-
-    var _readUInt32 = function (bytes) {
-      var number = [];
-      for (var i = 0; i < 4; ++i) {
-        number.push(_readChar(bytes));
-      }
-      return (number[0] << 24) +
-        (number[1] << 16) +
-        (number[2] << 8) +
-        number[3] >>> 0;
-    };
-
-    var _readString = function (bytes) {
-      var c;
-      var str = '';
-
-      do {
-        c = _readChar(bytes);
-        if (!c) {
-          break;
-        }
-        str += String.fromCharCode(c);
-      } while (c);
-
-      return str;
-    };
-
-    var _readChecksum = function (bytes) {
-      var result = _checksum.unserialize(bytes);
-      return result;
-    };
-
-    var _unserializeInitSegment = function (bytes) {
-      var len = _readUInt32(bytes);
-      return bytes.splice(0, len);
-    };
-
-    var _unserializeHeader = function (bytes) {
-      var header = {};
-
-      header.magic = _readString(bytes);
-      header.version = _readUInt32(bytes);
-      header.checksum = _readString(bytes);
-      header.chunksize = _readUInt32(bytes);
-
-      for (var c in Checksum) {
-        if (Checksum[c].getIdentifier() === header.checksum) {
-          _checksum = Checksum[c].create();
-          break;
-        }
-      }
-
-      if (!_checksum) {
-        throw 'Unknown checksum ' + header.checksum;
-      }
-
-      return header;
-    };
-
-    var _unserializeTrackers = function (bytes) {
-      var trackers = [];
-      var c;
-
-      do {
-        var str = '';
-        c = _readChar(bytes);
-        if (!c) {
-          break;
-        }
-        str += String.fromCharCode(c) + _readString(bytes);
-        trackers.push(str);
-      } while (c);
-
-      return trackers;
-    };
-
-    var _unserializeMediaSegments = function (bytes) {
-      var segments = {};
-
-      do {
-        var timecode = _readUInt32(bytes);
-        var segment = [];
-        var chunks = [];
-        var num;
-
-        segment.push(_readUInt32(bytes));
-        segment.push(_readChecksum(bytes));
-
-        num = _readUInt32(bytes);
-        for (var i = 0; i < num; ++i) {
-          chunks.push(_readChecksum(bytes));
-        }
-        segment.push(chunks);
-        segments[timecode] = segment;
-      } while (bytes.length);
-
-      return segments;
-    };
-
-    var unserialize = function (bytes, metadata) {
-      var header = _unserializeHeader(bytes);
-      var trackers = _unserializeTrackers(bytes);
-      var init = _unserializeInitSegment(bytes);
-      var media = _unserializeMediaSegments(bytes);
-
-      metadata.setCryptoId(header.checksum);
-      metadata.setChunkSize(header.chunksize);
-      metadata.setTrackers(trackers);
-      metadata.setInitSegment(init);
-      metadata.setMediaSegments(media);
-    };
-
-    return {
-      unserialize: unserialize
-    };
+    /**
+     * @type {BinaryStream}
+     * @private
+     */
+    this.stream_ = null;
   }
+
+  /**
+   *
+   * @returns {Segment}
+   * @private
+   */
+  MetadataUnserializer.prototype.unserializeSegment_ = function () {
+    /** @type {Segment} */
+    var segment = {};
+
+    segment.timecode = this.stream_.readUInt32();
+    segment.length = this.stream_.readUInt32();
+    segment.checksum = this.crypto_.unserialize(this.stream_);
+
+    segment.chunks = [];
+    var numChunks = this.stream_.readUInt32();
+    for (var ci = 0; ci < numChunks; ++ci) {
+      var chunk = this.crypto_.unserialize(this.stream_);
+      segment.chunks.push(chunk);
+    }
+
+    return segment;
+  };
+
+  /**
+   *
+   * @returns {Stream}
+   * @private
+   */
+  MetadataUnserializer.prototype.unserializeStream_ = function () {
+    /** @type {Stream} */
+    var stream = {};
+
+    stream.type = this.stream_.readByte();
+    stream.mimeType = this.stream_.readString();
+    stream.bandwidth = this.stream_.readUInt32();
+    stream.width = this.stream_.readInt32();
+    stream.height = this.stream_.readInt32();
+    stream.numChannels = this.stream_.readInt32();
+    stream.samplingFrequency = this.stream_.readInt32();
+    stream.chunksize = this.stream_.readUInt32();
+
+    /** @type {number} */
+    var initLength = this.stream_.readUInt32();
+    stream.init = new Uint8Array(initLength);
+    for (var i = 0; i < initLength; ++i) {
+      stream.init[i] = this.stream_.readByte();
+    }
+
+    stream.segments = [];
+    var numSegments = this.stream_.readUInt32();
+    for (var s = 0; s < numSegments; ++s) {
+      /** @type Segment */
+      var segment = this.unserializeSegment_();
+      stream.segments.push(segment);
+    }
+    return stream;
+  };
+
+  /**
+   *
+   * @returns {Array.<Stream>}
+   * @private
+   */
+  MetadataUnserializer.prototype.unserializeStreams_ = function () {
+    /** @type Array.<Stream> */
+    var streams = [];
+    var numStreams = this.stream_.readUInt32();
+    for (var i = 0; i < numStreams; ++i) {
+      var stream = this.unserializeStream_();
+      streams.push(stream);
+    }
+    return streams;
+  };
+
+  /**
+   *
+   * @returns {Array.<string>}
+   * @private
+   */
+  MetadataUnserializer.prototype.unserializeTrackers_ = function () {
+    var numTrackers = this.stream_.readUInt32();
+    var trackers = [];
+
+    for (var i = 0; i < numTrackers; ++i) {
+      trackers.push(this.stream_.readString());
+    }
+
+    return trackers;
+  };
+
+  /**
+   * @returns {Header}
+   * @private
+   */
+  MetadataUnserializer.prototype.unserializeHeader_ = function () {
+    /** @type {Header} */
+    var header = {};
+
+    header.magic = this.stream_.readUInt32();
+    if (header.magic !== 1347568460) {
+      throw 'Wrong file header';
+    }
+
+    header.version = this.stream_.readUInt32();
+    header.cryptoId = this.stream_.readString();
+
+    this.crypto_ = Crypto.createInstance(header.cryptoId);
+    if (!this.crypto_) {
+      throw 'Unknown checksum ' + header.cryptoId;
+    }
+
+    header.timecodeScale = this.stream_.readUInt32();
+    header.duration = this.stream_.readFloat8();
+    return header;
+  };
+
+  /**
+   * @param {BinaryStream} stream
+   * @param {Metadata} metadata
+   */
+  MetadataUnserializer.prototype.unserialize = function (stream, metadata) {
+    this.stream_ = stream;
+
+    /** @type {Header} */
+    var header = this.unserializeHeader_();
+    var trackers = this.unserializeTrackers_();
+    var streams = this.unserializeStreams_();
+
+    metadata.timecodeScale = header.timecodeScale;
+    metadata.duration = header.duration;
+    metadata.trackers = trackers;
+    metadata.streams = streams;
+  };
 
   module.exports = MetadataUnserializer;
 })();

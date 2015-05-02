@@ -8,8 +8,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -23,25 +23,22 @@
 (function () {
   'use strict';
 
-  Math.trunc = Math.trunc || function (x) {
-      return x < 0 ? Math.ceil(x) : Math.floor(x);
-    };
+  var Listenable = require('./listenable');
+
+  var RTCPeerConnection = require('wrtc').RTCPeerConnection;
+  var RTCSessionDescription = require('wrtc').RTCSessionDescription;
+  var RTCIceCandidate = require('wrtc').RTCIceCandidate;
 
   /**
    * @class
    * @constructor
    */
-  function Utils() {
+  function PeerConnection() {
+
   }
 
-  /**
-   *
-   * @param x
-   * @returns {number}
-   */
-  Utils.trunc = function (x) {
-    return Math.trunc(x);
-  };
+  PeerConnection.prototype = Object.create(Listenable.prototype);
+  PeerConnection.prototype.constructor = PeerConnection;
 
-  module.exports = Utils;
+  module.exports = PeerConnection;
 })();

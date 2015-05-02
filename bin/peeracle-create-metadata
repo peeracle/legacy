@@ -5,6 +5,9 @@
 var fs = require('fs');
 var program = require('commander');
 var Peeracle = require('../src/peeracle');
+var observatory = require('observatory').settings({
+  prefix: ' - '
+});
 
 function list(val) {
   return val.split(',');
@@ -14,9 +17,9 @@ program
   .usage('[options] -o <output> <filename>')
   .option('-t, --trackers <urlA,urlB,...>', 'List of trackers urls, splitted with commas', list)
   .option('-o, --output <filename>', 'Output filename for the resulting metadata file')
+  .option('-c, --crypto <crypto>', 'Cryptographic algorithm used for hashing')
   .parse(process.argv);
 
-var metadata;
 var files = program.args;
 if (!files.length) {
   program.outputHelp();
@@ -28,10 +31,11 @@ if (!program.output) {
   process.exit(1);
 }
 
+var crypto = program.crypto || 'crc32';
 var trackers = program.trackers || ['ws://127.0.0.1:8080'];
 
 function dumpMetadata() {
-  metadata.setTrackers(trackers);
+  metadata.trackers = trackers;
   var serializer = new Peeracle.MetadataSerializer();
   var bytes = serializer.serialize(metadata);
   fs.writeFileSync(program.output, new Buffer(bytes));
@@ -40,35 +44,70 @@ function dumpMetadata() {
 function processMedia(mediaFormat, file) {
   var media = Peeracle.Media[mediaFormat].create(file);
   var i = 0;
-  media.getInitSegment(function (init) {
+  var task = observatory.add('Reading media');
+  task.status('Fetching init segment');
+  metadata = new Peeracle.Metadata();
+  metadata.setCryptoId(crypto);
+  metadata.addStream(media, function () {
+    task.done('Done');
+    dumpMetadata();
+  });
+  /*media.getInitSegment(function (init) {
+    task.done('Done');
+    task = observatory.add('Fetching media segment');
     metadata = new Peeracle.Metadata();
+    metadata.setCryptoId(crypto);
     metadata.calculateChunkSize(file.getLength());
     var bytes = [];
     for (var b = 0, len = init.length; b < len; ++b) {
       bytes.push(init[b]);
     }
     metadata.setInitSegment(bytes);
+    task.status('In Progress');
     media.getNextMediaSegment(function getCluster(cluster) {
       if (!cluster) {
+        task.done('Done');
+        task = observatory.add('Writing metadata');
+        task.status('Writing');
         dumpMetadata();
+        task.done('Done');
         return;
       }
       metadata.addMediaSegment(cluster.timecode, cluster.bytes);
+      task.details(++i + ' cluster(s)');
       media.getNextMediaSegment(getCluster);
     });
-  });
+  });*/
 }
 
-var file = new Peeracle.File(files[0]);
-file.fetchBytes(4, function (bytes) {
-  for (var mediaFormat in Peeracle.Media) {
-    var header = Peeracle.Media[mediaFormat].getFileHeader();
-    if (header[0] === bytes[0] &&
-      header[1] === bytes[1] &&
-      header[2] === bytes[2] &&
-      header[3] === bytes[3]) {
-      processMedia(mediaFormat, file);
-      break;
-    }
+var metadata = new Peeracle.Metadata();
+metadata.cryptoId = crypto;
+
+function createDataSource(handle) {
+  if (typeof handle !== 'string') {
+    return null;
   }
+
+  if (handle.slice(0, 7) === 'http://' ||
+    handle.slice(0, 8) === 'https://') {
+    return new Peeracle.DataSource.Http(handle);
+  }
+  return new Peeracle.DataSource.File(handle);
+}
+
+var f = 0;
+var file = createDataSource(files[f]);
+Peeracle.Media.createInstance(file, function doFile (media) {
+  if (!media) {
+    console.log('No media');
+    return;
+  }
+  metadata.addStream(media, function () {
+    if (++f < files.length) {
+      file = createDataSource(files[f]);
+      Peeracle.Media.createInstance(file, doFile);
+    } else {
+      dumpMetadata();
+    }
+  });
 });

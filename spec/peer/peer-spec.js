@@ -19,8 +19,10 @@ describe('Peeracle.Peer', function () {
   });
 
   it('should have it\'s members defined', function () {
-    expect(pa.subscribe).toBeDefined();
-    expect(pa.unsubscribe).toBeDefined();
+    expect(pa.on).toBeDefined();
+    expect(pa.off).toBeDefined();
+    expect(pa.once).toBeDefined();
+    expect(pa.emit).toBeDefined();
     expect(pa.createOffer).toBeDefined();
     expect(pa.createAnswer).toBeDefined();
     expect(pa.setAnswer).toBeDefined();
@@ -113,10 +115,8 @@ describe('Peeracle.Peer', function () {
       onIceCandidate: function (ice) {
 
       },
-      onConnectionStateChange: function (state) {
-        if (state === 'completed' || state === 'connected') {
-          pastate = true;
-        }
+      onReady: function () {
+        pastate = true;
         if (pastate === true && pbstate === true) {
           pa.unsubscribe(pasubscriber);
           pb.unsubscribe(pbsubscriber);
@@ -130,10 +130,8 @@ describe('Peeracle.Peer', function () {
       onIceCandidate: function (ice) {
 
       },
-      onConnectionStateChange: function (state) {
-        if (state === 'completed' || state === 'connected') {
-          pbstate = true;
-        }
+      onReady: function () {
+        pbstate = true;
         if (pastate === true && pbstate === true) {
           pa.unsubscribe(pasubscriber);
           pb.unsubscribe(pbsubscriber);

@@ -20,173 +20,236 @@
  * SOFTWARE.
  */
 
-'use strict';
-
 (function () {
-  var Crypto;
+  'use strict';
 
-  if (typeof module === 'undefined') {
-    Crypto = Peeracle.Crypto;
-  } else {
-    Crypto = require('./crypto');
+  var Crypto = require('./crypto');
+
+  /**
+   * @typedef {Object} Segment
+   * @property {number} timecode - Segment's timecode
+   * @property {number} length - Segment's length
+   * @property {*} checksum - Segment's checksum
+   * @property {Array.<*>} chunks - Array of chunks' checksum
+   */
+
+  /**
+   * @typedef {Object} Stream
+   * @property {number} type - Stream type
+   * @property {string} mimeType - Stream mime type for MediaSource API
+   * @property {number} bandwidth - Stream bandwidth
+   * @property {number} width - Video width
+   * @property {number} height - Video height
+   * @property {number} numChannels - Number of audio channels
+   * @property {number} samplingFrequency - Audio sample rate
+   * @property {number} chunksize - Stream fixed chunk size
+   * @property {Uint8Array} init - Init segment bytes
+   * @property {Array.<Segment>} segments - Array of media segments
+   */
+
+  /**
+   * @typedef {Object} Header
+   * @property {number} magic
+   * @property {number} version
+   * @property {string} cryptoId
+   * @property {number} timecodeScale
+   * @property {number} duration
+   */
+
+  /**
+   * @class
+   * @constructor
+   * @memberof Peeracle
+   */
+  function Metadata() {
+    /**
+     * @member {*}
+     * @readonly
+     */
+    this.id = null;
+
+    /**
+     * @member {Crypto}
+     * @private
+     */
+    this.crypto_ = null;
+
+    /**
+     * @member {string}
+     */
+    this.cryptoId = 'crc32';
+
+    /**
+     * @member {Array.<string>}
+     */
+    this.trackers = [];
+
+    /**
+     * @member {number}
+     */
+    this.minChunkSize = 32 * 1024;
+
+    /**
+     * @member {number}
+     */
+    this.maxChunkSize = 256 * 1024;
+
+    /**
+     *
+     * @member {number}
+     */
+    this.timecodeScale = -1;
+
+    /**
+     *
+     * @member {number}
+     */
+    this.duration = -1;
+
+    /**
+     *
+     * @member {Array.<Stream>}
+     */
+    this.streams = [];
   }
 
-  function Metadata() {
-    var _id;
-    var _crypto;
-    var _cryptoId = 'crc32';
-    var _chunksize = 0;
-    var _trackers = [];
-    var _initSegment = [];
-    var _mediaSegments = [];
+  /**
+   * @function
+   * @public
+   * @return {number}
+   */
+  Metadata.prototype.getId = function () {
+    if (this.id) {
+      return this.id;
+    }
 
-    var _loadCrypto = function () {
-      for (var c in Crypto) {
-        if (Crypto[c].getIdentifier() === _cryptoId) {
-          _crypto = Crypto[c].create();
-          break;
-        }
+    if (!this.crypto_) {
+      this.crypto_ = Crypto.createInstance(this.cryptoId);
+    }
+
+    this.crypto_.init();
+    // this.crypto_.update(this.initSegment);
+    this.id = this.crypto_.finish();
+    return this.id;
+  };
+
+  /**
+   *
+   * @param {Peeracle.Media} media
+   * @returns {number}
+   */
+  Metadata.prototype.calculateChunkSize = function (media) {
+    /** @type {number} */
+    var i;
+    var l;
+    var cues = media.cues;
+    var sum = 0;
+    var last = 0;
+
+    for (i = 0, l = cues.length; i < l; ++i) {
+      var cue = cues[i];
+      sum += cue.clusterOffset - last;
+      last = cue.clusterOffset;
+    }
+
+    var total = (sum / cues.length); // * cues.length;
+    // var targetLength = 40 * 1024;
+    // var chunkSize = total / (targetLength / 20);
+
+    for (i = this.minChunkSize; i < this.maxChunkSize; i *= 2) {
+      if (total > i) {
+        continue;
       }
+      break;
+    }
 
-      if (!_crypto) {
-        throw 'Unknown checksum ' + _cryptoId;
-      }
-    };
+    console.log(total);
+    return i;
+  };
 
-    var getId = function () {
-      if (!_id) {
-        if (!_crypto) {
-          _loadCrypto();
-        }
-
-        _crypto.init();
-        _crypto.update(_initSegment);
-        for (var m in _mediaSegments) {
-          _crypto.update([_mediaSegments[m][1]]);
-          for (var c = 0, l = _mediaSegments[m][2].length; c < l; ++c) {
-            _crypto.update([_mediaSegments[m][2][c]]);
-          }
-        }
-        _id = _crypto.final();
-      }
-      return _id;
-    };
-
-    var getCryptoId = function () {
-      return _cryptoId;
-    };
-
-    var getChunkSize = function () {
-      return _chunksize;
-    };
-
-    var getTrackers = function () {
-      return _trackers;
-    };
-
-    var getInitSegment = function () {
-      return _initSegment;
-    };
-
-    var getMediaSegments = function () {
-      return _mediaSegments;
-    };
-
-    var setCryptoId = function (checksum) {
-      _cryptoId = checksum;
-    };
-
-    var setChunkSize = function (chunksize) {
-      _chunksize = chunksize;
-    };
-
-    var setTrackers = function (trackers) {
-      _trackers = trackers;
-    };
-
-    var setInitSegment = function (initSegment) {
-      _initSegment = initSegment;
-    };
-
-    var setMediaSegments = function (mediaSegments) {
-      _mediaSegments = mediaSegments;
-    };
-
-    var addMediaSegment = function (timecode, mediaSegment) {
-      var clusterLength = mediaSegment.length;
-      var chunkLength = _chunksize;
-
-      if (!_crypto) {
-        _loadCrypto();
-      }
-
-      var cluster = {
-        timecode: timecode,
-        length: clusterLength,
-        checksum: _crypto.checksum(mediaSegment),
-        chunks: []
+  /**
+   *
+   * @param {Peeracle.Media} media
+   * @param cb
+   */
+  Metadata.prototype.addStream = function (media, cb) {
+    media.getInitSegment(function (bytes) {
+      /** @type {Stream} */
+      var stream = {
+        type: 1,
+        mimeType: media.mimeType,
+        bandwidth: 0,
+        width: media.width,
+        height: media.height,
+        numChannels: media.numChannels,
+        samplingFrequency: media.samplingFrequency,
+        chunksize: this.calculateChunkSize(media),
+        init: bytes,
+        segments: []
       };
 
-      for (var i = 0; i < clusterLength; i += chunkLength) {
-        var chunk = mediaSegment.subarray(i, i + chunkLength);
+      if (this.timecodeScale === -1) {
+        this.timecodeScale = media.timecodeScale;
+      }
 
-        cluster.chunks.push(_crypto.checksum(chunk));
+      if (this.duration === -1) {
+        this.duration = media.duration;
+      }
 
-        if (clusterLength - i < chunkLength) {
-          chunkLength = clusterLength - i;
+      var numCues = media.cues.length;
+      var currentCue = 0;
+
+      if (!numCues) {
+        this.streams.push(stream);
+        cb();
+        return;
+      }
+
+      var timecode = media.cues[currentCue].timecode;
+      media.getMediaSegment(timecode, function nextMedia(bytes) {
+        if (!bytes) {
+          this.streams.push(stream);
+          cb();
+          return;
         }
-      }
 
-      _mediaSegments.push(cluster);
-    };
+        var clusterLength = bytes.length;
+        var chunkLength = stream.chunksize;
 
-    var validateMediaSegment = function (timecode, mediaSegment) {
-      if (!_crypto) {
-        _loadCrypto();
-      }
-
-      for (var i = 0, l = _mediaSegments.length; i < l; ++i) {
-        if (_mediaSegments[i].timecode === timecode) {
-          return _mediaSegments[i].checksum === _crypto.checksum(mediaSegment);
+        if (!this.crypto_) {
+          this.crypto_ = Crypto.createInstance(this.cryptoId);
         }
-      }
 
-      return false;
-    };
+        var cluster = {
+          timecode: timecode,
+          length: clusterLength,
+          checksum: this.crypto_.checksum(bytes),
+          chunks: []
+        };
 
-    var calculateChunkSize = function (fileLength) {
-      var i;
-      var targetLength = 40 * 1024;
-      var chunkSize = fileLength / (targetLength / 20);
+        for (var i = 0; i < clusterLength; i += chunkLength) {
+          var chunk = bytes.subarray(i, i + chunkLength);
 
-      for (i = 16 * 1024; i < 1024 * 1024; i *= 2) {
-        if (chunkSize > i) {
-          continue;
+          cluster.chunks.push(this.crypto_.checksum(chunk));
+
+          if (clusterLength - i < chunkLength) {
+            chunkLength = clusterLength - i;
+          }
         }
-        break;
-      }
-      _chunksize = i;
-    };
 
-    return {
-      getId: getId,
-      getCryptoId: getCryptoId,
-      getChunkSize: getChunkSize,
-      getTrackers: getTrackers,
-      getInitSegment: getInitSegment,
-      getMediaSegments: getMediaSegments,
+        stream.segments.push(cluster);
 
-      setCryptoId: setCryptoId,
-      setChunkSize: setChunkSize,
-      setTrackers: setTrackers,
-      setInitSegment: setInitSegment,
-      setMediaSegments: setMediaSegments,
+        if (++currentCue >= numCues) {
+          this.streams.push(stream);
+          cb();
+          return;
+        }
 
-      addMediaSegment: addMediaSegment,
-      validateMediaSegment: validateMediaSegment,
-      calculateChunkSize: calculateChunkSize
-    };
-  }
+        timecode = media.cues[currentCue].timecode;
+        media.getMediaSegment(timecode, nextMedia.bind(this));
+      }.bind(this));
+    }.bind(this));
+  };
 
   module.exports = Metadata;
 })();

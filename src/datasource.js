@@ -23,25 +23,47 @@
 (function () {
   'use strict';
 
-  Math.trunc = Math.trunc || function (x) {
-      return x < 0 ? Math.ceil(x) : Math.floor(x);
-    };
-
   /**
-   * @class
+   * @interface
+   * @memberof Peeracle
+   * @param {*} handle
    * @constructor
    */
-  function Utils() {
+  function DataSource(handle) {
+    /**
+     * @readonly
+     * @member {number}
+     */
+    this.offset = 0;
+
+    /**
+     * @readonly
+     * @member {number}
+     */
+    this.length = 0;
   }
 
   /**
-   *
-   * @param x
-   * @returns {number}
+   * @function
+   * @param length
    */
-  Utils.trunc = function (x) {
-    return Math.trunc(x);
+  DataSource.prototype.read = function (length) {
   };
 
-  module.exports = Utils;
+  /**
+   * @function
+   * @param position
+   */
+  DataSource.prototype.seek = function (position) {
+  };
+
+  /**
+   * @function
+   * @param length
+   * @param cb
+   */
+  DataSource.prototype.fetchBytes = function (length, cb) {
+  };
+
+  module.exports = DataSource;
 })();

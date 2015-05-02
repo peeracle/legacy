@@ -9,7 +9,7 @@ module.exports = function (config) {
         pattern: 'dist/peeracle-0.0.1.js',
         included: true
       },
-      'spec/**/*-spec.js'
+      'test/**/*-spec.js'
     ],
 
     autoWatch: true,
