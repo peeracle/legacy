@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
   /** @type {DataSource} */
-  var DataSource = Peeracle.DataSource || require('./datasource');
+  var DataSource = require('./DataSource');
 
   // @exclude
   var fs = require('fs');
@@ -136,5 +136,5 @@
     // @endexclude
   };
 
-  global.File = File;
-})(Peeracle.DataSource || this.DataSource);
+  return File;
+})();

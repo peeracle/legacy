@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
   /**
@@ -271,5 +271,5 @@
     this.writeBytes(bytes);
   };
 
-  global.BinaryStream = BinaryStream;
-})(Peeracle || this);
+  return BinaryStream;
+})();

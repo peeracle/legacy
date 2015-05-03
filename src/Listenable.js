@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
   /**
@@ -89,5 +89,5 @@
     }
   };
 
-  global.Listenable = Listenable;
-})(Peeracle || this);
+  return Listenable;
+})();

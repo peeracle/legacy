@@ -23,7 +23,20 @@
 'use strict';
 
 var Peeracle = {};
-(function (global) {
+
+var RTCPeerConnection = window.mozRTCPeerConnection ||
+  window.webkitRTCPeerConnection ||
+  window.RTCPeerConnection;
+
+var RTCSessionDescription = window.mozRTCSessionDescription ||
+  window.webkitRTCSessionDescription ||
+  window.RTCSessionDescription;
+
+var RTCIceCandidate = window.mozRTCIceCandidate ||
+  window.webkitRTCIceCandidate ||
+  window.RTCIceCandidate;
+
+Peeracle.BinaryStream = (function () {
 
   /**
    * @class
@@ -273,10 +286,10 @@ var Peeracle = {};
     this.writeBytes(bytes);
   };
 
-  global.BinaryStream = BinaryStream;
-})(Peeracle || this);
+  return BinaryStream;
+})();
 
-(function (global) {
+Peeracle.Crypto = (function () {
 
   /**
    * @interface
@@ -343,12 +356,12 @@ var Peeracle = {};
   Crypto.prototype.unserialize = function (binaryStream) {
   };
 
-  global.Crypto = Crypto;
-})(Peeracle || this);
+  return Crypto;
+})();
 
-(function (global) {
+Peeracle.Crypto.Crc32 = (function () {
 
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var Crypto = Peeracle.Crypto;
 
   /**
    * crc32 checksum algorithm implementation
@@ -473,10 +486,10 @@ var Peeracle = {};
     return binaryStream.readUInt32();
   };
 
-  global.Crc32 = Crc32;
-})(Peeracle.Crypto || this.Crypto);
+  return Crc32;
+})();
 
-(function (global) {
+Peeracle.DataSource = (function () {
 
   /**
    * @interface
@@ -520,13 +533,13 @@ var Peeracle = {};
   DataSource.prototype.fetchBytes = function (length, cb) {
   };
 
-  global.DataSource = DataSource;
-})(Peeracle || this);
+  return DataSource;
+})();
 
-(function (global) {
+Peeracle.DataSource.File = (function () {
 
   /** @type {DataSource} */
-  var DataSource = Peeracle.DataSource || require('./datasource');
+  var DataSource = Peeracle.DataSource;
 
   /**
    * @class
@@ -599,13 +612,13 @@ var Peeracle = {};
       reader.readAsArrayBuffer(this.handle_.slice(this.offset, this.offset + length));
   };
 
-  global.File = File;
-})(Peeracle.DataSource || this.DataSource);
+  return File;
+})();
 
-(function (global) {
+Peeracle.DataSource.Http = (function () {
 
   /** @type {DataSource} */
-  var DataSource = Peeracle.DataSource || require('./datasource');
+  var DataSource = Peeracle.DataSource;
   /**
    * @class
    * @memberof Peeracle.DataSource
@@ -677,10 +690,10 @@ var Peeracle = {};
     r.send();
   };
 
-  global.Http = Http;
-})(Peeracle.DataSource || this.DataSource);
+  return Http;
+})();
 
-(function (global) {
+Peeracle.Listenable = (function () {
 
   /**
    * @class
@@ -748,10 +761,10 @@ var Peeracle = {};
     }
   };
 
-  global.Listenable = Listenable;
-})(Peeracle || this);
+  return Listenable;
+})();
 
-(function (global) {
+Peeracle.Media = (function () {
 
   /**
    * @typedef {Object} Track
@@ -843,10 +856,10 @@ var Peeracle = {};
     throw 'Media: method getMediaSegment(cb) not implemented';
   };
 
-  global.Media = Media;
-})(Peeracle || this);
+  return Media;
+})();
 
-(function (global) {
+Peeracle.Media.WebM = (function () {
 
   /**
    * @typedef {Object} EBMLTag
@@ -858,7 +871,7 @@ var Peeracle = {};
    */
 
   /** @type {Media} **/
-  var Media = Peeracle.Media || require('./media');
+  var Media = Peeracle.Media;
 
   /**
    *
@@ -876,35 +889,35 @@ var Peeracle = {};
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.clusterTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.infoTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.tracksTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.cuesTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.seekHeadTag_ = null;
@@ -929,7 +942,7 @@ var Peeracle = {};
 
     /**
      *
-     * @type {Array}
+     * @type {Array.<Track>}
      */
     this.tracks = [];
 
@@ -1007,6 +1020,12 @@ var Peeracle = {};
     return null;
   };
 
+  /**
+   * @param tag
+   * @param bytes
+   * @param start
+   * @private
+   */
   WebM.prototype.parseInfoTag_ = function (tag, bytes, start) {
     if (tag.str === '2ad7b1') {
       this.timecodeScale = this.readUInt_(bytes,
@@ -1622,12 +1641,12 @@ var Peeracle = {};
     }.bind(this));
   };
 
-  global.WebM = WebM;
-})(Peeracle.Media || this.Media);
+  return WebM;
+})();
 
-(function (global) {
+Peeracle.Metadata = (function () {
 
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var Crypto = Peeracle.Crypto;
 
   /**
    * @typedef {Object} Segment
@@ -1855,13 +1874,13 @@ var Peeracle = {};
     }.bind(this));
   };
 
-  global.Metadata = Metadata;
-})(Peeracle || this);
+  return Metadata;
+})();
 
-(function (global) {
+Peeracle.Metadata.Serializer = (function () {
 
-  var BinaryStream = Peeracle.BinaryStream || require('./binarystream');
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var BinaryStream = Peeracle.BinaryStream;
+  var Crypto = Peeracle.Crypto;
 
   /**
    * @class
@@ -2021,12 +2040,12 @@ var Peeracle = {};
     return this.stream_.bytes;
   };
 
-  global.MetadataSerializer = MetadataSerializer;
-})(Peeracle || this);
+  return MetadataSerializer;
+})();
 
-(function (global) {
+Peeracle.Metadata.Unserializer = (function () {
 
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var Crypto = Peeracle.Crypto;
 
   /**
    * @class
@@ -2181,12 +2200,12 @@ var Peeracle = {};
     metadata.streams = streams;
   };
 
-  global.MetadataUnserializer = MetadataUnserializer;
-})(Peeracle || this);
+  return MetadataUnserializer;
+})();
 
-(function (global) {
+Peeracle.Peer = (function () {
 
-  var Listenable = Peeracle.Listenable || require('./listenable');
+  var Listenable = Peeracle.Listenable;
 
   /**
    * @class
@@ -2199,7 +2218,7 @@ var Peeracle = {};
 
   Peer.prototype = Object.create(Listenable.prototype);
 
-  global.Peer = Peer;
+  return Peer;
 
   /*
   function Peer() {
@@ -2432,26 +2451,11 @@ var Peeracle = {};
       close: close
     };
   }*/
-})(Peeracle || this);
+})();
 
-(function (global) {
+Peeracle.PeerConnection = (function () {
 
-  var Listenable = Peeracle.Listenable || require('./listenable');
-
-  var RTCPeerConnection = window.mozRTCPeerConnection ||
-    window.webkitRTCPeerConnection ||
-    window.RTCPeerConnection ||
-    require('wrtc').RTCPeerConnection;
-
-  var RTCSessionDescription = window.mozRTCSessionDescription ||
-    window.webkitRTCSessionDescription ||
-    window.RTCSessionDescription ||
-    require('wrtc').RTCSessionDescription;
-
-  var RTCIceCandidate = window.mozRTCIceCandidate ||
-    window.webkitRTCIceCandidate ||
-    window.RTCIceCandidate ||
-    require('wrtc').RTCIceCandidate;
+  var Listenable = Peeracle.Listenable;
 
   /**
    * @class
@@ -2464,18 +2468,20 @@ var Peeracle = {};
   PeerConnection.prototype = Object.create(Listenable.prototype);
   PeerConnection.prototype.constructor = PeerConnection;
 
-  global.PeerConnection = PeerConnection;
-})(Peeracle || this);
+  return PeerConnection;
+})();
 
-(function (global) {
+Peeracle.Tracker = (function () {
 
-  global.Tracker = {
+  var Tracker = {
   };
-})(Peeracle || this);
 
-(function (global) {
+  return Tracker;
+})();
 
-  var Listenable = Peeracle.Listenable || require('./listenable');
+Peeracle.Tracker.Client = (function () {
+
+  var Listenable = Peeracle.Listenable;
   /**
    * @class
    * @memberof Peeracle.Tracker
@@ -2520,12 +2526,12 @@ var Peeracle = {};
     this.ws_.onclose = onClose_.bind(this);
   };
 
-  global.Client = Client;
-})(Peeracle.Tracker || this.Tracker);
+  return Client;
+})(this.Tracker);
 
-(function (global) {
+Peeracle.Tracker.Message = (function () {
 
-  var BinaryStream = Peeracle.BinaryStream || require('./binarystream');
+  var BinaryStream = Peeracle.BinaryStream;
 
   /**
    * @class
@@ -2546,7 +2552,7 @@ var Peeracle = {};
 
     if (bytes && typeof bytes === ArrayBuffer) {
       this.stream_ = new BinaryStream(bytes);
-      this.readFromBytes_(bytes);
+      // this.readFromBytes_(bytes);
     }
   }
 
@@ -2559,10 +2565,10 @@ var Peeracle = {};
     Welcome: 2
   };
 
-  global.Message = Message;
-})(Peeracle.Tracker || this.Tracker);
+  return Message;
+})();
 
-(function (global) {
+Peeracle.Utils = (function () {
 
   Math.trunc = Math.trunc || function (x) {
       return x < 0 ? Math.ceil(x) : Math.floor(x);
@@ -2584,5 +2590,5 @@ var Peeracle = {};
     return Math.trunc(x);
   };
 
-  global.Utils = Utils;
-})(Peeracle || this);
+  return Utils;
+})();

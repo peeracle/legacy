@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
-  var BinaryStream = Peeracle.BinaryStream || require('./binarystream');
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var BinaryStream = require('./BinaryStream');
+  var Crypto = require('./Crypto');
 
   /**
    * @class
@@ -184,5 +184,5 @@
     return this.stream_.bytes;
   };
 
-  global.MetadataSerializer = MetadataSerializer;
-})(Peeracle || this);
+  return MetadataSerializer;
+})();

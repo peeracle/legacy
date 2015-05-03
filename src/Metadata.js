@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var Crypto = require('./Crypto');
 
   /**
    * @typedef {Object} Segment
@@ -251,5 +251,5 @@
     }.bind(this));
   };
 
-  global.Metadata = Metadata;
-})(Peeracle || this);
+  return Metadata;
+})();

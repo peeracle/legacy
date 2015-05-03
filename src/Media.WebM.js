@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
   /**
@@ -33,7 +33,7 @@
    */
 
   /** @type {Media} **/
-  var Media = Peeracle.Media || require('./media');
+  var Media = require('./Media');
 
   /**
    *
@@ -51,35 +51,35 @@
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.clusterTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.infoTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.tracksTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.cuesTag_ = null;
 
     /**
      *
-     * @type {null}
+     * @type {EBMLTag}
      * @private
      */
     this.seekHeadTag_ = null;
@@ -104,7 +104,7 @@
 
     /**
      *
-     * @type {Array}
+     * @type {Array.<Track>}
      */
     this.tracks = [];
 
@@ -182,6 +182,12 @@
     return null;
   };
 
+  /**
+   * @param tag
+   * @param bytes
+   * @param start
+   * @private
+   */
   WebM.prototype.parseInfoTag_ = function (tag, bytes, start) {
     if (tag.str === '2ad7b1') {
       this.timecodeScale = this.readUInt_(bytes,
@@ -797,5 +803,5 @@
     }.bind(this));
   };
 
-  global.WebM = WebM;
-})(Peeracle.Media || this.Media);
+  return WebM;
+})();

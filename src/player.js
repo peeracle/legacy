@@ -274,4 +274,4 @@
   }
 
   module.exports = Player;
-})(Peeracle || this);
+})(this);

@@ -20,73 +20,50 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
   /**
    * @interface
    * @memberof Peeracle
-   * @namespace
+   * @param {*} handle
+   * @constructor
    */
-  function Crypto() {
+  function DataSource(handle) {
+    /**
+     * @readonly
+     * @member {number}
+     */
+    this.offset = 0;
+
+    /**
+     * @readonly
+     * @member {number}
+     */
+    this.length = 0;
   }
 
   /**
-   *
-   * @param id
-   * @returns {?Crypto}
+   * @function
+   * @param length
    */
-  Crypto.createInstance = function (id) {
-    for (var c in Crypto) {
-      if (Crypto.hasOwnProperty(c) &&
-        Crypto[c].hasOwnProperty('getIdentifier') &&
-        Crypto[c].getIdentifier() === id) {
-        return new Crypto[c]();
-      }
-    }
-    return null;
+  DataSource.prototype.read = function (length) {
   };
 
   /**
    * @function
-   * @param array
+   * @param position
    */
-  Crypto.prototype.checksum = function (array) {
+  DataSource.prototype.seek = function (position) {
   };
 
   /**
    * @function
+   * @param length
+   * @param cb
    */
-  Crypto.prototype.init = function () {
+  DataSource.prototype.fetchBytes = function (length, cb) {
   };
 
-  /**
-   * @function
-   * @param array
-   */
-  Crypto.prototype.update = function (array) {
-  };
-
-  /**
-   * @function
-   */
-  Crypto.prototype.finish = function () {
-  };
-
-  /**
-   *
-   * @param value
-   * @param {BinaryStream} binaryStream
-   */
-  Crypto.prototype.serialize = function (value, binaryStream) {
-  };
-
-  /**
-   *
-   * @param {BinaryStream} binaryStream
-   */
-  Crypto.prototype.unserialize = function (binaryStream) {
-  };
-
-  global.Crypto = Crypto;
-})(Peeracle || this);
+  return DataSource;
+})();

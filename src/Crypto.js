@@ -20,14 +20,73 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
-  global.Tracker = {
-    // @exclude
-    Client: require('./tracker.client'),
-    Message: require('./tracker.message'),
-    Server: require('./tracker.server')
-    // @endexclude
+  /**
+   * @interface
+   * @memberof Peeracle
+   * @namespace
+   */
+  function Crypto() {
+  }
+
+  /**
+   *
+   * @param id
+   * @returns {?Crypto}
+   */
+  Crypto.createInstance = function (id) {
+    for (var c in Crypto) {
+      if (Crypto.hasOwnProperty(c) &&
+        Crypto[c].hasOwnProperty('getIdentifier') &&
+        Crypto[c].getIdentifier() === id) {
+        return new Crypto[c]();
+      }
+    }
+    return null;
   };
-})(Peeracle || this);
+
+  /**
+   * @function
+   * @param array
+   */
+  Crypto.prototype.checksum = function (array) {
+  };
+
+  /**
+   * @function
+   */
+  Crypto.prototype.init = function () {
+  };
+
+  /**
+   * @function
+   * @param array
+   */
+  Crypto.prototype.update = function (array) {
+  };
+
+  /**
+   * @function
+   */
+  Crypto.prototype.finish = function () {
+  };
+
+  /**
+   *
+   * @param value
+   * @param {BinaryStream} binaryStream
+   */
+  Crypto.prototype.serialize = function (value, binaryStream) {
+  };
+
+  /**
+   *
+   * @param {BinaryStream} binaryStream
+   */
+  Crypto.prototype.unserialize = function (binaryStream) {
+  };
+
+  return Crypto;
+})();

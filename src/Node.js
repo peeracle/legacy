@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
-  var Utils = Peeracle.Utils || require('./utils');
+  var Utils = require('./Utils');
 
   /*var Peer;
   var Tracker;
@@ -344,5 +344,5 @@
     };
   }*/
 
-  global.Node = Node;
-})(Peeracle || this);
+  return Node;
+})();

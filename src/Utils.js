@@ -8,8 +8,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,36 +20,28 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
-  var Listenable = Peeracle.Listenable || require('./listenable');
-
-  var RTCPeerConnection = window.mozRTCPeerConnection ||
-    window.webkitRTCPeerConnection ||
-    window.RTCPeerConnection ||
-    require('wrtc').RTCPeerConnection;
-
-  var RTCSessionDescription = window.mozRTCSessionDescription ||
-    window.webkitRTCSessionDescription ||
-    window.RTCSessionDescription ||
-    require('wrtc').RTCSessionDescription;
-
-  var RTCIceCandidate = window.mozRTCIceCandidate ||
-    window.webkitRTCIceCandidate ||
-    window.RTCIceCandidate ||
-    require('wrtc').RTCIceCandidate;
+  Math.trunc = Math.trunc || function (x) {
+      return x < 0 ? Math.ceil(x) : Math.floor(x);
+    };
 
   /**
    * @class
    * @constructor
    */
-  function PeerConnection() {
-
+  function Utils() {
   }
 
-  PeerConnection.prototype = Object.create(Listenable.prototype);
-  PeerConnection.prototype.constructor = PeerConnection;
+  /**
+   *
+   * @param x
+   * @returns {number}
+   */
+  Utils.trunc = function (x) {
+    return Math.trunc(x);
+  };
 
-  global.PeerConnection = PeerConnection;
-})(Peeracle || this);
+  return Utils;
+})();

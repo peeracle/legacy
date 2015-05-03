@@ -20,16 +20,14 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
   var http = require('http');
   var WebSocketServer = require('websocket').server;
   var winston = require('winston');
 
-  var Tracker = {
-    Message: require('./tracker.message')
-  };
+  var Tracker = require('./Tracker');
 
   /**
    * @class
@@ -108,5 +106,5 @@
     }.bind(this));
   };
 
-  global.Server = Server;
-})(Peeracle.Tracker || this.Tracker);
+  return Server;
+})();

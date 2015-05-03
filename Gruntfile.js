@@ -37,34 +37,47 @@ module.exports = function (grunt) {
       options: {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n\n' +
-        'var Peeracle = {};\n',
+        'var Peeracle = {};\n\n' +
+        'var RTCPeerConnection = window.mozRTCPeerConnection ||\n' +
+        '  window.webkitRTCPeerConnection ||\n' +
+        '  window.RTCPeerConnection;\n\n' +
+
+        'var RTCSessionDescription = window.mozRTCSessionDescription ||\n' +
+        '  window.webkitRTCSessionDescription ||\n' +
+        '  window.RTCSessionDescription;\n\n' +
+
+        'var RTCIceCandidate = window.mozRTCIceCandidate ||\n' +
+        '  window.webkitRTCIceCandidate ||\n' +
+        '  window.RTCIceCandidate;\n\n',
 
         process: function (src, filepath) {
-          return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\n/g, '$1');
-            //.replace(/module.exports = (.*);/g, 'Peeracle.$1 = $1;');
+          var moduleName = filepath.slice(4, filepath.length - 3);
+          return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\n/g, '$1')
+            .replace(/module.exports = /g, 'Peeracle.' + moduleName + ' = ')
+            .replace(/var (.*) = require\('.\/(.*)'\);/g, 'var $1 = Peeracle.$2;');
         },
         stripBanners: true
       },
       dist: {
         src: [
-          'src/binarystream.js',
-          'src/crypto.js',
-          'src/crypto.crc32.js',
-          'src/datasource.js',
-          'src/datasource.file.js',
-          'src/datasource.http.js',
-          'src/listenable.js',
-          'src/media.js',
-          'src/media.webm.js',
-          'src/metadata.js',
-          'src/metadata.serializer.js',
-          'src/metadata.unserializer.js',
-          'src/peer.js',
-          'src/peerconnection.js',
-          'src/tracker.js',
-          'src/tracker.client.js',
-          'src/tracker.message.js',
-          'src/utils.js'
+          'src/BinaryStream.js',
+          'src/Crypto.js',
+          'src/Crypto.Crc32.js',
+          'src/DataSource.js',
+          'src/DataSource.File.js',
+          'src/DataSource.Http.js',
+          'src/Listenable.js',
+          'src/Media.js',
+          'src/Media.WebM.js',
+          'src/Metadata.js',
+          'src/Metadata.Serializer.js',
+          'src/Metadata.Unserializer.js',
+          'src/Peer.js',
+          'src/PeerConnection.js',
+          'src/Tracker.js',
+          'src/Tracker.Client.js',
+          'src/Tracker.Message.js',
+          'src/Utils.js'
         ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }

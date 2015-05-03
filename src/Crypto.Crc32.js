@@ -20,10 +20,10 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
-  var Crypto = Peeracle.Crypto || require('./crypto');
+  var Crypto = require('./Crypto');
 
   /**
    * crc32 checksum algorithm implementation
@@ -148,5 +148,5 @@
     return binaryStream.readUInt32();
   };
 
-  global.Crc32 = Crc32;
-})(Peeracle.Crypto || this.Crypto);
+  return Crc32;
+})();

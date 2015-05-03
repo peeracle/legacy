@@ -8,8 +8,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -20,50 +20,27 @@
  * SOFTWARE.
  */
 
-(function (global) {
+module.exports = (function () {
   'use strict';
 
+  var Listenable = require('./Listenable');
+
+  // @exclude
+  var RTCPeerConnection = require('wrtc').RTCPeerConnection;
+  var RTCSessionDescription = require('wrtc').RTCSessionDescription;
+  var RTCIceCandidate = require('wrtc').RTCIceCandidate;
+  // @endexclude
+
   /**
-   * @interface
-   * @memberof Peeracle
-   * @param {*} handle
+   * @class
    * @constructor
    */
-  function DataSource(handle) {
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.offset = 0;
+  function PeerConnection() {
 
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.length = 0;
   }
 
-  /**
-   * @function
-   * @param length
-   */
-  DataSource.prototype.read = function (length) {
-  };
+  PeerConnection.prototype = Object.create(Listenable.prototype);
+  PeerConnection.prototype.constructor = PeerConnection;
 
-  /**
-   * @function
-   * @param position
-   */
-  DataSource.prototype.seek = function (position) {
-  };
-
-  /**
-   * @function
-   * @param length
-   * @param cb
-   */
-  DataSource.prototype.fetchBytes = function (length, cb) {
-  };
-
-  global.DataSource = DataSource;
-})(Peeracle || this);
+  return PeerConnection;
+})();
