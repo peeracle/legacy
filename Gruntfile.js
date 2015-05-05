@@ -174,4 +174,5 @@ module.exports = function (grunt) {
 
   // Build only task
   grunt.registerTask('build', ['concat', 'preprocess', 'eslint', 'jsbeautifier', 'closure-compiler']);
+  grunt.registerTask('test', ['karma']);
 };
