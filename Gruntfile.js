@@ -38,7 +38,8 @@ module.exports = function (grunt) {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n\n' +
         '(function(){\n' +
-        'var Peeracle = {};\n\n' +
+        'window[\'Peeracle\'] = {};\n' +
+        'var Peeracle = window.Peeracle;\n\n' +
         'var RTCPeerConnection = window.mozRTCPeerConnection ||\n' +
         '  window.webkitRTCPeerConnection ||\n' +
         '  window.RTCPeerConnection;\n\n' +
