@@ -69,7 +69,25 @@ module.exports = function (grunt) {
         stripBanners: true
       },
       dist: {
-        src: 'src/*.js',
+        src: [
+          'src/BinaryStream.js',
+          'src/Crypto.js',
+          'src/Crypto.Crc32.js',
+          'src/DataSource.js',
+          'src/Listenable.js',
+          'src/Manager.js',
+          'src/Media.js',
+          'src/Media.WebM.js',
+          'src/Metadata.js',
+          'src/MetadataSerializer.js',
+          'src/MetadataUnserializer.js',
+          'src/Peer.js',
+          'src/PeerConnection.js',
+          'src/Tracker.js',
+          'src/Tracker.Client.js',
+          'src/Tracker.Message.js',
+          'src/Utils.js'
+        ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
     },
