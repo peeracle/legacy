@@ -6,7 +6,7 @@ module.exports = function (config) {
 
     files: [
       {
-        pattern: 'dist/peeracle-0.0.1.js',
+        pattern: 'dist/peeracle-0.0.1.min.js',
         included: true
       },
       'spec/**/*-spec.js'
