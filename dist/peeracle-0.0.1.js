@@ -23,7 +23,8 @@
 'use strict';
 
 (function() {
-  var Peeracle = {};
+  window['Peeracle'] = {};
+  var Peeracle = window.Peeracle;
 
   var RTCPeerConnection = window.mozRTCPeerConnection ||
     window.webkitRTCPeerConnection ||
@@ -64,6 +65,7 @@
   }
 
   BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
+  BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
 
   /**
    * @returns {number}
@@ -92,10 +94,11 @@
    */
   BinaryStream.prototype.readBytes = function readBytes(length) {
     var bytes;
+
     if (this.offset_ >= this.offset_ + this.length_) {
       throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
     }
-    bytes = this.bytes.slice(this.offset_, length);
+    bytes = this.bytes.subarray(this.offset_, this.offset_ + length);
     this.offset_ += length;
     return bytes;
   };
@@ -293,13 +296,17 @@
    * @param {string} value
    */
   BinaryStream.prototype.writeString = function writeString(value) {
-    var length = value.length;
-    var bytes = new Uint8Array(length);
     var i;
+    var length;
+    var bytes;
+
+    length = value.length;
+    bytes = new Uint8Array(length + 1);
 
     for (i = 0; i < length; ++i) {
       bytes[i] = value.charCodeAt(i);
     }
+    bytes[length] = 0;
 
     this.writeBytes(bytes);
   };
@@ -316,6 +323,73 @@
   };
 
   Peeracle.BinaryStream = BinaryStream;
+
+  /**
+   * @interface
+   * @memberof Peeracle
+   * @namespace
+   */
+  function Crypto() {}
+
+  /**
+   *
+   * @param id
+   * @returns {?Crypto}
+   */
+  Crypto.createInstance = function createInstance(id) {
+    var c;
+
+    for (c in Crypto) {
+      if (Crypto.hasOwnProperty(c) &&
+        Crypto[c].hasOwnProperty('IDENTIFIER') &&
+        Crypto[c].IDENTIFIER === id) {
+        return new Crypto[c]();
+      }
+    }
+
+    return null;
+  };
+
+  /* eslint-disable */
+
+  /**
+   * @function
+   * @param array
+   */
+  Crypto.prototype.checksum = function checksum(array) {};
+
+  /**
+   * @function
+   */
+  Crypto.prototype.init = function init() {};
+
+  /**
+   * @function
+   * @param array
+   */
+  Crypto.prototype.update = function update(array) {};
+
+  /**
+   * @function
+   */
+  Crypto.prototype.finish = function finish() {};
+
+  /**
+   *
+   * @param value
+   * @param {BinaryStream} binaryStream
+   */
+  Crypto.prototype.serialize = function serialize(value, binaryStream) {};
+
+  /**
+   *
+   * @param {BinaryStream} binaryStream
+   */
+  Crypto.prototype.unserialize = function unserialize(binaryStream) {};
+
+  /* eslint-enable */
+
+  Peeracle.Crypto = Crypto;
 
   /**
    * crc32 checksum algorithm implementation
@@ -443,219 +517,6 @@
 
   Peeracle.Crypto.Crc32 = Crc32;
 
-  /**
-   * @interface
-   * @memberof Peeracle
-   * @namespace
-   */
-  function Crypto() {}
-
-  /**
-   *
-   * @param id
-   * @returns {?Crypto}
-   */
-  Crypto.createInstance = function createInstance(id) {
-    var c;
-
-    for (c in Crypto) {
-      if (Crypto.hasOwnProperty(c) &&
-        Crypto[c].hasOwnProperty('IDENTIFIER') &&
-        Crypto[c].IDENTIFIER === id) {
-        return new Crypto[c]();
-      }
-    }
-
-    return null;
-  };
-
-  /* eslint-disable */
-
-  /**
-   * @function
-   * @param array
-   */
-  Crypto.prototype.checksum = function checksum(array) {};
-
-  /**
-   * @function
-   */
-  Crypto.prototype.init = function init() {};
-
-  /**
-   * @function
-   * @param array
-   */
-  Crypto.prototype.update = function update(array) {};
-
-  /**
-   * @function
-   */
-  Crypto.prototype.finish = function finish() {};
-
-  /**
-   *
-   * @param value
-   * @param {BinaryStream} binaryStream
-   */
-  Crypto.prototype.serialize = function serialize(value, binaryStream) {};
-
-  /**
-   *
-   * @param {BinaryStream} binaryStream
-   */
-  Crypto.prototype.unserialize = function unserialize(binaryStream) {};
-
-  /* eslint-enable */
-
-  Peeracle.Crypto = Crypto;
-
-  /**
-   * @class
-   * @memberof Peeracle.DataSource
-   * @implements {Peeracle.DataSource}
-   * @param {Blob|string} handle
-   * @constructor
-   */
-  function File(handle) {
-    /**
-     * @type {*}
-     * @private
-     */
-    this.handle_ = handle;
-
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.offset = 0;
-
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.length = (typeof handle !== 'string') ? handle.size : -1;
-
-  }
-
-  File.prototype = Object.create(DataSource.prototype);
-  File.prototype.constructor = File;
-
-  /**
-   *
-   * @param length
-   */
-  File.prototype.read = function read(length) {
-    this.offset += length;
-  };
-
-  /**
-   *
-   * @param position
-   */
-  File.prototype.seek = function seek(position) {
-    this.offset = position;
-  };
-
-  /**
-   *
-   * @param length
-   * @param cb
-   */
-  File.prototype.fetchBytes = function fetchBytes(length, cb) {
-    var reader;
-
-    if (this.length > -1 && this.offset + length > this.length) {
-      cb(null);
-      return;
-    }
-
-    reader = new FileReader();
-    reader.onload = function onload(e) {
-      cb(new Uint8Array(e.target.result));
-    };
-    reader.readAsArrayBuffer(this.handle_.slice(this.offset, this.offset +
-      length));
-  };
-
-  Peeracle.DataSource.File = File;
-
-  /**
-   * @class
-   * @memberof Peeracle.DataSource
-   * @implements {Peeracle.DataSource}
-   * @param {string} handle
-   * @constructor
-   */
-  function Http(handle) {
-    /**
-     * @member {number}
-     * @readonly
-     */
-    this.offset = 0;
-
-    /**
-     * @member {number}
-     * @readonly
-     */
-    this.length = 0;
-
-    /**
-     * @member {string}
-     * @readonly
-     * @private
-     */
-    this.url_ = handle;
-  }
-
-  Http.prototype = Object.create(DataSource.prototype);
-  Http.prototype.constructor = Http;
-
-  /**
-   * @function
-   * @param length
-   */
-  Http.prototype.read = function read(length) {
-    this.offset += length;
-  };
-
-  /**
-   * @function
-   * @param position
-   */
-  Http.prototype.seek = function seek(position) {
-    this.offset = position;
-  };
-
-  /**
-   * @function
-   * @param length
-   * @param cb
-   */
-  Http.prototype.fetchBytes = function fetchBytes(length, cb) {
-    /** @type {XMLHttpRequest} */
-    var r = new XMLHttpRequest();
-    /** @type {Uint8Array} */
-    var bytes;
-    /** @type {string} */
-    var range = this.offset + '-' + (this.offset + (length - 1));
-
-    r.open('GET', this.url_);
-    r.setRequestHeader('Range', 'bytes=' + range);
-    r.responseType = 'arraybuffer';
-    r.onload = function onload() {
-      if (r.status === 206) {
-        bytes = new Uint8Array(r.response);
-        cb(bytes);
-        return;
-      }
-      cb(null);
-    };
-    r.send();
-  };
-
-  Peeracle.DataSource.Http = Http;
-
   /* eslint-disable */
 
   /**
@@ -777,6 +638,121 @@
   }
 
   Peeracle.Manager = Manager;
+
+  /**
+   * @typedef {Object} Track
+   * @property {number} id
+   * @property {number} type
+   * @property {string} codec
+   * @property {number} width
+   * @property {number} height
+   * @property {number} numChannels
+   * @property {number} samplingFrequency
+   * @property {number} bitDepth
+   */
+
+  /**
+   * @typedef {Object} Cue
+   * @property {number} timecode
+   * @property {number} track
+   * @property {number} clusterOffset
+   */
+
+  /**
+   * @interface
+   * @memberof Peeracle
+   * @namespace
+   */
+  function Media() {
+    /** @member {string} */
+    this.mimeType = null;
+
+    /** @member {number} */
+    this.timecodeScale = null;
+
+    /** @member {number} */
+    this.duration = null;
+
+    /** @member {Array.<Track>} */
+    this.tracks = null;
+
+    /** @member {Array.<Cue>} */
+    this.cues = null;
+
+    /** @member {number} */
+    this.width = null;
+
+    /** @member {number} */
+    this.height = null;
+
+    /** @member {number} */
+    this.numChannels = null;
+
+    /** @member {number} */
+    this.samplingFrequency = null;
+
+    /** @member {number} */
+    this.bitDepth = null;
+  }
+
+  /**
+   *
+   * @param {DataSource} dataSource
+   * @param cb
+   */
+  Media.createInstance = function createInstance(dataSource, cb) {
+    var m;
+    var i;
+    var medias = [];
+
+    for (m in Media) {
+      if (Media.hasOwnProperty(m) &&
+        Media[m].hasOwnProperty('checkHeader')) {
+        medias.push(Media[m]);
+      }
+    }
+
+    if (!medias.length) {
+      cb(null);
+      return;
+    }
+
+    i = 0;
+    medias[i].checkHeader(dataSource, function check(media) {
+      if (media) {
+        cb(media);
+        return;
+      }
+
+      if (++i >= medias.length) {
+        cb(null);
+        return;
+      }
+
+      medias[i].checkHeader(dataSource, check);
+    });
+  };
+
+  /* eslint-disable */
+
+  /**
+   *
+   * @function
+   * @param cb
+   */
+  Media.prototype.getInitSegment = function getInitSegment(cb) {};
+
+  /**
+   *
+   * @function
+   * @param timecode
+   * @param cb
+   */
+  Media.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {};
+
+  /* eslint-enable */
+
+  Peeracle.Media = Media;
 
   /**
    * @typedef {Object} EBMLTag
@@ -1600,121 +1576,6 @@
   };
 
   Peeracle.Media.WebM = WebM;
-
-  /**
-   * @typedef {Object} Track
-   * @property {number} id
-   * @property {number} type
-   * @property {string} codec
-   * @property {number} width
-   * @property {number} height
-   * @property {number} numChannels
-   * @property {number} samplingFrequency
-   * @property {number} bitDepth
-   */
-
-  /**
-   * @typedef {Object} Cue
-   * @property {number} timecode
-   * @property {number} track
-   * @property {number} clusterOffset
-   */
-
-  /**
-   * @interface
-   * @memberof Peeracle
-   * @namespace
-   */
-  function Media() {
-    /** @member {string} */
-    this.mimeType = null;
-
-    /** @member {number} */
-    this.timecodeScale = null;
-
-    /** @member {number} */
-    this.duration = null;
-
-    /** @member {Array.<Track>} */
-    this.tracks = null;
-
-    /** @member {Array.<Cue>} */
-    this.cues = null;
-
-    /** @member {number} */
-    this.width = null;
-
-    /** @member {number} */
-    this.height = null;
-
-    /** @member {number} */
-    this.numChannels = null;
-
-    /** @member {number} */
-    this.samplingFrequency = null;
-
-    /** @member {number} */
-    this.bitDepth = null;
-  }
-
-  /**
-   *
-   * @param {DataSource} dataSource
-   * @param cb
-   */
-  Media.createInstance = function createInstance(dataSource, cb) {
-    var m;
-    var i;
-    var medias = [];
-
-    for (m in Media) {
-      if (Media.hasOwnProperty(m) &&
-        Media[m].hasOwnProperty('checkHeader')) {
-        medias.push(Media[m]);
-      }
-    }
-
-    if (!medias.length) {
-      cb(null);
-      return;
-    }
-
-    i = 0;
-    medias[i].checkHeader(dataSource, function check(media) {
-      if (media) {
-        cb(media);
-        return;
-      }
-
-      if (++i >= medias.length) {
-        cb(null);
-        return;
-      }
-
-      medias[i].checkHeader(dataSource, check);
-    });
-  };
-
-  /* eslint-disable */
-
-  /**
-   *
-   * @function
-   * @param cb
-   */
-  Media.prototype.getInitSegment = function getInitSegment(cb) {};
-
-  /**
-   *
-   * @function
-   * @param timecode
-   * @param cb
-   */
-  Media.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {};
-
-  /* eslint-enable */
-
-  Peeracle.Media = Media;
 
   /**
    * @typedef {Object} Segment
@@ -2579,6 +2440,10 @@
 
   Peeracle.PeerConnection = PeerConnection;
 
+  var Tracker = {};
+
+  Peeracle.Tracker = Tracker;
+
   /**
    * @class
    * @memberof Peeracle.Tracker
@@ -2658,101 +2523,6 @@
   };
 
   Peeracle.Tracker.Message = Message;
-
-  var http = require('http');
-  var WebSocketServer = require('websocket').server;
-  var winston = require('winston');
-  var Tracker = Peeracle.Tracker;
-
-  /**
-   * @class
-   * @memberof Peeracle.Tracker
-   * @constructor
-   */
-  function Server() {
-    this.server_ = null;
-    this.ws_ = null;
-
-    winston.loggers.add('Server', {
-      console: {
-        level: 'info',
-        colorize: true,
-        label: 'Server'
-      }
-    });
-
-    this.log_ = new(winston.Logger)({
-      transports: [
-        new(winston.transports.Console)({
-          timestamp: function timestamp() {
-            return Date.now();
-          },
-          formatter: function formatter(options) {
-            return options.timestamp().toLocaleString() + ' [' +
-              options.level.toUpperCase() + '] ' +
-              (undefined !== options.message ? options.message :
-                '') +
-              (options.meta && Object.keys(options.meta).length ?
-                '\n\t' + JSON.stringify(options.meta) : '');
-          }
-        }),
-        new(winston.transports.DailyRotateFile)({
-          filename: 'tracker',
-          datePattern: '.yyyy-MM-dd'
-        })
-      ]
-    });
-  }
-
-  Server.prototype.listen = function listen(host, port) {
-    this.server_ = http.createServer(function createServer(request,
-      response) {
-      response.writeHead(404);
-      response.end();
-    }).listen(port, host, function httpListen() {
-      this.log_.log('info', 'Listening on ' + host + ':' + parseInt(
-        port, 10));
-    }.bind(this));
-
-    this.ws_ = new WebSocketServer({
-      httpServer: this.server_,
-      autoAcceptConnections: false
-    });
-
-    this.ws_.on('request', function onRequest(request) {
-      // TODO: detect origin
-      var sock;
-      try {
-        sock = request.accept('prcl-0.0.1', request.origin);
-      } catch (e) {
-        return;
-      }
-
-      this.log_.log('info', 'new user connected from ' + sock.remoteAddress);
-      sock.on('message', function onMessage(message) {
-        var msg;
-        if (message.type !== 'binary') {
-          return;
-        }
-
-        msg = new Tracker.Message(new Uint8Array(message.binaryData));
-        this.log_.log('info', 'Got new message', msg);
-      }.bind(this));
-
-      sock.on('close', function onClose(reasonCode, description) {
-        this.log_.log('info', 'closed', {
-          reasonCode: reasonCode,
-          description: description
-        });
-      }.bind(this));
-    }.bind(this));
-  };
-
-  Peeracle.Tracker.Server = Server;
-
-  var Tracker = {};
-
-  Peeracle.Tracker = Tracker;
 
   Math.trunc = Math.trunc || function trunc(x) {
     return x < 0 ? Math.ceil(x) : Math.floor(x);
