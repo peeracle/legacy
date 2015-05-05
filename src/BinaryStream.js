@@ -78,10 +78,11 @@ BinaryStream.prototype.writeByte = function writeByte(value) {
  */
 BinaryStream.prototype.readBytes = function readBytes(length) {
   var bytes;
+
   if (this.offset_ >= this.offset_ + this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
-  bytes = this.bytes.slice(this.offset_, length);
+  bytes = this.bytes.subarray(this.offset_, this.offset_ + length);
   this.offset_ += length;
   return bytes;
 };
