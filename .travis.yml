@@ -6,6 +6,6 @@ install:
   - mkdir build
   - wget -P build http://dl.google.com/closure-compiler/compiler-latest.zip
   - unzip build/compiler-latest.zip -d build/
-  - rm build/compiler-latest
+  - rm build/compiler-latest.zip
   - npm install
 before_script: grunt build
