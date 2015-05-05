@@ -2,9 +2,9 @@
   "name": "peeracle",
   "version": "0.0.1",
   "description": "Peeracle Javascript Library",
-  "main": "src/peeracle.js",
+  "main": "peeracle.js",
   "scripts": {
-    "test": "NODE_ENV=test ./node_modules/jasmine/bin/jasmine.js",
+    "test": "NODE_ENV=test jasmine-node --verbose .",
     "lint": "eslint src/*.js"
   },
   "repository": {
@@ -29,15 +29,17 @@
   },
   "homepage": "https://github.com/peeracle/peeracle",
   "devDependencies": {
+    "babel-eslint": "^3.0.1",
     "eslint": "^0.15.1",
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-jshint": "^0.11.0",
     "grunt-contrib-uglify": "^0.8.0",
+    "grunt-eslint": "^12.0.0",
+    "grunt-jsbeautifier": "^0.2.10",
     "grunt-karma": "^0.10.1",
     "grunt-preprocess": "^4.1.0",
-    "jasmine-core": "^2.2.0",
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.7",
     "karma-firefox-launcher": "^0.1.4",
@@ -48,6 +50,7 @@
   "dependencies": {
     "commander": "^2.7.1",
     "event-target": "^0.1.0",
+    "grunt-closure-compiler": "0.0.21",
     "observatory": "^0.1.1",
     "websocket": "^1.0.17",
     "winston": "^1.0.0",

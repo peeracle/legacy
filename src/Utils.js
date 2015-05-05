@@ -20,28 +20,26 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  Math.trunc = Math.trunc || function (x) {
-      return x < 0 ? Math.ceil(x) : Math.floor(x);
-    };
-
-  /**
-   * @class
-   * @constructor
-   */
-  function Utils() {
-  }
-
-  /**
-   *
-   * @param x
-   * @returns {number}
-   */
-  Utils.trunc = function (x) {
-    return Math.trunc(x);
+Math.trunc = Math.trunc || function trunc(x) {
+    return x < 0 ? Math.ceil(x) : Math.floor(x);
   };
 
-  return Utils;
-})();
+/**
+ * @class
+ * @constructor
+ */
+function Utils() {
+}
+
+/**
+ *
+ * @param x
+ * @returns {number}
+ */
+Utils.trunc = function utilsTrunc(x) {
+  return Math.trunc(x);
+};
+
+module.exports = Utils;

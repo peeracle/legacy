@@ -20,16 +20,14 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var Tracker = {
-    // @exclude
-    Client: require('./Tracker.Client.js'),
-    Message: require('./Tracker.Message.js'),
-    Server: require('./Tracker.Server.js')
-    // @endexclude
-  };
+var Tracker = {
+  // @exclude
+  Client: require('./Tracker.Client.js'),
+  Message: require('./Tracker.Message.js'),
+  Server: require('./Tracker.Server.js')
+  // @endexclude
+};
 
-  return Tracker;
-})();
+module.exports = Tracker;

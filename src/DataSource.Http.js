@@ -20,85 +20,86 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  /** @type {DataSource} */
-  var DataSource = require('./DataSource');
-  // @exclude
-  var XMLHttpRequest = require('xhr2');
-  // @endexclude
+// @exclude
+/** @type {DataSource} */
+var DataSource = require('./DataSource');
+var XMLHttpRequest = require('xhr2');
+// @endexclude
+
+/**
+ * @class
+ * @memberof Peeracle.DataSource
+ * @implements {Peeracle.DataSource}
+ * @param {string} handle
+ * @constructor
+ */
+function Http(handle) {
+  /**
+   * @member {number}
+   * @readonly
+   */
+  this.offset = 0;
 
   /**
-   * @class
-   * @memberof Peeracle.DataSource
-   * @implements {Peeracle.DataSource}
-   * @param {string} handle
-   * @constructor
+   * @member {number}
+   * @readonly
    */
-  function Http(handle) {
-    /**
-     * @member {number}
-     * @readonly
-     */
-    this.offset = 0;
-
-    /**
-     * @member {number}
-     * @readonly
-     */
-    this.length = 0;
-
-    /**
-     * @member {string}
-     * @readonly
-     * @private
-     */
-    this.url_ = handle;
-  }
-
-  Http.prototype = Object.create(DataSource.prototype);
-  Http.prototype.constructor = Http;
+  this.length = 0;
 
   /**
-   * @function
-   * @param length
+   * @member {string}
+   * @readonly
+   * @private
    */
-  Http.prototype.read = function (length) {
-    this.offset += length;
+  this.url_ = handle;
+}
+
+Http.prototype = Object.create(DataSource.prototype);
+Http.prototype.constructor = Http;
+
+/**
+ * @function
+ * @param length
+ */
+Http.prototype.read = function read(length) {
+  this.offset += length;
+};
+
+/**
+ * @function
+ * @param position
+ */
+Http.prototype.seek = function seek(position) {
+  this.offset = position;
+};
+
+/**
+ * @function
+ * @param length
+ * @param cb
+ */
+Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+  /** @type {XMLHttpRequest} */
+  var r = new XMLHttpRequest();
+  /** @type {Uint8Array} */
+  var bytes;
+  /** @type {string} */
+  var range = this.offset + '-' + (this.offset + (length - 1));
+
+  r.open('GET', this.url_);
+  r.setRequestHeader('Range', 'bytes=' + range);
+  r.responseType = 'arraybuffer';
+  r.onload = function onload() {
+    if (r.status === 206) {
+      bytes = new Uint8Array(r.response);
+      cb(bytes);
+      return;
+    }
+    cb(null);
   };
+  r.send();
+};
 
-  /**
-   * @function
-   * @param position
-   */
-  Http.prototype.seek = function (position) {
-    this.offset = position;
-  };
-
-  /**
-   * @function
-   * @param length
-   * @param cb
-   */
-  Http.prototype.fetchBytes = function (length, cb) {
-    /** @type {XMLHttpRequest} */
-    var r = new XMLHttpRequest();
-    var range = this.offset + '-' + (this.offset + (length - 1));
-
-    r.open('GET', this.url_);
-    r.setRequestHeader('Range', 'bytes=' + range);
-    r.responseType = 'arraybuffer';
-    r.onload = function () {
-      if (r.status === 206) {
-        var bytes = new Uint8Array(r.response);
-        cb(bytes);
-        return;
-      }
-      cb(null);
-    };
-    r.send();
-  };
-
-  return Http;
-})();
+module.exports = Http;

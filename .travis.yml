@@ -1,0 +1,11 @@
+language: node_js
+node_js:
+  - "0.12"
+before_install: npm install -g grunt-cli
+install:
+  - mkdir build
+  - wget -P build http://dl.google.com/closure-compiler/compiler-latest.zip
+  - unzip build/compiler-latest.zip -d build/
+  - rm build/compiler-latest
+  - npm install
+before_script: grunt build

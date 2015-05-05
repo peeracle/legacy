@@ -23,12 +23,14 @@
 /* eslint-disable */
 'use strict';
 
-var Peeracle = require('../src/peeracle');
+if (!Peeracle) {
+  var Peeracle = require('../peeracle');
+}
 
 describe('BinaryStream', function () {
   var buffer;
   var binaryStream;
-  it('should create an array with 32 zeroes', function () {
+  it('should create a Uint8Array with 32 zeroes', function () {
     buffer = new Uint8Array(32);
     expect(buffer).not.toBeNull();
     expect(buffer.length).toEqual(32);

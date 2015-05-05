@@ -20,253 +20,253 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var Listenable = require('./Listenable');
+// @exclude
+var Listenable = require('./Listenable');
+// @endexclude
 
-  /**
-   * @class
-   * @constructor
-   * @memberof Peeracle
-   */
-  function Peer() {
+/**
+ * @class
+ * @constructor
+ * @memberof Peeracle
+ */
+function Peer() {
 
-  }
+}
 
-  Peer.prototype = Object.create(Listenable.prototype);
+Peer.prototype = Object.create(Listenable.prototype);
 
-  return Peer;
+module.exports = Peer;
 
-  /*
-  function Peer() {
-    var _subscribers = [];
-    var _peerConnection;
-    var _signalDataChannel;
-    var _mediaDataChannel;
-    var _ready;
+/*
+ function Peer() {
+ var _subscribers = [];
+ var _peerConnection;
+ var _signalDataChannel;
+ var _mediaDataChannel;
+ var _ready;
 
-    var _onIceCandidate = function (event) {
-      if (!_peerConnection || !event) {
-        return;
-      }
+ var _onIceCandidate = function (event) {
+ if (!_peerConnection || !event) {
+ return;
+ }
 
-      var ice = event.candidate;
-      _subscribers.forEach(function (subscriber) {
-        subscriber.onIceCandidate(ice);
-      });
-    };
+ var ice = event.candidate;
+ _subscribers.forEach(function (subscriber) {
+ subscriber.onIceCandidate(ice);
+ });
+ };
 
 
-    var _onMediaError = function (error) {
-      console.log('Peeracle.MediaChannel onerror', error);
-    };
+ var _onMediaError = function (error) {
+ console.log('Peeracle.MediaChannel onerror', error);
+ };
 
-    var _onMediaMessage = function (event) {
-      _subscribers.forEach(function (subscriber) {
-        subscriber.onData(new Uint8Array(event.data));
-      });
-    };
+ var _onMediaMessage = function (event) {
+ _subscribers.forEach(function (subscriber) {
+ subscriber.onData(new Uint8Array(event.data));
+ });
+ };
 
-    var _onMediaOpen = function (event) {
-      if ((event.target && event.target.readyState.toLowerCase() === 'open') || event.type === 'open') {
-        _ready++;
-        if (_ready === 2) {
-          console.log('we are ready.');
-          _subscribers.forEach(function (subscriber) {
-            subscriber.onReady();
-          });
-        }
-      }
-    };
+ var _onMediaOpen = function (event) {
+ if ((event.target && event.target.readyState.toLowerCase() === 'open') || event.type === 'open') {
+ _ready++;
+ if (_ready === 2) {
+ console.log('we are ready.');
+ _subscribers.forEach(function (subscriber) {
+ subscriber.onReady();
+ });
+ }
+ }
+ };
 
-    var _onMediaClose = function () {
-      console.log('Peeracle.MediaChannel onclose');
-    };
+ var _onMediaClose = function () {
+ console.log('Peeracle.MediaChannel onclose');
+ };
 
-    var _setMediaDataChannel = function (dataChannel) {
-      dataChannel.onerror = _onMediaError;
-      dataChannel.onmessage = _onMediaMessage;
-      dataChannel.onopen = _onMediaOpen;
-      dataChannel.onclose = _onMediaClose;
-    };
+ var _setMediaDataChannel = function (dataChannel) {
+ dataChannel.onerror = _onMediaError;
+ dataChannel.onmessage = _onMediaMessage;
+ dataChannel.onopen = _onMediaOpen;
+ dataChannel.onclose = _onMediaClose;
+ };
 
-    var _onSignalError = function (error) {
-      console.log('Peeracle.SignalChannel onerror', error);
-    };
+ var _onSignalError = function (error) {
+ console.log('Peeracle.SignalChannel onerror', error);
+ };
 
-    var _onSignalMessage = function (event) {
-      var data = JSON.parse(event.data);
-      if (data.type === 'request') {
-        _subscribers.forEach(function (subscriber) {
-          subscriber.onRequest(data.cluster, data.chunk);
-        });
-      }
-    };
+ var _onSignalMessage = function (event) {
+ var data = JSON.parse(event.data);
+ if (data.type === 'request') {
+ _subscribers.forEach(function (subscriber) {
+ subscriber.onRequest(data.cluster, data.chunk);
+ });
+ }
+ };
 
-    var _onSignalOpen = function (event) {
-      if ((event.target && event.target.readyState.toLowerCase() === 'open') || event.type === 'open') {
-        _ready++;
-        if (_ready === 2) {
-          console.log('we are ready.');
-          _subscribers.forEach(function (subscriber) {
-            subscriber.onReady();
-          });
-        }
-      }
-    };
+ var _onSignalOpen = function (event) {
+ if ((event.target && event.target.readyState.toLowerCase() === 'open') || event.type === 'open') {
+ _ready++;
+ if (_ready === 2) {
+ console.log('we are ready.');
+ _subscribers.forEach(function (subscriber) {
+ subscriber.onReady();
+ });
+ }
+ }
+ };
 
-    var _onSignalClose = function () {
-      console.log('Peeracle.SignalChannel onclose');
-    };
+ var _onSignalClose = function () {
+ console.log('Peeracle.SignalChannel onclose');
+ };
 
-    var _setSignalDataChannel = function (dataChannel) {
-      dataChannel.onerror = _onSignalError;
-      dataChannel.onmessage = _onSignalMessage;
-      dataChannel.onopen = _onSignalOpen;
-      dataChannel.onclose = _onSignalClose;
-    };
+ var _setSignalDataChannel = function (dataChannel) {
+ dataChannel.onerror = _onSignalError;
+ dataChannel.onmessage = _onSignalMessage;
+ dataChannel.onopen = _onSignalOpen;
+ dataChannel.onclose = _onSignalClose;
+ };
 
-    var _onDataChannel = function (event) {
-      if (!event || !event.channel) {
-        return;
-      }
+ var _onDataChannel = function (event) {
+ if (!event || !event.channel) {
+ return;
+ }
 
-      if (event.channel.label === 'signal') {
-        _signalDataChannel = event.channel;
-        _setSignalDataChannel(_signalDataChannel);
-      } else if (event.channel.label === 'media') {
-        _mediaDataChannel = event.channel;
-        _setMediaDataChannel(_mediaDataChannel);
-      }
-    };
+ if (event.channel.label === 'signal') {
+ _signalDataChannel = event.channel;
+ _setSignalDataChannel(_signalDataChannel);
+ } else if (event.channel.label === 'media') {
+ _mediaDataChannel = event.channel;
+ _setMediaDataChannel(_mediaDataChannel);
+ }
+ };
 
-    var _createDataChannels = function () {
-      _signalDataChannel = _peerConnection.createDataChannel('signal');
-      _mediaDataChannel = _peerConnection.createDataChannel('media');
+ var _createDataChannels = function () {
+ _signalDataChannel = _peerConnection.createDataChannel('signal');
+ _mediaDataChannel = _peerConnection.createDataChannel('media');
 
-      _setSignalDataChannel(_signalDataChannel);
-      _setMediaDataChannel(_mediaDataChannel);
-    };
+ _setSignalDataChannel(_signalDataChannel);
+ _setMediaDataChannel(_mediaDataChannel);
+ };
 
-    var _createPeerConnection = function () {
-      var configuration = {
-        iceServers: [
-          {
-            url: 'stun:stun.l.google.com:19302'
-          }
-        ]
-      };
+ var _createPeerConnection = function () {
+ var configuration = {
+ iceServers: [
+ {
+ url: 'stun:stun.l.google.com:19302'
+ }
+ ]
+ };
 
-      _peerConnection = new RTCPeerConnection(configuration);
-      _peerConnection.onicecandidate = _onIceCandidate;
-      _peerConnection.ondatachannel = _onDataChannel;
-      _ready = 0;
-    };
+ _peerConnection = new RTCPeerConnection(configuration);
+ _peerConnection.onicecandidate = _onIceCandidate;
+ _peerConnection.ondatachannel = _onDataChannel;
+ _ready = 0;
+ };
 
-    var subscribe = function (subscriber) {
-      var index = _subscribers.indexOf(subscriber);
+ var subscribe = function (subscriber) {
+ var index = _subscribers.indexOf(subscriber);
 
-      if (!~index) {
-        _subscribers.push(subscriber);
-      }
-    };
+ if (!~index) {
+ _subscribers.push(subscriber);
+ }
+ };
 
-    var unsubscribe = function (subscriber) {
-      var index = _subscribers.indexOf(subscriber);
+ var unsubscribe = function (subscriber) {
+ var index = _subscribers.indexOf(subscriber);
 
-      if (~index) {
-        _subscribers.splice(index, 1);
-      }
-    };
+ if (~index) {
+ _subscribers.splice(index, 1);
+ }
+ };
 
-    var createOffer = function (successCb, failureCb) {
-      var errorFunction = function (error) {
-        failureCb(error);
-      };
+ var createOffer = function (successCb, failureCb) {
+ var errorFunction = function (error) {
+ failureCb(error);
+ };
 
-      _createPeerConnection();
-      _createDataChannels();
-      _peerConnection.createOffer(function (sdp) {
-        _peerConnection.setLocalDescription(sdp, function () {
-          successCb(sdp);
-        }, errorFunction);
-      }, errorFunction);
-    };
+ _createPeerConnection();
+ _createDataChannels();
+ _peerConnection.createOffer(function (sdp) {
+ _peerConnection.setLocalDescription(sdp, function () {
+ successCb(sdp);
+ }, errorFunction);
+ }, errorFunction);
+ };
 
-    var createAnswer = function (offerSdp, successCb, failureCb) {
-      var errorFunction = function (error) {
-        failureCb(error);
-      };
+ var createAnswer = function (offerSdp, successCb, failureCb) {
+ var errorFunction = function (error) {
+ failureCb(error);
+ };
 
-      _createPeerConnection();
-      var realSdp = new RTCSessionDescription(offerSdp);
-      _peerConnection.setRemoteDescription(realSdp, function () {
-        _peerConnection.createAnswer(function (sdp) {
-          _peerConnection.setLocalDescription(sdp, function () {
-            successCb(sdp);
-          }, errorFunction);
-        }, errorFunction);
-      }, errorFunction);
-    };
+ _createPeerConnection();
+ var realSdp = new RTCSessionDescription(offerSdp);
+ _peerConnection.setRemoteDescription(realSdp, function () {
+ _peerConnection.createAnswer(function (sdp) {
+ _peerConnection.setLocalDescription(sdp, function () {
+ successCb(sdp);
+ }, errorFunction);
+ }, errorFunction);
+ }, errorFunction);
+ };
 
-    var setAnswer = function (answerSdp, successCb, failureCb) {
-      var errorFunction = function (error) {
-        failureCb(error);
-      };
+ var setAnswer = function (answerSdp, successCb, failureCb) {
+ var errorFunction = function (error) {
+ failureCb(error);
+ };
 
-      var realSdp = new RTCSessionDescription(answerSdp);
-      _peerConnection.setRemoteDescription(realSdp, function () {
-        successCb();
-      }, errorFunction);
-    };
+ var realSdp = new RTCSessionDescription(answerSdp);
+ _peerConnection.setRemoteDescription(realSdp, function () {
+ successCb();
+ }, errorFunction);
+ };
 
-    var addIceCandidate = function (ice, successCb, failureCb) {
-      _peerConnection.addIceCandidate(new RTCIceCandidate(ice),
-        function () {
-          successCb();
-        }, function (error) {
-          failureCb(error);
-        }
-      );
-    };
+ var addIceCandidate = function (ice, successCb, failureCb) {
+ _peerConnection.addIceCandidate(new RTCIceCandidate(ice),
+ function () {
+ successCb();
+ }, function (error) {
+ failureCb(error);
+ }
+ );
+ };
 
-    var request = function (cluster, chunk) {
-      _signalDataChannel.send(JSON.stringify({type: 'request', cluster: cluster, chunk: chunk}));
-    };
+ var request = function (cluster, chunk) {
+ _signalDataChannel.send(JSON.stringify({type: 'request', cluster: cluster, chunk: chunk}));
+ };
 
-    var sendData = function (data) {
-      var index = 0;
-      var size = 16384;
-      var process = setInterval(function () {
-        if (_mediaDataChannel.bufferedAmount) {
-          return;
-        }
+ var sendData = function (data) {
+ var index = 0;
+ var size = 16384;
+ var process = setInterval(function () {
+ if (_mediaDataChannel.bufferedAmount) {
+ return;
+ }
 
-        if (index + size > data.length) {
-          size = data.length - index;
-          clearInterval(process);
-        }
+ if (index + size > data.length) {
+ size = data.length - index;
+ clearInterval(process);
+ }
 
-        _mediaDataChannel.send(data.subarray(index, index + size));
-        index += size;
-      }, 1);
-    };
+ _mediaDataChannel.send(data.subarray(index, index + size));
+ index += size;
+ }, 1);
+ };
 
-    var close = function () {
-      _peerConnection.close();
-    };
+ var close = function () {
+ _peerConnection.close();
+ };
 
-    return {
-      subscribe: subscribe,
-      unsubscribe: unsubscribe,
-      createOffer: createOffer,
-      createAnswer: createAnswer,
-      setAnswer: setAnswer,
-      addIceCandidate: addIceCandidate,
-      request: request,
-      sendData: sendData,
-      close: close
-    };
-  }*/
-})();
+ return {
+ subscribe: subscribe,
+ unsubscribe: unsubscribe,
+ createOffer: createOffer,
+ createAnswer: createAnswer,
+ setAnswer: setAnswer,
+ addIceCandidate: addIceCandidate,
+ request: request,
+ sendData: sendData,
+ close: close
+ };
+ }*/

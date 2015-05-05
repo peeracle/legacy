@@ -20,59 +20,89 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var Crypto = require('./Crypto');
+// @exclude
+var Crypto = require('./Crypto');
+// @endexclude
 
+/**
+ * @class
+ * @memberof Peeracle
+ * @constructor
+ */
+function MetadataUnserializer() {
   /**
-   * @class
-   * @memberof Peeracle
-   * @constructor
-   */
-  function MetadataUnserializer() {
-    /**
-     * @type {Crypto}
-     * @private
-     */
-    this.crypto_ = null;
-
-    /**
-     * @type {BinaryStream}
-     * @private
-     */
-    this.stream_ = null;
-  }
-
-  /**
-   *
-   * @returns {Segment}
+   * @type {Crypto}
    * @private
    */
-  MetadataUnserializer.prototype.unserializeSegment_ = function () {
+  this.crypto_ = null;
+
+  /**
+   * @type {BinaryStream}
+   * @private
+   */
+  this.stream_ = null;
+}
+
+/**
+ *
+ * @returns {Segment}
+ * @private
+ */
+MetadataUnserializer.prototype.unserializeSegment_ =
+  function unserializeSegment_() {
     /** @type {Segment} */
     var segment = {};
+    var numChunks;
+    var i;
+    var chunk;
 
     segment.timecode = this.stream_.readUInt32();
     segment.length = this.stream_.readUInt32();
     segment.checksum = this.crypto_.unserialize(this.stream_);
 
     segment.chunks = [];
-    var numChunks = this.stream_.readUInt32();
-    for (var ci = 0; ci < numChunks; ++ci) {
-      var chunk = this.crypto_.unserialize(this.stream_);
+    numChunks = this.stream_.readUInt32();
+    for (i = 0; i < numChunks; ++i) {
+      chunk = this.crypto_.unserialize(this.stream_);
       segment.chunks.push(chunk);
     }
 
     return segment;
   };
 
-  /**
-   *
-   * @returns {Stream}
-   * @private
-   */
-  MetadataUnserializer.prototype.unserializeStream_ = function () {
+MetadataUnserializer.prototype.unserializeStreamInit_ =
+  function unserializeStreamInit_(stream) {
+    /** @type {number} */
+    var i;
+    var initLength = this.stream_.readUInt32();
+    stream.init = new Uint8Array(initLength);
+    for (i = 0; i < initLength; ++i) {
+      stream.init[i] = this.stream_.readByte();
+    }
+  };
+
+MetadataUnserializer.prototype.unserializeStreamSegments_ =
+  function unserializeStreamSegments_(stream) {
+    var i;
+    var segment;
+    var numSegments = this.stream_.readUInt32();
+
+    stream.segments = [];
+    for (i = 0; i < numSegments; ++i) {
+      segment = this.unserializeSegment_();
+      stream.segments.push(segment);
+    }
+  };
+
+/**
+ *
+ * @returns {Stream}
+ * @private
+ */
+MetadataUnserializer.prototype.unserializeStream_ =
+  function unserializeStream_() {
     /** @type {Stream} */
     var stream = {};
 
@@ -85,66 +115,61 @@ module.exports = (function () {
     stream.samplingFrequency = this.stream_.readInt32();
     stream.chunksize = this.stream_.readUInt32();
 
-    /** @type {number} */
-    var initLength = this.stream_.readUInt32();
-    stream.init = new Uint8Array(initLength);
-    for (var i = 0; i < initLength; ++i) {
-      stream.init[i] = this.stream_.readByte();
-    }
-
-    stream.segments = [];
-    var numSegments = this.stream_.readUInt32();
-    for (var s = 0; s < numSegments; ++s) {
-      /** @type Segment */
-      var segment = this.unserializeSegment_();
-      stream.segments.push(segment);
-    }
+    this.unserializeStreamInit_(stream);
+    this.unserializeStreamSegments_(stream);
     return stream;
   };
 
-  /**
-   *
-   * @returns {Array.<Stream>}
-   * @private
-   */
-  MetadataUnserializer.prototype.unserializeStreams_ = function () {
+/**
+ *
+ * @returns {Array.<Stream>}
+ * @private
+ */
+MetadataUnserializer.prototype.unserializeStreams_ =
+  function unserializeStreams_() {
+    var i;
+    var stream;
     /** @type Array.<Stream> */
     var streams = [];
     var numStreams = this.stream_.readUInt32();
-    for (var i = 0; i < numStreams; ++i) {
-      var stream = this.unserializeStream_();
+
+    for (i = 0; i < numStreams; ++i) {
+      stream = this.unserializeStream_();
       streams.push(stream);
     }
     return streams;
   };
 
-  /**
-   *
-   * @returns {Array.<string>}
-   * @private
-   */
-  MetadataUnserializer.prototype.unserializeTrackers_ = function () {
+/**
+ *
+ * @returns {Array.<string>}
+ * @private
+ */
+MetadataUnserializer.prototype.unserializeTrackers_ =
+  function unserializeTrackers_() {
+    var i;
     var numTrackers = this.stream_.readUInt32();
     var trackers = [];
 
-    for (var i = 0; i < numTrackers; ++i) {
+    for (i = 0; i < numTrackers; ++i) {
       trackers.push(this.stream_.readString());
     }
 
     return trackers;
   };
 
-  /**
-   * @returns {Header}
-   * @private
-   */
-  MetadataUnserializer.prototype.unserializeHeader_ = function () {
+/**
+ * @returns {Header}
+ * @private
+ */
+MetadataUnserializer.prototype.unserializeHeader_ =
+  function unserializeHeader_() {
     /** @type {Header} */
     var header = {};
 
     header.magic = this.stream_.readUInt32();
     if (header.magic !== 1347568460) {
-      throw 'Wrong file header';
+      throw new Error('Wrong file header');
     }
 
     header.version = this.stream_.readUInt32();
@@ -152,7 +177,7 @@ module.exports = (function () {
 
     this.crypto_ = Crypto.createInstance(header.cryptoId);
     if (!this.crypto_) {
-      throw 'Unknown checksum ' + header.cryptoId;
+      throw new Error('Unknown checksum ' + header.cryptoId);
     }
 
     header.timecodeScale = this.stream_.readUInt32();
@@ -160,17 +185,21 @@ module.exports = (function () {
     return header;
   };
 
-  /**
-   * @param {BinaryStream} stream
-   * @param {Metadata} metadata
-   */
-  MetadataUnserializer.prototype.unserialize = function (stream, metadata) {
+/**
+ * @param {BinaryStream} stream
+ * @param {Metadata} metadata
+ */
+MetadataUnserializer.prototype.unserialize =
+  function unserialize(stream, metadata) {
+    var header;
+    var trackers;
+    var streams;
+
     this.stream_ = stream;
 
-    /** @type {Header} */
-    var header = this.unserializeHeader_();
-    var trackers = this.unserializeTrackers_();
-    var streams = this.unserializeStreams_();
+    header = this.unserializeHeader_();
+    trackers = this.unserializeTrackers_();
+    streams = this.unserializeStreams_();
 
     metadata.timecodeScale = header.timecodeScale;
     metadata.duration = header.duration;
@@ -178,5 +207,4 @@ module.exports = (function () {
     metadata.streams = streams;
   };
 
-  return MetadataUnserializer;
-})();
+module.exports = MetadataUnserializer;

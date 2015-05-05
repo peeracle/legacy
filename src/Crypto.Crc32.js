@@ -20,133 +20,134 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var Crypto = require('./Crypto');
+// @exclude
+var Crypto = require('./Crypto');
+// @endexclude
 
+/**
+ * crc32 checksum algorithm implementation
+ *
+ * @class
+ * @constructor
+ * @memberof Peeracle.Crypto
+ * @implements {Peeracle.Crypto}
+ */
+function Crc32() {
   /**
-   * crc32 checksum algorithm implementation
-   *
-   * @class
-   * @constructor
-   * @memberof Peeracle.Crypto
-   * @implements {Peeracle.Crypto}
-   */
-  function Crc32() {
-    /**
-     * @type {number}
-     * @private
-     */
-    this.crc_ = null;
-
-    /**
-     * @type {Array.<number>}
-     * @private
-     */
-    this.crcTable_ = null;
-  }
-
-  Crc32.prototype = Object.create(Crypto.prototype);
-  Crc32.prototype.constructor = Crc32;
-
-  /**
-   *
-   * @returns {string}
-   */
-  Crc32.getIdentifier = function () {
-    return 'crc32';
-  };
-
-  /**
-   * Generate the crc32 table.
-   *
-   * @function
+   * @type {number}
    * @private
    */
-  Crc32.prototype.generateCrc32Table_ = function () {
-    var c;
-    this.crcTable_ = [];
-    for (var n = 0; n < 256; n++) {
-      c = n;
-      for (var k = 0; k < 8; k++) {
-        c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
-      }
-      this.crcTable_[n] = c;
+  this.crc_ = null;
+
+  /**
+   * @type {Array.<number>}
+   * @private
+   */
+  this.crcTable_ = null;
+}
+
+Crc32.prototype = Object.create(Crypto.prototype);
+Crc32.prototype.constructor = Crc32;
+
+/** @type {string} */
+Crc32.IDENTIFIER = 'crc32';
+
+/**
+ * Generate the crc32 table.
+ *
+ * @function
+ * @private
+ */
+Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
+  var c;
+  var n;
+  var k;
+
+  this.crcTable_ = [];
+  for (n = 0; n < 256; n++) {
+    c = n;
+    for (k = 0; k < 8; k++) {
+      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
     }
-  };
+    this.crcTable_[n] = c;
+  }
+};
 
-  /**
-   * Retrieve the checksum of an entire array.
-   *
-   * @function
-   * @param array
-   * @returns {*}
-   */
-  Crc32.prototype.checksum = function (array) {
-    this.init();
-    this.update(array);
-    return this.finish();
-  };
+/**
+ * Retrieve the checksum of an entire array.
+ *
+ * @function
+ * @param array
+ * @returns {*}
+ */
+Crc32.prototype.checksum = function checksum(array) {
+  this.init();
+  this.update(array);
+  return this.finish();
+};
 
-  /**
-   * Initialize the checksum algorithm.
-   *
-   * @function
-   */
-  Crc32.prototype.init = function () {
-    if (!this.crcTable_) {
-      this.generateCrc32Table_();
-    }
+/**
+ * Initialize the checksum algorithm.
+ *
+ * @function
+ */
+Crc32.prototype.init = function init() {
+  if (!this.crcTable_) {
+    this.generateCrc32Table_();
+  }
 
-    this.crc_ = 0 ^ (-1);
-  };
+  this.crc_ = 0 ^ (-1);
+};
 
-  /**
-   * Do a checksum for a partial array.
-   *
-   * @function
-   * @param array
-   */
-  Crc32.prototype.update = function (array) {
-    var keys = Object.keys(array);
-    for (var i = 0, l = keys.length; i < l; ++i) {
-      this.crc_ = (this.crc_ >>> 8) ^
-        this.crcTable_[(this.crc_ ^ array[i]) & 0xFF];
-    }
-  };
+/**
+ * Do a checksum for a partial array.
+ *
+ * @function
+ * @param array
+ */
+Crc32.prototype.update = function update(array) {
+  var i;
+  var l;
+  var keys = Object.keys(array);
 
-  /**
-   * Return the final checksum.
-   *
-   * @function
-   * @returns {number}
-   */
-  Crc32.prototype.finish = function () {
-    return (this.crc_ ^ (-1)) >>> 0;
-  };
+  for (i = 0, l = keys.length; i < l; ++i) {
+    this.crc_ = (this.crc_ >>> 8) ^
+      this.crcTable_[(this.crc_ ^ array[i]) & 0xFF];
+  }
+};
 
-  /**
-   * Convert the checksum to bytes.
-   *
-   * @function
-   * @param value
-   * @param {BinaryStream} binaryStream
-   */
-  Crc32.prototype.serialize = function (value, binaryStream) {
-    return binaryStream.writeUInt32(value);
-  };
+/**
+ * Return the final checksum.
+ *
+ * @function
+ * @returns {number}
+ */
+Crc32.prototype.finish = function finish() {
+  return (this.crc_ ^ (-1)) >>> 0;
+};
 
-  /**
-   * Read the checksum from bytes.
-   *
-   * @function
-   * {BinaryStream} binaryStream
-   * @returns {*}
-   */
-  Crc32.prototype.unserialize = function (binaryStream) {
-    return binaryStream.readUInt32();
-  };
+/**
+ * Convert the checksum to bytes.
+ *
+ * @function
+ * @param value
+ * @param {BinaryStream} binaryStream
+ */
+Crc32.prototype.serialize = function serialize(value, binaryStream) {
+  return binaryStream.writeUInt32(value);
+};
 
-  return Crc32;
-})();
+/**
+ * Read the checksum from bytes.
+ *
+ * @function
+ * {BinaryStream} binaryStream
+ * @returns {*}
+ */
+Crc32.prototype.unserialize = function unserialize(binaryStream) {
+  return binaryStream.readUInt32();
+};
+
+module.exports = Crc32;

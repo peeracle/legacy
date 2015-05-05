@@ -20,98 +20,121 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  /**
-   * @typedef {Object} Track
-   * @property {number} id
-   * @property {number} type
-   * @property {string} codec
-   * @property {number} width
-   * @property {number} height
-   * @property {number} numChannels
-   * @property {number} samplingFrequency
-   * @property {number} bitDepth
-   */
+/**
+ * @typedef {Object} Track
+ * @property {number} id
+ * @property {number} type
+ * @property {string} codec
+ * @property {number} width
+ * @property {number} height
+ * @property {number} numChannels
+ * @property {number} samplingFrequency
+ * @property {number} bitDepth
+ */
 
-  /**
-   * @typedef {Object} Cue
-   * @property {number} timecode
-   * @property {number} track
-   * @property {number} clusterOffset
-   */
+/**
+ * @typedef {Object} Cue
+ * @property {number} timecode
+ * @property {number} track
+ * @property {number} clusterOffset
+ */
 
-  /**
-   * @interface
-   * @memberof Peeracle
-   * @namespace
-   */
-  function Media() {
-    this.mimeType = null;
-    this.timecodeScale = null;
-    this.duration = null;
-    this.tracks = null;
-    this.cues = null;
-    this.width = null;
-    this.height = null;
-    this.numChannels = null;
-    this.samplingFrequency = null;
-    this.bitDepth = null;
+/**
+ * @interface
+ * @memberof Peeracle
+ * @namespace
+ */
+function Media() {
+  /** @member {string} */
+  this.mimeType = null;
+
+  /** @member {number} */
+  this.timecodeScale = null;
+
+  /** @member {number} */
+  this.duration = null;
+
+  /** @member {Array.<Track>} */
+  this.tracks = null;
+
+  /** @member {Array.<Cue>} */
+  this.cues = null;
+
+  /** @member {number} */
+  this.width = null;
+
+  /** @member {number} */
+  this.height = null;
+
+  /** @member {number} */
+  this.numChannels = null;
+
+  /** @member {number} */
+  this.samplingFrequency = null;
+
+  /** @member {number} */
+  this.bitDepth = null;
+}
+
+/**
+ *
+ * @param {DataSource} dataSource
+ * @param cb
+ */
+Media.createInstance = function createInstance(dataSource, cb) {
+  var m;
+  var i;
+  var medias = [];
+
+  for (m in Media) {
+    if (Media.hasOwnProperty(m) &&
+      Media[m].hasOwnProperty('checkHeader')) {
+      medias.push(Media[m]);
+    }
   }
 
-  /**
-   *
-   * @param {DataSource} dataSource
-   * @param cb
-   */
-  Media.createInstance = function (dataSource, cb) {
-    var medias = [];
-    for (var m in Media) {
-      if (Media.hasOwnProperty(m) &&
-        Media[m].hasOwnProperty('checkHeader')) {
-        medias.push(Media[m]);
-      }
+  if (!medias.length) {
+    cb(null);
+    return;
+  }
+
+  i = 0;
+  medias[i].checkHeader(dataSource, function check(media) {
+    if (media) {
+      cb(media);
+      return;
     }
 
-    if (!medias.length) {
+    if (++i >= medias.length) {
       cb(null);
       return;
     }
 
-    var i = 0;
-    medias[i].checkHeader(dataSource, function check(media) {
-      if (media) {
-        cb(media);
-        return;
-      }
+    medias[i].checkHeader(dataSource, check);
+  });
+};
 
-      if (++i >= medias.length) {
-        cb(null);
-        return;
-      }
+/* eslint-disable */
 
-      medias[i].checkHeader(dataSource, check);
-    });
-  };
+/**
+ *
+ * @function
+ * @param cb
+ */
+Media.prototype.getInitSegment = function getInitSegment(cb) {
+};
 
-  /**
-   *
-   * @function
-   * @param cb
-   */
-  Media.prototype.getInitSegment = function (cb) {
-    throw 'Media: method getInitSegment(cb) not implemented';
-  };
+/**
+ *
+ * @function
+ * @param timecode
+ * @param cb
+ */
+Media.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
+};
 
-  /**
-   *
-   * @function
-   * @param cb
-   */
-  Media.prototype.getMediaSegment = function (timecode, cb) {
-    throw 'Media: method getMediaSegment(cb) not implemented';
-  };
+/* eslint-enable */
 
-  return Media;
-})();
+module.exports = Media;

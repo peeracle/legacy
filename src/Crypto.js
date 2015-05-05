@@ -20,73 +20,78 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  /**
-   * @interface
-   * @memberof Peeracle
-   * @namespace
-   */
-  function Crypto() {
+/**
+ * @interface
+ * @memberof Peeracle
+ * @namespace
+ */
+function Crypto() {
+}
+
+/**
+ *
+ * @param id
+ * @returns {?Crypto}
+ */
+Crypto.createInstance = function createInstance(id) {
+  var c;
+
+  for (c in Crypto) {
+    if (Crypto.hasOwnProperty(c) &&
+      Crypto[c].hasOwnProperty('IDENTIFIER') &&
+      Crypto[c].IDENTIFIER === id) {
+      return new Crypto[c]();
+    }
   }
 
-  /**
-   *
-   * @param id
-   * @returns {?Crypto}
-   */
-  Crypto.createInstance = function (id) {
-    for (var c in Crypto) {
-      if (Crypto.hasOwnProperty(c) &&
-        Crypto[c].hasOwnProperty('getIdentifier') &&
-        Crypto[c].getIdentifier() === id) {
-        return new Crypto[c]();
-      }
-    }
-    return null;
-  };
+  return null;
+};
 
-  /**
-   * @function
-   * @param array
-   */
-  Crypto.prototype.checksum = function (array) {
-  };
+/* eslint-disable */
 
-  /**
-   * @function
-   */
-  Crypto.prototype.init = function () {
-  };
+/**
+ * @function
+ * @param array
+ */
+Crypto.prototype.checksum = function checksum(array) {
+};
 
-  /**
-   * @function
-   * @param array
-   */
-  Crypto.prototype.update = function (array) {
-  };
+/**
+ * @function
+ */
+Crypto.prototype.init = function init() {
+};
 
-  /**
-   * @function
-   */
-  Crypto.prototype.finish = function () {
-  };
+/**
+ * @function
+ * @param array
+ */
+Crypto.prototype.update = function update(array) {
+};
 
-  /**
-   *
-   * @param value
-   * @param {BinaryStream} binaryStream
-   */
-  Crypto.prototype.serialize = function (value, binaryStream) {
-  };
+/**
+ * @function
+ */
+Crypto.prototype.finish = function finish() {
+};
 
-  /**
-   *
-   * @param {BinaryStream} binaryStream
-   */
-  Crypto.prototype.unserialize = function (binaryStream) {
-  };
+/**
+ *
+ * @param value
+ * @param {BinaryStream} binaryStream
+ */
+Crypto.prototype.serialize = function serialize(value, binaryStream) {
+};
 
-  return Crypto;
-})();
+/**
+ *
+ * @param {BinaryStream} binaryStream
+ */
+Crypto.prototype.unserialize = function unserialize(binaryStream) {
+};
+
+/* eslint-enable */
+
+module.exports = Crypto;

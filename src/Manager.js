@@ -20,8 +20,10 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  return null;
-})();
+function Manager() {
+
+}
+
+module.exports = Manager;

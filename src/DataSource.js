@@ -20,50 +20,52 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
+
+/* eslint-disable */
+
+/**
+ * @interface
+ * @memberof Peeracle
+ * @param {*} handle
+ * @constructor
+ */
+function DataSource(handle) {
+  /**
+   * @readonly
+   * @member {number}
+   */
+  this.offset = 0;
 
   /**
-   * @interface
-   * @memberof Peeracle
-   * @param {*} handle
-   * @constructor
+   * @readonly
+   * @member {number}
    */
-  function DataSource(handle) {
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.offset = 0;
+  this.length = 0;
+}
 
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.length = 0;
-  }
+/**
+ * @function
+ * @param length
+ */
+DataSource.prototype.read = function read(length) {
+};
 
-  /**
-   * @function
-   * @param length
-   */
-  DataSource.prototype.read = function (length) {
-  };
+/**
+ * @function
+ * @param position
+ */
+DataSource.prototype.seek = function seek(position) {
+};
 
-  /**
-   * @function
-   * @param position
-   */
-  DataSource.prototype.seek = function (position) {
-  };
+/**
+ * @function
+ * @param length
+ * @param cb
+ */
+DataSource.prototype.fetchBytes = function fetchBytes(length, cb) {
+};
 
-  /**
-   * @function
-   * @param length
-   * @param cb
-   */
-  DataSource.prototype.fetchBytes = function (length, cb) {
-  };
+/* eslint-enable*/
 
-  return DataSource;
-})();
+module.exports = DataSource;

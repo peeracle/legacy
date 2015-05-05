@@ -20,74 +20,74 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  /**
-   * @class
-   * @memberof Peeracle
-   * @constructor
-   */
-  function Listenable() {
-    this.listeners = {};
+/**
+ * @class
+ * @memberof Peeracle
+ * @constructor
+ */
+function Listenable() {
+  this.listeners = {};
+}
+
+/**
+ *
+ * @param type
+ * @param listener
+ */
+Listenable.prototype.on = function on(type, listener) {
+  this.listeners[type] = this.listeners[type] || [];
+  this.listeners[type].push(listener);
+};
+
+/**
+ *
+ * @param type
+ * @param listener
+ */
+Listenable.prototype.once = function once(type, listener) {
+  var self = this;
+
+  function wrappedListener() {
+    self.off(type, wrappedListener);
+    listener.apply(null, arguments);
   }
 
-  /**
-   *
-   * @param type
-   * @param listener
-   */
-  Listenable.prototype.on = function (type, listener) {
-    this.listeners[type] = this.listeners[type] || [];
-    this.listeners[type].push(listener);
-  };
+  wrappedListener.__originalListener = listener;
+  this.on(type, wrappedListener);
+};
 
-  /**
-   *
-   * @param type
-   * @param listener
-   */
-  Listenable.prototype.once = function (type, listener) {
-    var self = this;
-
-    function wrappedListener() {
-      self.off(type, wrappedListener);
-      listener.apply(null, arguments);
-    }
-
-    wrappedListener.__originalListener = listener;
-    this.on(type, wrappedListener);
-  };
-
-  /**
-   *
-   * @param type
-   * @param listener
-   */
-  Listenable.prototype.off = function (type, listener) {
-    if (this.listeners[type]) {
-      if (listener) {
-        this.listeners[type] = this.listeners[type].filter(function (l) {
-          return l !== listener && l.__originalListener !== listener;
-        });
-      } else {
-        delete this.listeners[type];
-      }
-    }
-  };
-
-  /**
-   *
-   * @param type
-   */
-  Listenable.prototype.emit = function (type) {
-    if (this.listeners[type]) {
-      var args = [].slice.call(arguments, 1);
-      this.listeners[type].forEach(function (listener) {
-        listener.apply(null, args);
+/**
+ *
+ * @param type
+ * @param listener
+ */
+Listenable.prototype.off = function off(type, listener) {
+  if (this.listeners[type]) {
+    if (listener) {
+      this.listeners[type] = this.listeners[type].filter(function filterListener(l) {
+        return l !== listener && l.__originalListener !== listener;
       });
+    } else {
+      delete this.listeners[type];
     }
-  };
+  }
+};
 
-  return Listenable;
-})();
+/**
+ *
+ * @param type
+ */
+Listenable.prototype.emit = function emit(type) {
+  var args;
+
+  if (this.listeners[type]) {
+    args = [].slice.call(arguments, 1);
+    this.listeners[type].forEach(function applyListener(listener) {
+      listener.apply(null, args);
+    });
+  }
+};
+
+module.exports = Listenable;

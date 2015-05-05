@@ -20,42 +20,42 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var BinaryStream = require('./BinaryStream');
+// @exclude
+var BinaryStream = require('./BinaryStream');
+// @endexclude
+
+/**
+ * @class
+ * @param {Uint8Array?} bytes
+ * @constructor
+ */
+function Message(bytes) {
+  /**
+   * @member {Message.Type}
+   */
+  this.type = Message.Type.None;
 
   /**
-   * @class
-   * @param {Uint8Array?} bytes
-   * @constructor
+   * @member {?BinaryStream}
+   * @private
    */
-  function Message(bytes) {
-    /**
-     * @member {Message.Type}
-     */
-    this.type = Message.Type.None;
+  this.stream_ = null;
 
-    /**
-     * @member {?BinaryStream}
-     * @private
-     */
-    this.stream_ = null;
-
-    if (bytes && typeof bytes === ArrayBuffer) {
-      this.stream_ = new BinaryStream(bytes);
-      // this.readFromBytes_(bytes);
-    }
+  if (bytes && typeof bytes === ArrayBuffer) {
+    this.stream_ = new BinaryStream(bytes);
+    // this.readFromBytes_(bytes);
   }
+}
 
-  /**
-   * @enum {number}
-   */
-  Message.Type = {
-    None: 0,
-    Hello: 1,
-    Welcome: 2
-  };
+/**
+ * @enum {number}
+ */
+Message.Type = {
+  None: 0,
+  Hello: 1,
+  Welcome: 2
+};
 
-  return Message;
-})();
+module.exports = Message;

@@ -20,27 +20,24 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var Listenable = require('./Listenable');
+// @exclude
+var Listenable = require('./Listenable');
+/*var RTCPeerConnection = require('wrtc').RTCPeerConnection;
+var RTCSessionDescription = require('wrtc').RTCSessionDescription;
+var RTCIceCandidate = require('wrtc').RTCIceCandidate;*/
+// @endexclude
 
-  // @exclude
-  var RTCPeerConnection = require('wrtc').RTCPeerConnection;
-  var RTCSessionDescription = require('wrtc').RTCSessionDescription;
-  var RTCIceCandidate = require('wrtc').RTCIceCandidate;
-  // @endexclude
+/**
+ * @class
+ * @constructor
+ */
+function PeerConnection() {
 
-  /**
-   * @class
-   * @constructor
-   */
-  function PeerConnection() {
+}
 
-  }
+PeerConnection.prototype = Object.create(Listenable.prototype);
+PeerConnection.prototype.constructor = PeerConnection;
 
-  PeerConnection.prototype = Object.create(Listenable.prototype);
-  PeerConnection.prototype.constructor = PeerConnection;
-
-  return PeerConnection;
-})();
+module.exports = PeerConnection;

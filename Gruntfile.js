@@ -37,6 +37,7 @@ module.exports = function (grunt) {
       options: {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n\n' +
+        '(function(){\n' +
         'var Peeracle = {};\n\n' +
         'var RTCPeerConnection = window.mozRTCPeerConnection ||\n' +
         '  window.webkitRTCPeerConnection ||\n' +
@@ -50,42 +51,31 @@ module.exports = function (grunt) {
         '  window.webkitRTCIceCandidate ||\n' +
         '  window.RTCIceCandidate;\n\n',
 
+        footer: '})();\n',
+
         process: function (src, filepath) {
           var moduleName = filepath.slice(4, filepath.length - 3);
+          var modules = moduleName.split('.');
+          var moduleStr = 'Peeracle';
+          for (var i = 0; i < modules.length; ++i) {
+            moduleStr += '.' + modules[i];
+          }
+
           return src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?\n/g, '$1')
-            .replace(/module.exports = /g, 'Peeracle.' + moduleName + ' = ')
+            .replace(/module.exports = /g, moduleStr + ' = ')
             .replace(/var (.*) = require\('.\/(.*)'\);/g, 'var $1 = Peeracle.$2;');
         },
         stripBanners: true
       },
       dist: {
-        src: [
-          'src/BinaryStream.js',
-          'src/Crypto.js',
-          'src/Crypto.Crc32.js',
-          'src/DataSource.js',
-          'src/DataSource.File.js',
-          'src/DataSource.Http.js',
-          'src/Listenable.js',
-          'src/Media.js',
-          'src/Media.WebM.js',
-          'src/Metadata.js',
-          'src/Metadata.Serializer.js',
-          'src/Metadata.Unserializer.js',
-          'src/Peer.js',
-          'src/PeerConnection.js',
-          'src/Tracker.js',
-          'src/Tracker.Client.js',
-          'src/Tracker.Message.js',
-          'src/Utils.js'
-        ],
+        src: 'src/*.js',
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
       }
     },
 
     preprocess: {
       inline: {
-        src: ['dist/*.js'],
+        src: 'dist/<%= pkg.name %>-<%= pkg.version %>.js',
         options: {
           inline: true,
           context: {
@@ -95,29 +85,74 @@ module.exports = function (grunt) {
       }
     },
 
-    uglify: {
+    jsbeautifier: {
+      files: ['dist/<%= pkg.name %>-<%= pkg.version %>.js'],
       options: {
-        banner: '<%= banner %>\n',
-        preserveComments: 'some'
+        js: {
+          braceStyle: "collapse",
+          breakChainedMethods: false,
+          e4x: false,
+          evalCode: false,
+          indentChar: " ",
+          indentLevel: 0,
+          indentSize: 2,
+          indentWithTabs: false,
+          jslintHappy: false,
+          keepArrayIndentation: false,
+          keepFunctionIndentation: false,
+          maxPreserveNewlines: 10,
+          preserveNewlines: true,
+          spaceBeforeConditional: true,
+          spaceInParen: false,
+          unescapeStrings: false,
+          wrapLineLength: 80,
+          endWithNewline: true
+        }
+      }
+    },
+
+    eslint: {
+      target: ['src/*.js']
+    },
+
+    'closure-compiler': {
+      frontend: {
+        closurePath: '/opt/closure',
+        js: [
+          'dist/<%= pkg.name %>-<%= pkg.version %>.js',
+          'exports.js'
+        ],
+        jsOutputFile: 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js',
+        maxBuffer: 500,
+        options: {
+          compilation_level: 'ADVANCED_OPTIMIZATIONS',
+          language_in: 'ECMASCRIPT5_STRICT'
+        }
       },
-      build: {
-        src: 'dist/<%= pkg.name %>-<%= pkg.version %>.js',
-        dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.min.js'
+      frontend_debug: {
+        closurePath: '.',
+        js: 'dist/<%= pkg.name %>-<%= pkg.version %>.js',
+        jsOutputFile: 'dist/<%= pkg.name %>-<%= pkg.version %>.debug.js',
+        options: {
+          debug: true,
+          formatting: 'PRETTY_PRINT'
+        }
       }
     }
   });
 
-  // Load the plugin that provides the "uglify" task.
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-preprocess');
+  grunt.loadNpmTasks('grunt-eslint');
+  grunt.loadNpmTasks('grunt-jsbeautifier');
+  grunt.loadNpmTasks('grunt-closure-compiler');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat', 'preprocess', 'karma', 'uglify']);
+  grunt.registerTask('default', ['concat', 'preprocess', 'eslint', 'jsbeautifier', 'closure-compiler', 'karma']);
 
   // Build only task
-  grunt.registerTask('dist', ['concat', 'preprocess', 'uglify']);
+  grunt.registerTask('build', ['concat', 'preprocess', 'eslint', 'jsbeautifier', 'closure-compiler']);
 };

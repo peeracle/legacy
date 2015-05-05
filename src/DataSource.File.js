@@ -20,121 +20,123 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  /** @type {DataSource} */
-  var DataSource = require('./DataSource');
+// @exclude
+var DataSource = require('./DataSource');
+var fs = require('fs');
+// @endexclude
 
+/**
+ * @class
+ * @memberof Peeracle.DataSource
+ * @implements {Peeracle.DataSource}
+ * @param {Blob|string} handle
+ * @constructor
+ */
+function File(handle) {
   // @exclude
-  var fs = require('fs');
+  var stats;
   // @endexclude
 
   /**
-   * @class
-   * @memberof Peeracle.DataSource
-   * @implements {Peeracle.DataSource}
-   * @param {Blob|string} handle
-   * @constructor
-   */
-  function File(handle) {
-    /**
-     * @type {*}
-     * @private
-     */
-    this.handle_ = handle;
-
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.offset = 0;
-
-    /**
-     * @readonly
-     * @member {number}
-     */
-    this.length = (typeof handle !== 'string') ? handle.size : -1;
-
-    // @exclude
-    var stats = fs.statSync(this.handle_);
-    this.length = stats.size;
-    this.handle_ = fs.openSync(this.handle_, 'r');
-    // @endexclude
-  }
-
-  File.prototype = Object.create(DataSource.prototype);
-  File.prototype.constructor = File;
-
-  /**
-   *
-   * @param length
-   */
-  File.prototype.read = function (length) {
-    this.offset += length;
-  };
-
-  /**
-   *
-   * @param position
-   */
-  File.prototype.seek = function (position) {
-    this.offset = position;
-  };
-
-  /**
-   *
-   * @param length
-   * @param cb
+   * @type {*}
    * @private
    */
-  // @exclude
-  File.prototype.nodeFetchBytes_ = function (length, cb) {
-    var bytes = new Buffer(length);
-    var count = 0;
-
-    fs.read(this.handle_, bytes, count, length, this.offset,
-      function doRead(err, bytesRead) {
-        if (err) {
-          throw err;
-        }
-
-        count += bytesRead;
-        if (count >= length) {
-          cb(new Uint8Array(bytes));
-          return;
-        }
-        fs.read(this.handle_, bytes, count, length, this.offset + count, doRead);
-      }
-    );
-  };
-  // @endexclude
+  this.handle_ = handle;
 
   /**
-   *
-   * @param length
-   * @param cb
+   * @readonly
+   * @member {number}
    */
-  File.prototype.fetchBytes = function (length, cb) {
-    if (this.length > -1 && this.offset + length > this.length) {
-      cb(null);
-      return;
-    }
+  this.offset = 0;
 
-    // @exclude
-    if (typeof module === 'undefined') {
-      // @endexclude
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        cb(new Uint8Array(e.target.result));
-      };
-      reader.readAsArrayBuffer(this.handle_.slice(this.offset, this.offset + length));
-      // @exclude
-    } else {
-      this.nodeFetchBytes_(length, cb);
+  /**
+   * @readonly
+   * @member {number}
+   */
+  this.length = (typeof handle !== 'string') ? handle.size : -1;
+
+  // @exclude
+  stats = fs.statSync(this.handle_);
+  this.length = stats.size;
+  this.handle_ = fs.openSync(this.handle_, 'r');
+  // @endexclude
+}
+
+File.prototype = Object.create(DataSource.prototype);
+File.prototype.constructor = File;
+
+/**
+ *
+ * @param length
+ */
+File.prototype.read = function read(length) {
+  this.offset += length;
+};
+
+/**
+ *
+ * @param position
+ */
+File.prototype.seek = function seek(position) {
+  this.offset = position;
+};
+
+// @exclude
+/**
+ *
+ * @param length
+ * @param cb
+ * @private
+ */
+File.prototype.nodeFetchBytes_ = function nodeFetchBytes_(length, cb) {
+  var bytes = new Buffer(length);
+  var count = 0;
+
+  fs.read(this.handle_, bytes, count, length, this.offset,
+    function doRead(err, bytesRead) {
+      if (err) {
+        throw err;
+      }
+
+      count += bytesRead;
+      if (count >= length) {
+        cb(new Uint8Array(bytes));
+        return;
+      }
+      fs.read(this.handle_, bytes, count, length, this.offset + count, doRead);
     }
+  );
+};
+// @endexclude
+
+/**
+ *
+ * @param length
+ * @param cb
+ */
+File.prototype.fetchBytes = function fetchBytes(length, cb) {
+  var reader;
+
+  if (this.length > -1 && this.offset + length > this.length) {
+    cb(null);
+    return;
+  }
+
+  // @exclude
+  if (typeof module === 'undefined') {
     // @endexclude
-  };
+    reader = new FileReader();
+    reader.onload = function onload(e) {
+      cb(new Uint8Array(e.target.result));
+    };
+    reader.readAsArrayBuffer(this.handle_.slice(this.offset, this.offset + length));
+    // @exclude
+  } else {
+    this.nodeFetchBytes_(length, cb);
+  }
+  // @endexclude
+};
 
-  return File;
-})();
+module.exports = File;

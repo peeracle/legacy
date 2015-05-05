@@ -20,91 +20,89 @@
  * SOFTWARE.
  */
 
-module.exports = (function () {
-  'use strict';
+'use strict';
 
-  var http = require('http');
-  var WebSocketServer = require('websocket').server;
-  var winston = require('winston');
+var http = require('http');
+var WebSocketServer = require('websocket').server;
+var winston = require('winston');
+var Tracker = require('./Tracker');
 
-  var Tracker = require('./Tracker');
+/**
+ * @class
+ * @memberof Peeracle.Tracker
+ * @constructor
+ */
+function Server() {
+  this.server_ = null;
+  this.ws_ = null;
 
-  /**
-   * @class
-   * @memberof Peeracle.Tracker
-   * @constructor
-   */
-  function Server() {
-    this.server_ = null;
-    this.ws_ = null;
+  winston.loggers.add('Server', {
+    console: {
+      level: 'info',
+      colorize: true,
+      label: 'Server'
+    }
+  });
 
-    winston.loggers.add('Server', {
-      console: {
-        level: 'info',
-        colorize: true,
-        label: 'Server'
-      }
-    });
+  this.log_ = new (winston.Logger)({
+    transports: [
+      new (winston.transports.Console)({
+        timestamp: function timestamp() {
+          return Date.now();
+        },
+        formatter: function formatter(options) {
+          return options.timestamp().toLocaleString() + ' [' +
+            options.level.toUpperCase() + '] ' +
+            (undefined !== options.message ? options.message : '') +
+            (options.meta && Object.keys(options.meta).length ?
+            '\n\t' + JSON.stringify(options.meta) : '');
+        }
+      }),
+      new (winston.transports.DailyRotateFile)({
+        filename: 'tracker',
+        datePattern: '.yyyy-MM-dd'
+      })
+    ]
+  });
+}
 
-    this.log_ = new (winston.Logger)({
-      transports: [
-        new (winston.transports.Console)({
-          timestamp: function () {
-            return Date.now();
-          },
-          formatter: function (options) {
-            return options.timestamp().toLocaleString() + ' [' +
-              options.level.toUpperCase() + '] ' +
-              (undefined !== options.message ? options.message : '') +
-              (options.meta && Object.keys(options.meta).length ?
-              '\n\t' + JSON.stringify(options.meta) : '');
-          }
-        }),
-        new (winston.transports.DailyRotateFile)({
-          filename: 'tracker',
-          datePattern: '.yyyy-MM-dd'
-        })
-      ]
-    });
-  }
+Server.prototype.listen = function listen(host, port) {
+  this.server_ = http.createServer(function createServer(request, response) {
+    response.writeHead(404);
+    response.end();
+  }).listen(port, host, function httpListen() {
+    this.log_.log('info', 'Listening on ' + host + ':' + parseInt(port, 10));
+  }.bind(this));
 
-  Server.prototype.listen = function (host, port) {
-    this.server_ = http.createServer(function (request, response) {
-      response.writeHead(404);
-      response.end();
-    }).listen(port, host, function () {
-      this.log_.log('info', 'Listening on ' + host + ':' + parseInt(port));
-    }.bind(this));
+  this.ws_ = new WebSocketServer({
+    httpServer: this.server_,
+    autoAcceptConnections: false
+  });
 
-    this.ws_ = new WebSocketServer({
-      httpServer: this.server_,
-      autoAcceptConnections: false
-    });
+  this.ws_.on('request', function onRequest(request) {
+    // TODO: detect origin
+    var sock;
+    try {
+      sock = request.accept('prcl-0.0.1', request.origin);
+    } catch (e) {
+      return;
+    }
 
-    this.ws_.on('request', function (request) {
-      // TODO: detect origin
-      var sock;
-      try {
-        sock = request.accept('prcl-0.0.1', request.origin);
-      } catch (e) {
+    this.log_.log('info', 'new user connected from ' + sock.remoteAddress);
+    sock.on('message', function onMessage(message) {
+      var msg;
+      if (message.type !== 'binary') {
         return;
       }
 
-      this.log_.log('info', 'new user connected from ' + sock.remoteAddress);
-      sock.on('message', function (message) {
-        if (message.type !== 'binary') {
-          return;
-        }
-
-        var msg = new Tracker.Message(new Uint8Array(message.binaryData));
-        this.log_.log('info', 'Got new message', msg);
-      }.bind(this));
-
-      sock.on('close', function (reasonCode, description) {
-        this.log_.log('info', 'closed', {reasonCode: reasonCode, description: description});
-      }.bind(this));
+      msg = new Tracker.Message(new Uint8Array(message.binaryData));
+      this.log_.log('info', 'Got new message', msg);
     }.bind(this));
-  };
 
-  return Server;
-})();
+    sock.on('close', function onClose(reasonCode, description) {
+      this.log_.log('info', 'closed', {reasonCode: reasonCode, description: description});
+    }.bind(this));
+  }.bind(this));
+};
+
+module.exports = Server;
