@@ -49,6 +49,7 @@ function BinaryStream(buffer) {
 }
 
 BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
+BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
 
 /**
  * @returns {number}
@@ -277,9 +278,12 @@ BinaryStream.prototype.readString = function readString(length) {
  * @param {string} value
  */
 BinaryStream.prototype.writeString = function writeString(value) {
-  var length = value.length;
-  var bytes = new Uint8Array(length);
   var i;
+  var length;
+  var bytes;
+
+  length = value.length;
+  bytes = new Uint8Array(length + 1);
 
   for (i = 0; i < length; ++i) {
     bytes[i] = value.charCodeAt(i);
