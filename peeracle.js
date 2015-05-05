@@ -28,29 +28,29 @@
 (function () {
   'use strict';
 
-  var Crypto = require('./Crypto');
-  Crypto.Crc32 = require('./Crypto.Crc32.js');
+  var Crypto = require('./src/Crypto');
+  Crypto.Crc32 = require('./src/Crypto.Crc32.js');
 
-  var DataSource = require('./DataSource.js');
-  DataSource.File = require('./DataSource.File.js');
-  DataSource.Http = require('./DataSource.Http.js');
+  var DataSource = require('./src/DataSource.js');
+  DataSource.File = require('./src/DataSource.File.js');
+  DataSource.Http = require('./src/DataSource.Http.js');
 
-  var Media = require('./Media');
-  Media.WebM = require('./Media.WebM.js');
+  var Media = require('./src/Media');
+  Media.WebM = require('./src/Media.WebM.js');
 
   var Tracker = {
-    Client: require('./Tracker.Client.js'),
-    Server: require('./Tracker.Server.js')
+    Client: require('./src/Tracker.Client.js'),
+    Server: require('./src/Tracker.Server.js')
   };
 
   module.exports = {
-    BinaryStream: require('./BinaryStream'),
+    BinaryStream: require('./src/BinaryStream'),
     Crypto: Crypto,
     DataSource: DataSource,
-    Media: require('./Media'),
-    Metadata: require('./Metadata'),
-    MetadataSerializer: require('./Metadata.Serializer.js'),
-    MetadataUnserializer: require('./Metadata.Unserializer.js'),
+    Media: require('./src/Media'),
+    Metadata: require('./src/Metadata'),
+    MetadataSerializer: require('./src/MetadataSerializer.js'),
+    MetadataUnserializer: require('./src/MetadataUnserializer.js'),
     Tracker: Tracker
     //Node: require('./node'),
     //Peer: require('./peer'),
