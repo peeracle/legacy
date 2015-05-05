@@ -289,6 +289,7 @@ BinaryStream.prototype.writeString = function writeString(value) {
   for (i = 0; i < length; ++i) {
     bytes[i] = value.charCodeAt(i);
   }
+  bytes[length] = 0;
 
   this.writeBytes(bytes);
 };
