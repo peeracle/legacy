@@ -12,4 +12,6 @@ before_install:
   - npm install -g jasmine-node
 install:
   - npm install
-before_script: grunt
+before_script:
+  - grunt build
+  - npm test
