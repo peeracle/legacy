@@ -1,12 +1,14 @@
 language: node_js
 node_js:
   - "0.12"
-before_install: npm install -g grunt-cli
-install:
+before_install:
   - mkdir build
   - wget -P build http://dl.google.com/closure-compiler/compiler-latest.zip
   - unzip build/compiler-latest.zip -d build/
   - rm build/compiler-latest.zip
-  - apt-get install libncurses5-dev libssl-dev libnss3-dev libexpat-dev
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq libncurses5-dev libssl-dev libnss3-dev libexpat-dev
+  - npm install -g grunt-cli
+install:
   - npm install
 before_script: grunt build
