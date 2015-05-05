@@ -45,7 +45,8 @@
     "karma-firefox-launcher": "^0.1.4",
     "karma-jasmine": "^0.3.5",
     "karma-junit-reporter": "^0.2.2",
-    "karma-opera-launcher": "^0.1.0"
+    "karma-opera-launcher": "^0.1.0",
+    "karma-sauce-launcher": "^0.2.10"
   },
   "dependencies": {
     "commander": "^2.7.1",
