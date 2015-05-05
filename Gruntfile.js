@@ -117,7 +117,7 @@ module.exports = function (grunt) {
 
     'closure-compiler': {
       frontend: {
-        closurePath: '/opt/closure',
+        closurePath: '.',
         js: [
           'dist/<%= pkg.name %>-<%= pkg.version %>.js',
           'exports.js'
