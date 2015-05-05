@@ -7,5 +7,6 @@ install:
   - wget -P build http://dl.google.com/closure-compiler/compiler-latest.zip
   - unzip build/compiler-latest.zip -d build/
   - rm build/compiler-latest.zip
+  - apt-get install libncurses5-dev libssl-dev libnss3-dev libexpat-dev
   - npm install
 before_script: grunt build
