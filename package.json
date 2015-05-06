@@ -4,7 +4,7 @@
   "description": "Peeracle Javascript Library",
   "main": "peeracle.js",
   "scripts": {
-    "test": "NODE_ENV=test jasmine-node --verbose .",
+    "test": "NODE_ENV=test istanbul cover --include-all-sources jasmine-node spec",
     "lint": "eslint src/*.js"
   },
   "repository": {
@@ -42,11 +42,11 @@
     "grunt-preprocess": "^4.1.0",
     "karma": "^0.12.31",
     "karma-chrome-launcher": "^0.1.7",
+    "karma-coverage": "^0.3.1",
     "karma-firefox-launcher": "^0.1.4",
     "karma-jasmine": "^0.3.5",
     "karma-junit-reporter": "^0.2.2",
     "karma-opera-launcher": "^0.1.0",
-    "karma-sauce-launcher": "^0.2.10",
     "karma-verbose-reporter": "0.0.2"
   },
   "dependencies": {
