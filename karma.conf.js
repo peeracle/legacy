@@ -8,6 +8,7 @@ module.exports = function (config) {
         pattern: 'dist/peeracle-0.0.1.js',
         included: true
       },
+      'dist/peeracle-0.0.1.js',
       'spec/**/*-spec.js'
     ],
 
@@ -21,14 +22,24 @@ module.exports = function (config) {
       'karma-chrome-launcher',
       'karma-firefox-launcher',
       'karma-jasmine',
+      'karma-coverage',
       'karma-junit-reporter',
       'karma-verbose-reporter'
     ],
 
-    reporters: ['verbose', 'junit'],
+    reporters: ['verbose', 'junit', 'coverage'],
+
+    preprocessors: {
+      'dist/peeracle-0.0.1.js': ['coverage']
+    },
+
+    coverageReporter: {
+      type: 'html',
+      dir: 'coverage/browser'
+    },
 
     junitReporter: {
-      outputFile: 'unit.xml',
+      outputFile: 'reports/unit.xml',
       suite: 'unit'
     },
 
