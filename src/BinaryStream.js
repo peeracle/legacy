@@ -299,7 +299,7 @@ BinaryStream.prototype.writeString = function writeString(value) {
  * @param value
  */
 BinaryStream.prototype.seek = function seek(value) {
-  if (this.offset_ >= this.length_) {
+  if (value >= this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   this.offset_ = value;
