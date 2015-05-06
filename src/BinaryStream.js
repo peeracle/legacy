@@ -56,7 +56,7 @@ BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
  * @returns {number}
  */
 BinaryStream.prototype.readByte = function readByte() {
-  if (this.offset_ >= this.length_) {
+  if (this.offset_ + 1 >= this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   return this.bytes[this.offset_++];
@@ -82,11 +82,12 @@ BinaryStream.prototype.writeByte = function writeByte(value) {
 BinaryStream.prototype.readBytes = function readBytes(length) {
   var bytes;
 
-  if (this.offset_ >= this.offset_ + this.length_) {
   if (typeof length !== 'number' || length < 1) {
     throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
+  if (length > this.length_ ||
+    this.offset_ + length > this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   bytes = this.bytes.subarray(this.offset_, this.offset_ + length);
@@ -323,10 +324,10 @@ BinaryStream.prototype.writeString = function writeString(value) {
  * @param value
  */
 BinaryStream.prototype.seek = function seek(value) {
-  if (value >= this.length_) {
   if (typeof value !== 'number') {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
+  if (value < 0 || value >= this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   this.offset_ = value;
