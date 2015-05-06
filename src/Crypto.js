@@ -30,6 +30,8 @@
 function Crypto() {
 }
 
+Crypto.ERR_INVALID_ARGUMENT = 'Invalid argument';
+
 /**
  *
  * @param id
@@ -37,6 +39,10 @@ function Crypto() {
  */
 Crypto.createInstance = function createInstance(id) {
   var c;
+
+  if (typeof id !== 'string') {
+    throw new TypeError(Crypto.ERR_INVALID_ARGUMENT);
+  }
 
   for (c in Crypto) {
     if (Crypto.hasOwnProperty(c) &&
