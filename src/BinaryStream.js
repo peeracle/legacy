@@ -113,98 +113,25 @@ BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
  */
 BinaryStream.prototype.readFloat8 = function readFloat8() {
   var number = this.readBytes(8);
-  var sign = (number[0] >> 7) & 0x1;
-  var exponent = (((number[0] & 0x7f) << 4) |
-    ((number[1] >> 4) & 0xf)) - 1023;
-
-  var i;
-  var significand = 0;
-  var shift = Math.pow(2, 6 * 8);
-  significand += (number[1] & 0xf) * shift;
-  for (i = 2; i < 8; ++i) {
-    shift = Math.pow(2, (8 - i - 1) * 8);
-    significand += (number[i] & 0xff) * shift;
-  }
-
-  if (exponent > -1023) {
-    if (exponent === 1024) {
-      if (significand === 0) {
-        if (sign === 0) {
-          return Number.POSITIVE_INFINITY;
-        }
-        return Number.NEGATIVE_INFINITY;
-      }
-      return NaN;
-    }
-    significand += 0x10000000000000;
-  } else {
-    if (significand === 0) {
-      return 0;
-    }
-    exponent = -1022;
-  }
-
-  return Math.pow(-1, sign) * (significand * Math.pow(2, -52)) *
-    Math.pow(2, exponent);
+  var f = new Float64Array(number.buffer);
+  return f[0];
 };
 
 /**
  * @param {number} value
  */
 BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
-  var hiWord = 0;
-  var loWord = 0;
-  var exponent;
-  var significand;
-  var val = value;
+  var f;
+  var u;
 
-  switch (val) {
-    case Number.POSITIVE_INFINITY:
-      hiWord = 0x7FF00000;
-      break;
-    case Number.NEGATIVE_INFINITY:
-      hiWord = 0xFFF00000;
-      break;
-    case +0.0:
-      hiWord = 0x40000000;
-      break;
-    case -0.0:
-      hiWord = 0xC0000000;
-      break;
-    default:
-      if (Number.isNaN(value)) {
-        hiWord = 0x7FF80000;
-        break;
-      }
-
-      if (val <= -0.0) {
-        hiWord = 0x80000000;
-        val = -val;
-      }
-
-      exponent = Math.floor(Math.log(val) / Math.log(2));
-      significand = Math.floor((val / Math.pow(2, exponent)) * Math.pow(2, 52));
-
-      loWord = significand & 0xFFFFFFFF;
-      significand /= Math.pow(2, 32);
-
-      exponent += 1023;
-      if (exponent >= 0x7FF) {
-        exponent = 0x7FF;
-        significand = 0;
-      } else if (exponent < 0) {
-        exponent = 0;
-      }
-
-      hiWord = hiWord | (exponent << 20);
-      hiWord = hiWord | (significand & ~(-1 << 20));
-      break;
   if (typeof value !== 'number') {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
-  this.writeUInt32(hiWord);
-  this.writeUInt32(loWord);
+  f = new Float64Array([value]);
+  u = new Uint8Array(f.buffer);
+
+  this.writeBytes(u);
 };
 
 /**
