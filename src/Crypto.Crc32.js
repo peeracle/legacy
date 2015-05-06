@@ -147,7 +147,7 @@ Crc32.prototype.finish = function finish() {
  * @param {BinaryStream} binaryStream
  */
 Crc32.prototype.serialize = function serialize(value, binaryStream) {
-  return binaryStream.writeUInt32(value);
+  binaryStream.writeUInt32(value);
 };
 
 /**
