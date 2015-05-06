@@ -30,9 +30,6 @@ if (typeof Peeracle === 'undefined') {
 describe('BinaryStream', function () {
   var buffer = new Uint8Array(32);
   var binaryStream = new Peeracle.BinaryStream(buffer);
-  var byte;
-  var bytes;
-  var string;
 
   it('should create a Uint8Array', function () {
     buffer = new Uint8Array(32);
@@ -43,64 +40,98 @@ describe('BinaryStream', function () {
     expect(buffer.length).toEqual(32);
   });
 
-  it('should write a random byte', function () {
-    byte = Peeracle.Utils.trunc(Math.random() * 255);
+  it('should write and read a random byte', function () {
+    var byte = Peeracle.Utils.trunc(Math.random() * 255);
     binaryStream.writeByte(byte);
+    binaryStream.seek(0);
+    var result = binaryStream.readByte();
+    expect(result).toEqual(byte);
   });
+
+  xit('should throw an error for byte overflow');
 
   it('should read a zero', function () {
     var result = binaryStream.readByte();
     expect(result).toEqual(0);
   });
 
-  it('should read the random byte', function () {
+  it('should write and read some random bytes', function () {
     var result;
+    var length = Peeracle.Utils.trunc(Math.random() * 32 + 1);
+    var bytes = new Uint8Array(length);
 
-    binaryStream.seek(0);
-    result = binaryStream.readByte();
-    expect(result).toEqual(byte);
-  });
-
-  it('should write some random bytes', function () {
-    var string = Math.random().toString(36).slice(2);
-
-    bytes = new Uint8Array(string.length);
-    for (var i = 0, j = string.length; i < j; ++i) {
-      bytes[i] = string.charCodeAt(i);
+    for (var i = 0; i < length; ++i) {
+      bytes[i] = Peeracle.Utils.trunc(Math.random() * 255);
     }
 
     binaryStream.seek(0);
     binaryStream.writeBytes(bytes);
-  });
-
-  it('should read the random bytes', function () {
-    var result;
-
     binaryStream.seek(0);
-    result = binaryStream.readBytes(bytes.length);
+    result = binaryStream.readBytes(length);
     expect(result).toEqual(bytes);
   });
 
-  it('should write a random string', function () {
-    string = Math.random().toString(36).slice(2);
+  it('should write and read a random string', function () {
+    var result;
+    var string = Math.random().toString(36).slice(2, 16);
 
     binaryStream.seek(0);
     binaryStream.writeString(string);
-  });
-
-  it('should read the random string', function () {
-    var result;
 
     binaryStream.seek(0);
     result = binaryStream.readString();
     expect(result).toEqual(string);
-  });
-
-  it('should read the two first bytes of the random string', function () {
-    var result;
 
     binaryStream.seek(0);
     result = binaryStream.readString(2);
     expect(result).toEqual(string.slice(0, 2));
+
+    binaryStream.seek(0);
+    result = binaryStream.readString(4);
+    expect(result).toEqual(string.slice(0, 4));
+
+    binaryStream.seek(4);
+    result = binaryStream.readString(6);
+    expect(result).toEqual(string.slice(4, 10));
+  });
+
+  it('should write and read a random unsigned integer', function () {
+    var result;
+    var value = Math.floor((Math.random() * 0xFFFFFFFF - 0x7FFFFFFF + 1) +
+      0x7FFFFFFF);
+
+    binaryStream.seek(0);
+    binaryStream.writeUInt32(value);
+
+    binaryStream.seek(0);
+    result = binaryStream.readUInt32();
+
+    expect(result).toEqual(value);
+  });
+
+  xit('should throw an error for unsigned integer overflow');
+
+  it('should write and read the random signed integer', function () {
+    var result;
+    var value = Math.floor(Math.random() * 0x7FFFFFFF);
+
+    binaryStream.seek(0);
+    binaryStream.writeInt32(value);
+    binaryStream.seek(0);
+    result = binaryStream.readInt32();
+    expect(result).toEqual(value);
+  });
+
+  xit('should throw an error for signed integer overflow');
+
+  it('should write and read a random double', function () {
+    var result;
+    var value = Math.random() * 0x7FFFFFFF;
+
+    binaryStream.seek(0);
+    binaryStream.writeFloat8(value);
+    binaryStream.seek(0);
+    result = binaryStream.readFloat8();
+    expect(result).toEqual(value);
   });
 });
