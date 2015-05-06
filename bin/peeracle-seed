@@ -8,7 +8,7 @@ var program = require('commander');
 var observatory = require('observatory').settings({
   prefix: ' - '
 });
-var Peeracle = require('../peeracle');
+var Peeracle = require('../index');
 
 program
   .usage('[options] <metadataFile>')

@@ -3,7 +3,7 @@
 'use strict';
 
 var program = require('commander');
-var Peeracle = require('../peeracle');
+var Peeracle = require('../index');
 
 program
   .option('-h, --host', 'Set the host to listen to')

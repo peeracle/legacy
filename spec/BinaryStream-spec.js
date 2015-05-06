@@ -24,7 +24,7 @@
 'use strict';
 
 if (typeof Peeracle === 'undefined') {
-  var Peeracle = require('../peeracle');
+  var Peeracle = require('../index');
 }
 
 describe('BinaryStream', function () {

@@ -2,7 +2,7 @@
 'use strict';
 
 if (typeof Peeracle === 'undefined') {
-  var Peeracle = require('../../src/peeracle.js');
+  var Peeracle = require('../../src/index.js');
 }
 
 var crc32refTable = [0,

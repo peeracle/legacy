@@ -4,7 +4,7 @@
 
 var fs = require('fs');
 var program = require('commander');
-var Peeracle = require('../peeracle');
+var Peeracle = require('../index');
 var observatory = require('observatory').settings({
   prefix: ' - '
 });
