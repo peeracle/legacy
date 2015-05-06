@@ -279,7 +279,7 @@ BinaryStream.prototype.readString = function readString(length) {
   var bytes;
   var i;
 
-  if (length) {
+  if (typeof length === 'number') {
     bytes = this.readBytes(length);
     for (i = 0; i < length; ++i) {
       str += String.fromCharCode(bytes[i]);
