@@ -157,7 +157,7 @@ BinaryStream.prototype.readInt32 = function readInt32(unsigned) {
  */
 BinaryStream.prototype.writeInt32 = function writeInt32(value, unsigned) {
   var l = 0;
-  var bytes = [];
+  var bytes;
   var val = value;
 
   if (typeof val !== 'number') {
@@ -166,8 +166,11 @@ BinaryStream.prototype.writeInt32 = function writeInt32(value, unsigned) {
 
   if (unsigned) {
     val = val >>> 0;
+  } else if (val < -0x7FFFFFFF || val > 0x7FFFFFFF) {
+    throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
   }
 
+  bytes = [];
   while (l < 4) {
     bytes[l] = (val & 0xFF);
     val = val >> 8;
@@ -190,6 +193,9 @@ BinaryStream.prototype.readUInt32 = function readUInt32() {
 BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
   if (typeof value !== 'number') {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+  }
+  if (value < 0 || value > 0xFFFFFFFF) {
+    throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
   }
   this.writeInt32(value, true);
 };
