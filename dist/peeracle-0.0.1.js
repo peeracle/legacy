@@ -164,9 +164,9 @@
     var loWord = 0;
     var exponent;
     var significand;
-    var val;
+    var val = value;
 
-    switch (value) {
+    switch (val) {
       case Number.POSITIVE_INFINITY:
         hiWord = 0x7FF00000;
         break;
@@ -185,9 +185,9 @@
           break;
         }
 
-        if (value <= -0.0) {
+        if (val <= -0.0) {
           hiWord = 0x80000000;
-          val = -value;
+          val = -val;
         }
 
         exponent = Math.floor(Math.log(val) / Math.log(2));
@@ -316,7 +316,7 @@
    * @param value
    */
   BinaryStream.prototype.seek = function seek(value) {
-    if (this.offset_ >= this.length_) {
+    if (value >= this.length_) {
       throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
     }
     this.offset_ = value;
