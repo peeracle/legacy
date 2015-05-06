@@ -10,6 +10,7 @@ before_install:
   - sudo apt-get install -qq libncurses5-dev libssl-dev libnss3-dev libexpat-dev
   - npm install -g grunt-cli
   - npm install -g jasmine-node
+  - npm install -g istanbul
 install:
   - npm install
 before_script:
