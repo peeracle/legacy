@@ -48,6 +48,7 @@ function BinaryStream(buffer) {
   this.offset_ = 0;
 }
 
+BinaryStream.ERR_INVALID_ARGUMENT = 'Invalid argument';
 BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
 BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
 
@@ -65,11 +66,13 @@ BinaryStream.prototype.readByte = function readByte() {
  * @param value
  */
 BinaryStream.prototype.writeByte = function writeByte(value) {
-  try {
-    this.bytes.set(new Uint8Array([value]), this.offset_++);
-  } catch (err) {
-    throw err;
+  if (typeof value !== 'number') {
+    throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
   }
+  if (value < 0 || value > 255) {
+    throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
+  }
+  this.bytes.set(new Uint8Array([value]), this.offset_++);
 };
 
 /**
@@ -80,6 +83,10 @@ BinaryStream.prototype.readBytes = function readBytes(length) {
   var bytes;
 
   if (this.offset_ >= this.offset_ + this.length_) {
+  if (typeof length !== 'number' || length < 1) {
+    throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+  }
+
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   bytes = this.bytes.subarray(this.offset_, this.offset_ + length);
@@ -97,7 +104,10 @@ BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
     this.offset_ += length;
   } catch (err) {
     throw err;
+  if (!(bytes instanceof Uint8Array)) {
+    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
+
 };
 
 /**
@@ -191,6 +201,8 @@ BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
       hiWord = hiWord | (exponent << 20);
       hiWord = hiWord | (significand & ~(-1 << 20));
       break;
+  if (typeof value !== 'number') {
+    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
   this.writeUInt32(hiWord);
@@ -223,6 +235,10 @@ BinaryStream.prototype.writeInt32 = function writeInt32(value, unsigned) {
   var bytes = [];
   var val = value;
 
+  if (typeof val !== 'number') {
+    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+  }
+
   if (unsigned) {
     val = val >>> 0;
   }
@@ -247,6 +263,9 @@ BinaryStream.prototype.readUInt32 = function readUInt32() {
  * @param {number} value
  */
 BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
+  if (typeof value !== 'number') {
+    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+  }
   this.writeInt32(value, true);
 };
 
@@ -283,6 +302,11 @@ BinaryStream.prototype.writeString = function writeString(value) {
   var length;
   var bytes;
 
+  if (typeof value !== 'string') {
+    this.writeByte(0);
+    return;
+  }
+
   length = value.length;
   bytes = new Uint8Array(length + 1);
 
@@ -300,6 +324,9 @@ BinaryStream.prototype.writeString = function writeString(value) {
  */
 BinaryStream.prototype.seek = function seek(value) {
   if (value >= this.length_) {
+  if (typeof value !== 'number') {
+    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+  }
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   this.offset_ = value;
