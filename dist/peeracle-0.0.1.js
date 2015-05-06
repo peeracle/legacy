@@ -237,7 +237,7 @@
    */
   BinaryStream.prototype.writeInt32 = function writeInt32(value, unsigned) {
     var l = 0;
-    var bytes = new Uint8Array(4);
+    var bytes = [];
     var val = value;
 
     if (unsigned) {
@@ -250,7 +250,7 @@
       ++l;
     }
 
-    this.writeBytes(bytes);
+    this.writeBytes(new Uint8Array(bytes.reverse()));
   };
 
   /**
