@@ -157,7 +157,7 @@ module.exports = function (grunt) {
           formatting: 'PRETTY_PRINT'
         }
       }
-    }
+    },
   });
 
   grunt.loadNpmTasks('grunt-contrib-clean');
@@ -168,11 +168,12 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-eslint');
   grunt.loadNpmTasks('grunt-jsbeautifier');
   grunt.loadNpmTasks('grunt-closure-compiler');
+  grunt.loadNpmTasks('grunt-contrib-jasmine');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat', 'preprocess', 'eslint', 'jsbeautifier', 'closure-compiler', 'karma']);
+  grunt.registerTask('default', ['concat', 'preprocess', 'eslint', 'jsbeautifier'/*, 'closure-compiler'*/, 'karma']);
 
   // Build only task
-  grunt.registerTask('build', ['concat', 'preprocess', 'eslint', 'jsbeautifier', 'closure-compiler']);
+  grunt.registerTask('build', ['concat', 'preprocess', 'eslint', 'jsbeautifier'/*, 'closure-compiler'*/]);
   grunt.registerTask('test', ['karma']);
 };
