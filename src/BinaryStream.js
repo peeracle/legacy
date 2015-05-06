@@ -90,6 +90,7 @@ BinaryStream.prototype.readBytes = function readBytes(length) {
     this.offset_ + length > this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
+
   bytes = this.bytes.subarray(this.offset_, this.offset_ + length);
   this.offset_ += length;
   return bytes;
@@ -99,16 +100,12 @@ BinaryStream.prototype.readBytes = function readBytes(length) {
  * @param {Uint8Array} bytes
  */
 BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
-  var length = bytes.length;
-  try {
-    this.bytes.set(bytes, this.offset_);
-    this.offset_ += length;
-  } catch (err) {
-    throw err;
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
+  this.bytes.set(bytes, this.offset_);
+  this.offset_ += bytes.length;
 };
 
 /**
