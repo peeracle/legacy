@@ -42,4 +42,16 @@ Utils.trunc = function utilsTrunc(x) {
   return Math.trunc(x);
 };
 
+Utils.stringToArray = function stringToArray(str) {
+  var i;
+  var l = str.length;
+  var arr = [];
+
+  for (i = 0; i < l; ++i) {
+    arr.push(str.charCodeAt(i));
+  }
+
+  return arr;
+};
+
 module.exports = Utils;

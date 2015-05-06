@@ -24,6 +24,7 @@
 
 // @exclude
 var Crypto = require('./Crypto');
+var Utils = require('./Utils');
 // @endexclude
 
 /**
@@ -83,8 +84,14 @@ Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
  * @returns {*}
  */
 Crc32.prototype.checksum = function checksum(array) {
+  var arr = array;
+
+  if (typeof arr === 'string') {
+    arr = Utils.stringToArray(arr);
+  }
+
   this.init();
-  this.update(array);
+  this.update(arr);
   return this.finish();
 };
 
@@ -110,11 +117,15 @@ Crc32.prototype.init = function init() {
 Crc32.prototype.update = function update(array) {
   var i;
   var l;
-  var keys = Object.keys(array);
+  var arr = array;
 
-  for (i = 0, l = keys.length; i < l; ++i) {
+  if (typeof arr === 'string') {
+    arr = Utils.stringToArray(arr);
+  }
+
+  for (i = 0, l = arr.length; i < l; ++i) {
     this.crc_ = (this.crc_ >>> 8) ^
-      this.crcTable_[(this.crc_ ^ array[i]) & 0xFF];
+      this.crcTable_[(this.crc_ ^ arr[i]) & 0xFF];
   }
 };
 
