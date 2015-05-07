@@ -74,6 +74,8 @@ module.exports = function (grunt) {
           'src/Crypto.js',
           'src/Crypto.Crc32.js',
           'src/DataSource.js',
+          'src/DataSource.File.js',
+          'src/DataSource.Http.js',
           'src/Listenable.js',
           'src/Manager.js',
           'src/Media.js',

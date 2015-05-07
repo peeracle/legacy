@@ -102,8 +102,8 @@
       throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
     }
 
-    if (length >= this.length_ ||
-      this.offset_ + length >= this.length_) {
+    if (length > this.length_ ||
+      this.offset_ + length > this.length_) {
       throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
     }
 
@@ -117,37 +117,11 @@
    */
   BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
     if (!(bytes instanceof Uint8Array)) {
-      throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
     }
 
     this.bytes.set(bytes, this.offset_);
     this.offset_ += bytes.length;
-  };
-
-  /**
-   * @returns {number}
-   */
-  BinaryStream.prototype.readFloat4 = function readFloat8() {
-    var number = this.readBytes(4);
-    var f = new Float32Array(number.buffer);
-    return f[0];
-  };
-
-  /**
-   * @param {number} value
-   */
-  BinaryStream.prototype.writeFloat4 = function writeFloat8(value) {
-    var f;
-    var u;
-
-    if (typeof value !== 'number') {
-      throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
-    }
-
-    console.log(value);
-    f = new Float32Array([value]);
-    u = new Uint8Array(f.buffer);
-    this.writeBytes(u);
   };
 
   /**
@@ -167,7 +141,7 @@
     var u;
 
     if (typeof value !== 'number') {
-      throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
     }
 
     f = new Float64Array([value]);
@@ -203,7 +177,7 @@
     var val = value;
 
     if (typeof val !== 'number') {
-      throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
     }
 
     if (unsigned) {
@@ -234,7 +208,7 @@
    */
   BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
     if (typeof value !== 'number') {
-      throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
     }
     if (value < 0 || value > 0xFFFFFFFF) {
       throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
@@ -297,7 +271,7 @@
    */
   BinaryStream.prototype.seek = function seek(value) {
     if (typeof value !== 'number') {
-      throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
     }
     if (value < 0 || value >= this.length_) {
       throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
@@ -314,6 +288,8 @@
    */
   function Crypto() {}
 
+  Crypto.ERR_INVALID_ARGUMENT = 'Invalid argument';
+
   /**
    *
    * @param id
@@ -321,6 +297,10 @@
    */
   Crypto.createInstance = function createInstance(id) {
     var c;
+
+    if (typeof id !== 'string') {
+      throw new TypeError(Crypto.ERR_INVALID_ARGUMENT);
+    }
 
     for (c in Crypto) {
       if (Crypto.hasOwnProperty(c) &&
@@ -431,8 +411,14 @@
    * @returns {*}
    */
   Crc32.prototype.checksum = function checksum(array) {
+    var arr = array;
+
+    if (typeof arr === 'string') {
+      arr = Utils.stringToArray(arr);
+    }
+
     this.init();
-    this.update(array);
+    this.update(arr);
     return this.finish();
   };
 
@@ -458,11 +444,15 @@
   Crc32.prototype.update = function update(array) {
     var i;
     var l;
-    var keys = Object.keys(array);
+    var arr = array;
 
-    for (i = 0, l = keys.length; i < l; ++i) {
+    if (typeof arr === 'string') {
+      arr = Utils.stringToArray(arr);
+    }
+
+    for (i = 0, l = arr.length; i < l; ++i) {
       this.crc_ = (this.crc_ >>> 8) ^
-        this.crcTable_[(this.crc_ ^ array[i]) & 0xFF];
+        this.crcTable_[(this.crc_ ^ arr[i]) & 0xFF];
     }
   };
 
@@ -484,7 +474,7 @@
    * @param {BinaryStream} binaryStream
    */
   Crc32.prototype.serialize = function serialize(value, binaryStream) {
-    return binaryStream.writeUInt32(value);
+    binaryStream.writeUInt32(value);
   };
 
   /**
@@ -544,6 +534,197 @@
   /* eslint-enable*/
 
   Peeracle.DataSource = DataSource;
+
+  /**
+   * @class
+   * @memberof Peeracle.DataSource
+   * @implements {Peeracle.DataSource}
+   * @param {Blob|string} handle
+   * @constructor
+   */
+  function File(handle) {
+    /**
+     * @type {*}
+     * @private
+     */
+    this.handle_ = handle;
+
+    /**
+     * @readonly
+     * @member {number}
+     */
+    this.offset = 0;
+
+    /**
+     * @readonly
+     * @member {number}
+     */
+    this.length = (typeof handle !== 'string') ? handle.size : -1;
+
+  }
+
+  File.prototype = Object.create(DataSource.prototype);
+  File.prototype.constructor = File;
+
+  /**
+   *
+   * @param length
+   */
+  File.prototype.read = function read(length) {
+    this.offset += length;
+  };
+
+  /**
+   *
+   * @param position
+   */
+  File.prototype.seek = function seek(position) {
+    this.offset = position;
+  };
+
+  /**
+   *
+   * @param length
+   * @param cb
+   */
+  File.prototype.fetchBytes = function fetchBytes(length, cb) {
+    var reader;
+
+    if (this.length > -1 && this.offset + length > this.length) {
+      cb(null);
+      return;
+    }
+
+    reader = new FileReader();
+    reader.onload = function onload(e) {
+      cb(new Uint8Array(e.target.result));
+    };
+    reader.readAsArrayBuffer(this.handle_.slice(this.offset, this.offset +
+      length));
+  };
+
+  Peeracle.DataSource.File = File;
+
+  /**
+   * @class
+   * @memberof Peeracle.DataSource
+   * @implements {Peeracle.DataSource}
+   * @param {string} handle
+   * @param {function} cb
+   * @constructor
+   */
+  function Http(handle, cb) {
+    var r;
+
+    if (typeof handle !== 'string') {
+      throw new TypeError('first argument must be a string');
+    }
+
+    if (cb && typeof cb !== 'function') {
+      throw new TypeError('second argument must be a callback');
+    }
+
+    /**
+     * @member {number}
+     * @readonly
+     */
+    this.offset = 0;
+
+    /**
+     * @member {number}
+     * @readonly
+     */
+    this.length = -1;
+
+    /**
+     * @member {string}
+     * @readonly
+     * @private
+     */
+    this.url_ = handle;
+
+    if (cb) {
+      r = new XMLHttpRequest();
+      r.open('HEAD', this.url_);
+      r.onreadystatechange = function onreadystatechange() {};
+      r.onload = function onload() {
+        console.log(r.response);
+        cb();
+      };
+      r.send();
+    }
+  }
+
+  Http.prototype = Object.create(DataSource.prototype);
+  Http.prototype.constructor = Http;
+
+  /**
+   * @function
+   * @param length
+   */
+  Http.prototype.read = function read(length) {
+    if (typeof length !== 'number') {
+      throw new TypeError('Invalid argument, expected number');
+    }
+    if (length < 0) {
+      throw new RangeError('Value out of bounds');
+    }
+    this.offset += length;
+  };
+
+  /**
+   * @function
+   * @param position
+   */
+  Http.prototype.seek = function seek(position) {
+    if (typeof position !== 'number') {
+      throw new TypeError('Invalid argument, expected number');
+    }
+    if (position < 0) {
+      throw new RangeError('Value out of bounds');
+    }
+    this.offset = position;
+  };
+
+  /**
+   * @function
+   * @param length
+   * @param cb
+   */
+  Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+    /** @type {XMLHttpRequest} */
+    var r;
+    /** @type {Uint8Array} */
+    var bytes;
+    /** @type {string} */
+    var range;
+
+    if (typeof length !== 'number') {
+      throw new TypeError('first argument must be a number');
+    }
+
+    if (typeof cb !== 'function') {
+      throw new TypeError('second argument must be a callback');
+    }
+
+    range = this.offset + '-' + (this.offset + (length - 1));
+    r = new XMLHttpRequest();
+    r.open('GET', this.url_);
+    r.setRequestHeader('Range', 'bytes=' + range);
+    r.responseType = 'arraybuffer';
+    r.onreadystatechange = function onreadystatechange() {};
+    r.onload = function onload() {
+      if (r.status === 206) {
+        bytes = new Uint8Array(r.response);
+        cb(bytes);
+        return;
+      }
+      cb(null);
+    };
+    r.send();
+  };
+
+  Peeracle.DataSource.Http = Http;
 
   /**
    * @class
@@ -2524,6 +2705,18 @@
    */
   Utils.trunc = function utilsTrunc(x) {
     return Math.trunc(x);
+  };
+
+  Utils.stringToArray = function stringToArray(str) {
+    var i;
+    var l = str.length;
+    var arr = [];
+
+    for (i = 0; i < l; ++i) {
+      arr.push(str.charCodeAt(i));
+    }
+
+    return arr;
   };
 
   Peeracle.Utils = Utils;
