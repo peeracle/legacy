@@ -93,6 +93,8 @@ Http.prototype.fetchBytes = function fetchBytes(length, cb) {
   r.open('GET', this.url_);
   r.setRequestHeader('Range', 'bytes=' + range);
   r.responseType = 'arraybuffer';
+  r.onreadystatechange = function onreadystatechange() {
+  };
   r.onload = function onload() {
     if (r.status === 206) {
       bytes = new Uint8Array(r.response);
