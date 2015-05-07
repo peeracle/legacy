@@ -2,7 +2,7 @@
   "name": "peeracle",
   "version": "0.0.1",
   "description": "Peeracle Javascript Library",
-  "main": "peeracle.js",
+  "main": "index.js",
   "scripts": {
     "test": "NODE_ENV=test istanbul cover --include-all-sources jasmine",
     "lint": "eslint src/*.js"
