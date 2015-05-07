@@ -82,12 +82,14 @@ Http.prototype.seek = function seek(position) {
  */
 Http.prototype.fetchBytes = function fetchBytes(length, cb) {
   /** @type {XMLHttpRequest} */
-  var r = new XMLHttpRequest();
+  var r;
   /** @type {Uint8Array} */
   var bytes;
   /** @type {string} */
-  var range = this.offset + '-' + (this.offset + (length - 1));
+  var range;
 
+  range = this.offset + '-' + (this.offset + (length - 1));
+  r = new XMLHttpRequest();
   r.open('GET', this.url_);
   r.setRequestHeader('Range', 'bytes=' + range);
   r.responseType = 'arraybuffer';
