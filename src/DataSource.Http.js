@@ -36,6 +36,10 @@ var XMLHttpRequest = require('xhr2');
  * @constructor
  */
 function Http(handle) {
+  if (typeof handle !== 'string') {
+    throw new TypeError('Argument must be a string');
+  }
+
   /**
    * @member {number}
    * @readonly
@@ -64,6 +68,12 @@ Http.prototype.constructor = Http;
  * @param length
  */
 Http.prototype.read = function read(length) {
+  if (typeof length !== 'number') {
+    throw new TypeError('Invalid argument, expected number');
+  }
+  if (length < 0) {
+    throw new RangeError('Value out of bounds');
+  }
   this.offset += length;
 };
 
@@ -72,6 +82,12 @@ Http.prototype.read = function read(length) {
  * @param position
  */
 Http.prototype.seek = function seek(position) {
+  if (typeof position !== 'number') {
+    throw new TypeError('Invalid argument, expected number');
+  }
+  if (position < 0) {
+    throw new RangeError('Value out of bounds');
+  }
   this.offset = position;
 };
 
@@ -87,6 +103,14 @@ Http.prototype.fetchBytes = function fetchBytes(length, cb) {
   var bytes;
   /** @type {string} */
   var range;
+
+  if (typeof length !== 'number') {
+    throw new TypeError('first argument must be a number');
+  }
+
+  if (typeof cb !== 'function') {
+    throw new TypeError('second argument must be a callback');
+  }
 
   range = this.offset + '-' + (this.offset + (length - 1));
   r = new XMLHttpRequest();
