@@ -21,9 +21,9 @@
  */
 
 'use strict';
-
 /* eslint-disable */
 
+/* istanbul ignore next */
 /**
  * @interface
  * @memberof Peeracle
@@ -44,6 +44,7 @@ function DataSource(handle) {
   this.length = 0;
 }
 
+/* istanbul ignore next */
 /**
  * @function
  * @param length
@@ -51,6 +52,7 @@ function DataSource(handle) {
 DataSource.prototype.read = function read(length) {
 };
 
+/* istanbul ignore next */
 /**
  * @function
  * @param position
@@ -58,6 +60,7 @@ DataSource.prototype.read = function read(length) {
 DataSource.prototype.seek = function seek(position) {
 };
 
+/* istanbul ignore next */
 /**
  * @function
  * @param length
@@ -66,6 +69,6 @@ DataSource.prototype.seek = function seek(position) {
 DataSource.prototype.fetchBytes = function fetchBytes(length, cb) {
 };
 
-/* eslint-enable*/
+/* eslint-enable */
 
 module.exports = DataSource;
