@@ -50,7 +50,7 @@ function Http(handle) {
    * @member {number}
    * @readonly
    */
-  this.length = 0;
+  this.length = -1;
 
   /**
    * @member {string}
@@ -91,12 +91,34 @@ Http.prototype.seek = function seek(position) {
   this.offset = position;
 };
 
-/**
- * @function
- * @param length
- * @param cb
- */
-Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
+  var r = new XMLHttpRequest();
+
+  r.open('HEAD', this.url_);
+  r.responseType = 'arraybuffer';
+  r.onreadystatechange = function onreadystatechange() {
+  };
+  r.onload = function onload() {
+    var length;
+
+    if (r.status >= 400) {
+      cb(false);
+      return;
+    }
+
+    length = r.getResponseHeader('Content-Length');
+    if (length) {
+      this.length = parseInt(length, 10);
+    } else {
+      this.length = -2;
+    }
+
+    cb(true);
+  }.bind(this);
+  r.send();
+};
+
+Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
   /** @type {XMLHttpRequest} */
   var r;
   /** @type {Uint8Array} */
@@ -128,6 +150,38 @@ Http.prototype.fetchBytes = function fetchBytes(length, cb) {
     cb(null);
   };
   r.send();
+};
+
+/**
+ * @function
+ * @param length
+ * @param cb
+ */
+Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+  if (typeof length !== 'number') {
+    throw new TypeError('first argument must be a number');
+  }
+
+  if (length < 1) {
+    throw new RangeError('first argument must be greater than zero');
+  }
+
+  if (typeof cb !== 'function') {
+    throw new TypeError('second argument must be a callback');
+  }
+
+  if (this.length === -1) {
+    this.retrieveLength_(function retrieveLengthCb(result) {
+      if (!result) {
+        cb(null);
+        return;
+      }
+      this.doFetchBytes_(length, cb);
+    }.bind(this));
+    return;
+  }
+
+  this.doFetchBytes_(length, cb);
 };
 
 module.exports = Http;
