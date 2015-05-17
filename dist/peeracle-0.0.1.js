@@ -281,6 +281,7 @@
 
   Peeracle.BinaryStream = BinaryStream;
 
+  /* istanbul ignore next */
   /**
    * @interface
    * @memberof Peeracle
@@ -288,6 +289,7 @@
    */
   function Crypto() {}
 
+  /* istanbul ignore next */
   Crypto.ERR_INVALID_ARGUMENT = 'Invalid argument';
 
   /**
@@ -304,6 +306,8 @@
 
     for (c in Crypto) {
       if (Crypto.hasOwnProperty(c) &&
+        Crypto[c].hasOwnProperty('prototype') &&
+        Crypto[c].prototype instanceof Crypto &&
         Crypto[c].hasOwnProperty('IDENTIFIER') &&
         Crypto[c].IDENTIFIER === id) {
         return new Crypto[c]();
@@ -315,28 +319,33 @@
 
   /* eslint-disable */
 
+  /* istanbul ignore next */
   /**
    * @function
    * @param array
    */
   Crypto.prototype.checksum = function checksum(array) {};
 
+  /* istanbul ignore next */
   /**
    * @function
    */
   Crypto.prototype.init = function init() {};
 
+  /* istanbul ignore next */
   /**
    * @function
    * @param array
    */
   Crypto.prototype.update = function update(array) {};
 
+  /* istanbul ignore next */
   /**
    * @function
    */
   Crypto.prototype.finish = function finish() {};
 
+  /* istanbul ignore next */
   /**
    *
    * @param value
@@ -344,6 +353,7 @@
    */
   Crypto.prototype.serialize = function serialize(value, binaryStream) {};
 
+  /* istanbul ignore next */
   /**
    *
    * @param {BinaryStream} binaryStream
@@ -492,6 +502,7 @@
 
   /* eslint-disable */
 
+  /* istanbul ignore next */
   /**
    * @interface
    * @memberof Peeracle
@@ -512,18 +523,21 @@
     this.length = 0;
   }
 
+  /* istanbul ignore next */
   /**
    * @function
    * @param length
    */
   DataSource.prototype.read = function read(length) {};
 
+  /* istanbul ignore next */
   /**
    * @function
    * @param position
    */
   DataSource.prototype.seek = function seek(position) {};
 
+  /* istanbul ignore next */
   /**
    * @function
    * @param length
@@ -531,7 +545,7 @@
    */
   DataSource.prototype.fetchBytes = function fetchBytes(length, cb) {};
 
-  /* eslint-enable*/
+  /* eslint-enable */
 
   Peeracle.DataSource = DataSource;
 
@@ -610,18 +624,11 @@
    * @memberof Peeracle.DataSource
    * @implements {Peeracle.DataSource}
    * @param {string} handle
-   * @param {function} cb
    * @constructor
    */
-  function Http(handle, cb) {
-    var r;
-
+  function Http(handle) {
     if (typeof handle !== 'string') {
       throw new TypeError('first argument must be a string');
-    }
-
-    if (cb && typeof cb !== 'function') {
-      throw new TypeError('second argument must be a callback');
     }
 
     /**
@@ -642,17 +649,6 @@
      * @private
      */
     this.url_ = handle;
-
-    if (cb) {
-      r = new XMLHttpRequest();
-      r.open('HEAD', this.url_);
-      r.onreadystatechange = function onreadystatechange() {};
-      r.onload = function onload() {
-        console.log(r.response);
-        cb();
-      };
-      r.send();
-    }
   }
 
   Http.prototype = Object.create(DataSource.prototype);
@@ -686,26 +682,38 @@
     this.offset = position;
   };
 
-  /**
-   * @function
-   * @param length
-   * @param cb
-   */
-  Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+  Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
+    var r = new XMLHttpRequest();
+    r.open('HEAD', this.url_);
+    r.responseType = 'arraybuffer';
+    r.onreadystatechange = function onreadystatechange() {};
+    r.onload = function onload() {
+      var length;
+
+      if (r.status >= 400) {
+        cb(false);
+        return;
+      }
+
+      length = r.getResponseHeader('Content-Length');
+      if (!length) {
+        cb(true);
+        return;
+      }
+
+      this.length = parseInt(length, 10);
+      cb(true);
+    }.bind(this);
+    r.send();
+  };
+
+  Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
     /** @type {XMLHttpRequest} */
     var r;
     /** @type {Uint8Array} */
     var bytes;
     /** @type {string} */
     var range;
-
-    if (typeof length !== 'number') {
-      throw new TypeError('first argument must be a number');
-    }
-
-    if (typeof cb !== 'function') {
-      throw new TypeError('second argument must be a callback');
-    }
 
     range = this.offset + '-' + (this.offset + (length - 1));
     r = new XMLHttpRequest();
@@ -722,6 +730,38 @@
       cb(null);
     };
     r.send();
+  };
+
+  /**
+   * @function
+   * @param length
+   * @param cb
+   */
+  Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+    if (typeof length !== 'number') {
+      throw new TypeError('first argument must be a number');
+    }
+
+    if (length < 1) {
+      throw new RangeError('first argument must be greater than zero');
+    }
+
+    if (typeof cb !== 'function') {
+      throw new TypeError('second argument must be a callback');
+    }
+
+    if (this.length === -1) {
+      this.retrieveLength_(function retrieveLengthCb(result) {
+        if (!result) {
+          cb(null);
+          return;
+        }
+        this.doFetchBytes_(length, cb);
+      }.bind(this));
+      return;
+    }
+
+    this.doFetchBytes_(length, cb);
   };
 
   Peeracle.DataSource.Http = Http;
