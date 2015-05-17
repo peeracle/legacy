@@ -37,7 +37,7 @@ var XMLHttpRequest = require('xhr2');
  */
 function Http(handle) {
   if (typeof handle !== 'string') {
-    throw new TypeError('Argument must be a string');
+    throw new TypeError('first argument must be a string');
   }
 
   /**
@@ -125,14 +125,6 @@ Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
   var bytes;
   /** @type {string} */
   var range;
-
-  if (typeof length !== 'number') {
-    throw new TypeError('first argument must be a number');
-  }
-
-  if (typeof cb !== 'function') {
-    throw new TypeError('second argument must be a callback');
-  }
 
   range = this.offset + '-' + (this.offset + (length - 1));
   r = new XMLHttpRequest();
