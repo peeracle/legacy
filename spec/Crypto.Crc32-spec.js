@@ -41,9 +41,37 @@ describe('Peeracle.Crypto.Crc32', function () {
     });
   });
 
+  describe('init', function () {
+    it('should initialize itself twice', function () {
+      crc32.init();
+      crc32.init();
+      expect(crc32.crcTable_).not.toBeNull();
+    });
+  });
+
   describe('checksum', function () {
     it('should do a checksum of "hello world"', function () {
       var checksum = crc32.checksum("hello world");
+      expect(checksum).toEqual(0xD4A1185);
+    });
+  });
+
+  describe('checksum', function () {
+    it('should do a checksum of an array "hello world"', function () {
+      var arr = [];
+      var checksum;
+      arr.push('h'.charCodeAt(0));
+      arr.push('e'.charCodeAt(0));
+      arr.push('l'.charCodeAt(0));
+      arr.push('l'.charCodeAt(0));
+      arr.push('o'.charCodeAt(0));
+      arr.push(' '.charCodeAt(0));
+      arr.push('w'.charCodeAt(0));
+      arr.push('o'.charCodeAt(0));
+      arr.push('r'.charCodeAt(0));
+      arr.push('l'.charCodeAt(0));
+      arr.push('d'.charCodeAt(0));
+      checksum = crc32.checksum(arr);
       expect(checksum).toEqual(0xD4A1185);
     });
   });

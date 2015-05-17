@@ -22,6 +22,7 @@
 
 'use strict';
 
+/* istanbul ignore next */
 /**
  * @interface
  * @memberof Peeracle
@@ -30,6 +31,7 @@
 function Crypto() {
 }
 
+/* istanbul ignore next */
 Crypto.ERR_INVALID_ARGUMENT = 'Invalid argument';
 
 /**
@@ -46,6 +48,8 @@ Crypto.createInstance = function createInstance(id) {
 
   for (c in Crypto) {
     if (Crypto.hasOwnProperty(c) &&
+      Crypto[c].hasOwnProperty('prototype') &&
+      Crypto[c].prototype instanceof Crypto &&
       Crypto[c].hasOwnProperty('IDENTIFIER') &&
       Crypto[c].IDENTIFIER === id) {
       return new Crypto[c]();
@@ -57,6 +61,7 @@ Crypto.createInstance = function createInstance(id) {
 
 /* eslint-disable */
 
+/* istanbul ignore next */
 /**
  * @function
  * @param array
@@ -64,12 +69,14 @@ Crypto.createInstance = function createInstance(id) {
 Crypto.prototype.checksum = function checksum(array) {
 };
 
+/* istanbul ignore next */
 /**
  * @function
  */
 Crypto.prototype.init = function init() {
 };
 
+/* istanbul ignore next */
 /**
  * @function
  * @param array
@@ -77,12 +84,14 @@ Crypto.prototype.init = function init() {
 Crypto.prototype.update = function update(array) {
 };
 
+/* istanbul ignore next */
 /**
  * @function
  */
 Crypto.prototype.finish = function finish() {
 };
 
+/* istanbul ignore next */
 /**
  *
  * @param value
@@ -91,6 +100,7 @@ Crypto.prototype.finish = function finish() {
 Crypto.prototype.serialize = function serialize(value, binaryStream) {
 };
 
+/* istanbul ignore next */
 /**
  *
  * @param {BinaryStream} binaryStream
