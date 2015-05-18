@@ -346,12 +346,12 @@ WebM.prototype.parseTracks_ = function parseTracks_(cb) {
 };
 
 WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) {
-  var cueTrackStart = start + tag.headerSize;
+  var cueTrackStart = start;
   var cueTrackTag = this.readBufferedTag_(cueTrackStart, bytes);
 
   var tagMap = {
-    'f7': ['id', this.readUInt_],
-    'f1': ['type', this.readUInt_]
+    'f7': ['track', this.readUInt_],
+    'f1': ['clusterOffset', this.readUInt_]
   };
 
   while (cueTrackTag) {
@@ -385,7 +385,7 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
         cuePointStart + cuePointTag.headerSize, cuePointTag.dataSize);
     } else if (cuePointTag.str === 'b7') {
       this.parseCueTrack_(cue, cuePointStart + cuePointTag.headerSize,
-        cuePointTag.dataSize, bytes);
+        cuePointTag, bytes);
     }
     cuePointStart += cuePointTag.headerSize + cuePointTag.dataSize;
     if (cuePointStart > start + tag.headerSize + tag.dataSize) {
@@ -501,9 +501,7 @@ WebM.prototype.parse_ = function parse_(cb) {
  */
 WebM.prototype.getInitSegment = function getInitSegment(cb) {
   if (!this.ebmlTag_) {
-    console.log('parsing');
     this.parse_(function parseCb(err) {
-      console.log('err', err);
       if (err) {
         throw err;
       }
