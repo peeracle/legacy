@@ -393,6 +393,7 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
     }
     cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
   }
+  this.cues.push(cue);
 };
 
 /**
@@ -402,7 +403,6 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
  */
 WebM.prototype.parseCues_ = function parseCues_(cb) {
   this.readTagBytes_(this.cuesTag_, function readBytesCb(bytes) {
-    var cue;
     var cueStart = this.cuesTag_.headerSize;
     var cueTag = this.readBufferedTag_(cueStart, bytes);
 
@@ -411,8 +411,7 @@ WebM.prototype.parseCues_ = function parseCues_(cb) {
         return;
       }
 
-      cue = this.parseCue_();
-      this.cues.push(cue);
+      this.parseCue_(cueStart, cueTag, bytes);
       cueStart += cueTag.headerSize + cueTag.dataSize;
       if (cueStart > this.cuesTag_.headerSize + this.cuesTag_.dataSize) {
         break;
