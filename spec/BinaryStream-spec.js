@@ -36,6 +36,21 @@ describe('Peeracle.BinaryStream', function () {
     binaryStream = new Peeracle.BinaryStream(buffer);
   });
 
+  describe('construct', function () {
+    it('should initialize', function () {
+      expect(function () {
+        var buf = new Uint8Array(1);
+        var bs = new Peeracle.BinaryStream(buf);
+      }).not.toThrow();
+    });
+    it('should throw error', function () {
+      expect(function () {
+        var buf = null;
+        var bs = new Peeracle.BinaryStream(buf);
+      }).toThrowError(Peeracle.BinaryStream.ERR_INVALID_ARGUMENT);
+    });
+  });
+
   describe('seek', function () {
     it('should throw an error for seeking outside the stream', function () {
       expect(function () {

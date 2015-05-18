@@ -30,6 +30,10 @@
  */
 
 function BinaryStream(buffer) {
+  if (!buffer || !(buffer instanceof Uint8Array)) {
+    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+  }
+
   /**
    * @member {Uint8Array}
    */
