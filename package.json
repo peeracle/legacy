@@ -32,6 +32,7 @@
     "babel-eslint": "^3.0.1",
     "eslint": "^0.15.1",
     "grunt": "^0.4.5",
+    "grunt-closure-compiler": "0.0.21",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-jshint": "^0.11.0",
@@ -53,7 +54,6 @@
   "dependencies": {
     "commander": "^2.7.1",
     "event-target": "^0.1.0",
-    "grunt-closure-compiler": "0.0.21",
     "observatory": "^0.1.1",
     "websocket": "^1.0.17",
     "winston": "^1.0.0",
