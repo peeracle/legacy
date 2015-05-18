@@ -150,8 +150,6 @@ function WebM(dataSource) {
    * @member {Array.<Cue>}
    */
   this.cues = [];
-
-  this.parse_();
 }
 
 WebM.TAG_SUFFIX_ = 'Tag_';
@@ -502,6 +500,18 @@ WebM.prototype.parse_ = function parse_(cb) {
  * @param cb
  */
 WebM.prototype.getInitSegment = function getInitSegment(cb) {
+  if (!this.ebmlTag_) {
+    console.log('parsing');
+    this.parse_(function parseCb(err) {
+      console.log('err', err);
+      if (err) {
+        throw err;
+      }
+      this.getInitSegment(cb);
+    }.bind(this));
+    return;
+  }
+
   this.readTagBytes_(this.ebmlTag_, function readTagBytesCb(bytes) {
     cb(bytes);
   });
