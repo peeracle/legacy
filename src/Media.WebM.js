@@ -455,7 +455,7 @@ WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
       return;
     }
 
-    if (tagMap.hasOwnProperty(tag.str)) {
+    if (tagMap.hasOwnProperty(tag.str) && !this[tagMap[tag.str] + WebM.TAG_SUFFIX_]) {
       this[tagMap[tag.str] + WebM.TAG_SUFFIX_] = tag;
     }
 
