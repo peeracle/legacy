@@ -95,7 +95,6 @@ Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
   var r = new XMLHttpRequest();
 
   r.open('HEAD', this.url_);
-  r.responseType = 'arraybuffer';
   r.onreadystatechange = function onreadystatechange() {
   };
   r.onload = function onload() {
@@ -112,7 +111,6 @@ Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
     } else {
       this.length = -2;
     }
-
     cb(true);
   }.bind(this);
   r.send();
@@ -120,14 +118,12 @@ Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
 
 Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
   /** @type {XMLHttpRequest} */
-  var r;
+  var r = new XMLHttpRequest();
   /** @type {Uint8Array} */
   var bytes;
   /** @type {string} */
-  var range;
+  var range = this.offset + '-' + (this.offset + (length - 1));
 
-  range = this.offset + '-' + (this.offset + (length - 1));
-  r = new XMLHttpRequest();
   r.open('GET', this.url_);
   r.setRequestHeader('Range', 'bytes=' + range);
   r.responseType = 'arraybuffer';
