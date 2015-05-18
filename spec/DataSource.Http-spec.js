@@ -34,8 +34,8 @@ if (typeof Peeracle === 'undefined') {
   var http = require('http');
   var i;
 
-  url = 'http://127.0.0.1:9990/';
-  length = Math.floor(Math.random() * 128 - 32 + 1) + 32;
+  url = 'http://127.0.0.1:3000/';
+  length = 33;
   bytes = new Uint8Array(length);
 
   for (i = 0; i < length; ++i) {
@@ -68,15 +68,14 @@ if (typeof Peeracle === 'undefined') {
       response.writeHead(200, {'Content-Length': length});
       response.end();
     }
-  }).listen(9990);
+  }).listen(3000);
 } else {
-  url = 'http://out.dotstar.fr/media/dash/' +
-    'tears_of_steel_video_160x72_250K.webm';
+  url = 'http://127.0.0.1:3000/';
+  length = 33;
   bytes = new Uint8Array([26, 69, 223, 163, 159, 66, 134, 129, 1,
     66, 247, 129, 1, 66, 242, 129, 4, 66, 243, 129,
     8, 66, 130, 132, 119, 101, 98, 109, 66, 135, 129,
     2, 66]);
-  length = 19993725;
 }
 
 describe('Peeracle.DataSource.Http', function () {
