@@ -449,6 +449,7 @@ WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
           this.parseCues_(function parseCuesCb() {
             this.ebmlTag_.dataSize =
               this.clusterTag_.headerOffset - this.ebmlTag_.headerSize;
+            cb(null);
           }.bind(this));
         }.bind(this));
       }.bind(this));
