@@ -285,7 +285,7 @@ WebM.prototype.parseTrack_ = function parseTrack_(start, tag, bytes) {
   var tagMap = {
     'd7': ['id', this.readUInt_],
     '83': ['type', this.readUInt_],
-    '86': ['codec', this.readUInt_]
+    '86': ['codec', this.readString_]
   };
 
   while (entryTag) {
