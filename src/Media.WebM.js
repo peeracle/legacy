@@ -234,7 +234,7 @@ WebM.prototype.parseTrackVideo_ =
     while (videoTag) {
       if (tagMap.hasOwnProperty(videoTag.str)) {
         track[tagMap[videoTag.str][0]] =
-          tagMap[videoTag.str][1](bytes, videoStart + videoTag.headerSize,
+          tagMap[videoTag.str][1].call(this, bytes, videoStart + videoTag.headerSize,
             videoTag.dataSize);
       }
       videoStart += videoTag.headerSize + videoTag.dataSize;
@@ -259,7 +259,7 @@ WebM.prototype.parseTrackAudio_ =
     while (audioTag) {
       if (tagMap.hasOwnProperty(audioTag.str)) {
         track[tagMap[audioTag.str][0]] =
-          tagMap[audioTag.str][1](bytes, audioStart + audioTag.headerSize,
+          tagMap[audioTag.str][1].call(this, bytes, audioStart + audioTag.headerSize,
             audioTag.dataSize);
       }
       audioStart += audioTag.headerSize + audioTag.dataSize;
@@ -293,7 +293,7 @@ WebM.prototype.parseTrack_ = function parseTrack_(start, tag, bytes) {
   while (entryTag) {
     if (tagMap.hasOwnProperty(entryTag.str)) {
       track[tagMap[entryTag.str][0]] =
-        tagMap[entryTag.str][1](bytes, entryStart + entryTag.headerSize,
+        tagMap[entryTag.str][1].call(this, bytes, entryStart + entryTag.headerSize,
           entryTag.dataSize);
     } else if (entryTag.str === 'e0') {
       this.parseTrackVideo_(track, entryStart, entryTag, bytes);
@@ -359,7 +359,7 @@ WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) 
   while (cueTrackTag) {
     if (tagMap.hasOwnProperty(cueTrackTag.str)) {
       cue[tagMap[cueTrackTag.str][0]] =
-        tagMap[cueTrackTag.str][1](bytes,
+        tagMap[cueTrackTag.str][1].call(this, bytes,
           cueTrackStart + cueTrackTag.headerSize, cueTrackTag.dataSize);
     }
     cueTrackStart += cueTrackTag.headerSize + cueTrackTag.dataSize;
