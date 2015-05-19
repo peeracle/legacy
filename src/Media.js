@@ -38,7 +38,7 @@
  * @typedef {Object} Cue
  * @property {number} timecode
  * @property {number} track
- * @property {number} clusterOffset
+ * @property {number} offset
  */
 
 /**

@@ -150,8 +150,8 @@ Metadata.prototype.calculateChunkSize = function calculateChunkSize(media) {
 
   for (i = 0, l = cues.length; i < l; ++i) {
     cue = cues[i];
-    sum += cue.clusterOffset - last;
-    last = cue.clusterOffset;
+    sum += cue.offset - last;
+    last = cue.offset;
   }
 
   total = (sum / l);

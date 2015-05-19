@@ -351,7 +351,7 @@ WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) 
 
   var tagMap = {
     'f7': ['track', this.readUInt_],
-    'f1': ['clusterOffset', this.readUInt_]
+    'f1': ['offset', this.readUInt_]
   };
 
   while (cueTrackTag) {
@@ -373,7 +373,7 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
   var cue = {
     timecode: -1,
     track: -1,
-    clusterOffset: -1
+    offset: -1,
   };
 
   var cuePointStart = start + tag.headerSize;
@@ -537,7 +537,7 @@ WebM.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
     cb(null);
   }
 
-  this.dataSource_.seek(this.seekHeadTag_.headerOffset + cue.clusterOffset);
+  this.dataSource_.seek(this.seekHeadTag_.headerOffset + cue.offset);
   this.readNextTag_(function readNextTagCb(tag) {
     this.readTagBytes_(tag, function readTagBytesCb(bytes) {
       cb(bytes);
