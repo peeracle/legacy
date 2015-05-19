@@ -79,6 +79,7 @@ module.exports = function (grunt) {
           'src/Listenable.js',
           'src/Manager.js',
           'src/Media.js',
+          'src/Media.MP4.js',
           'src/Media.WebM.js',
           'src/Metadata.js',
           'src/MetadataSerializer.js',

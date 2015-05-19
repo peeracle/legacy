@@ -37,6 +37,7 @@
 
   var Media = require('./src/Media');
   Media.WebM = require('./src/Media.WebM');
+  Media.MP4 = require('./src/Media.MP4');
 
   var Tracker = {
     Client: require('./src/Tracker.Client'),
