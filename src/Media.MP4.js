@@ -614,6 +614,27 @@ MP4.prototype.getInitSegment = function getInitSegment(cb) {
  * @param cb
  */
 MP4.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
+  var i;
+  var cue;
+  var l = this.cues.length;
+
+  for (i = 0; i < l; ++i) {
+    cue = this.cues[i];
+    if (timecode <= cue.timecode) {
+      break;
+    }
+  }
+
+  if (i >= l) {
+    cb(null);
+    return;
+  }
+
+  this.dataSource_.seek(cue.offset);
+  this.dataSource_.fetchBytes(cue.size, function fetchMediaCb(bytes) {
+    console.log(timecode, bytes.length, 'bytes');
+    cb(bytes);
+  });
 };
 
 module.exports = MP4;
