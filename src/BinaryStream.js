@@ -182,6 +182,21 @@ BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
  * @param {boolean?} unsigned
  * @returns {number}
  */
+BinaryStream.prototype.readInt16 = function readInt16(unsigned) {
+  var number = this.readBytes(2);
+  var value = (number[0] << 8);
+
+  if (unsigned) {
+    return value + number[1] >>> 0;
+  }
+
+  return value + number[1];
+};
+
+/**
+ * @param {boolean?} unsigned
+ * @returns {number}
+ */
 BinaryStream.prototype.readInt32 = function readInt32(unsigned) {
   var number = this.readBytes(4);
   var value = (number[0] << 24) +
