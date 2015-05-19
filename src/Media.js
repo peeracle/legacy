@@ -39,6 +39,7 @@
  * @property {number} timecode
  * @property {number} track
  * @property {number} offset
+ * @property {number} size
  */
 
 /**

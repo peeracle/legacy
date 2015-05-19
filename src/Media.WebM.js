@@ -374,6 +374,7 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
     timecode: -1,
     track: -1,
     offset: -1,
+    size: -1
   };
 
   var cuePointStart = start + tag.headerSize;
