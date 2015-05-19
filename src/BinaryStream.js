@@ -47,9 +47,8 @@ function BinaryStream(buffer) {
 
   /**
    * @member {number}
-   * @private
    */
-  this.offset_ = 0;
+  this.offset = 0;
 }
 
 BinaryStream.ERR_INVALID_ARGUMENT = 'Invalid argument';
@@ -60,10 +59,10 @@ BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
  * @returns {number}
  */
 BinaryStream.prototype.readByte = function readByte() {
-  if (this.offset_ + 1 >= this.length_) {
+  if (this.offset + 1 >= this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
-  return this.bytes[this.offset_++];
+  return this.bytes[this.offset++];
 };
 
 /**
@@ -76,7 +75,7 @@ BinaryStream.prototype.writeByte = function writeByte(value) {
   if (value < 0 || value > 255) {
     throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
   }
-  this.bytes.set(new Uint8Array([value]), this.offset_++);
+  this.bytes.set(new Uint8Array([value]), this.offset++);
 };
 
 /**
@@ -91,12 +90,12 @@ BinaryStream.prototype.readBytes = function readBytes(length) {
   }
 
   if (length > this.length_ ||
-    this.offset_ + length > this.length_) {
+    this.offset + length > this.length_) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
 
-  bytes = this.bytes.subarray(this.offset_, this.offset_ + length);
-  this.offset_ += length;
+  bytes = this.bytes.subarray(this.offset, this.offset + length);
+  this.offset += length;
   return bytes;
 };
 
@@ -108,8 +107,10 @@ BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
-  this.bytes.set(bytes, this.offset_);
-  this.offset_ += bytes.length;
+  this.bytes.set(bytes, this.offset);
+  this.offset += bytes.length;
+};
+
 };
 
 /**
@@ -265,6 +266,7 @@ BinaryStream.prototype.seek = function seek(value) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   this.offset_ = value;
+  this.offset = value;
 };
 
 module.exports = BinaryStream;
