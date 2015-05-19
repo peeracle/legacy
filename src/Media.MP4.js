@@ -481,14 +481,11 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     var bstream;
     var version;
-    var timeScale;
     var time;
     var offset;
     var count;
     var i;
-    var ref;
     var duration;
-    var refs = [];
     /** @type {Cue} */
     var cue;
 
@@ -505,15 +502,13 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
       return;
     }
 
-    bstream.seek(16);
-    timeScale = bstream.readUInt32();
+    bstream.seek(20);
     time = bstream.readUInt32();
     offset = bstream.readUInt32() + atom.offset + atom.size;
     bstream.seek(30);
 
     count = bstream.readInt16();
     for (i = 0; i < count; ++i) {
-      ref = {};
       cue = {
         timecode: -1,
         track: -1,
