@@ -206,18 +206,18 @@ MP4.prototype.readNextAtom_ = function readNextAtom_(cb) {
 MP4.prototype.parseFtypCompatibleBrands_ =
   function parseFtypCompatibleBrands_(atom, cb) {
     var i = 16;
-    this.dataSource_.fetchBytes(4, function getNextBrand(brand) {
+    this.dataSource_.fetchBytes(4, function getNextBrand(bytes) {
       var brandStr;
 
-      if (!brand) {
+      if (!bytes) {
         cb(false);
         return;
       }
 
-      brandStr = String.fromCharCode(brand[0]) +
-        String.fromCharCode(brand[1]) +
-        String.fromCharCode(brand[2]) +
-        String.fromCharCode(brand[3]);
+      brandStr = String.fromCharCode(bytes[0]) +
+        String.fromCharCode(bytes[1]) +
+        String.fromCharCode(bytes[2]) +
+        String.fromCharCode(bytes[3]);
 
       i += 4;
       this.compatibleBrands_.push(brandStr);
@@ -231,16 +231,16 @@ MP4.prototype.parseFtypCompatibleBrands_ =
   };
 
 MP4.prototype.parseFtypVersion_ = function parseFtypVersion_(atom, cb) {
-  this.dataSource_.fetchBytes(4, function getVersion(version) {
-    if (!version) {
+  this.dataSource_.fetchBytes(4, function getVersion(bytes) {
+    if (!bytes) {
       cb(false);
       return;
     }
 
-    this.version_ = ((version[0] << 24) +
-      (version[1] << 16) +
-      (version[2] << 8) +
-      version[3]) >>> 0;
+    this.version_ = ((bytes[0] << 24) +
+      (bytes[1] << 16) +
+      (bytes[2] << 8) +
+      bytes[3]) >>> 0;
 
     this.dataSource_.read(4);
     this.parseFtypCompatibleBrands_(atom, cb);
@@ -249,15 +249,15 @@ MP4.prototype.parseFtypVersion_ = function parseFtypVersion_(atom, cb) {
 
 MP4.prototype.parseFtypMajorBrand_ = function parseFtypMajorBrand_(atom, cb) {
   this.dataSource_.seek(atom.offset + 8);
-  this.dataSource_.fetchBytes(4, function getMajorBrand(majorBrand) {
-    if (!majorBrand) {
+  this.dataSource_.fetchBytes(4, function getMajorBrand(bytes) {
+    if (!bytes) {
       cb(false);
       return;
     }
-    this.majorBrand_ = String.fromCharCode(majorBrand[0]) +
-      String.fromCharCode(majorBrand[1]) +
-      String.fromCharCode(majorBrand[2]) +
-      String.fromCharCode(majorBrand[3]);
+    this.majorBrand_ = String.fromCharCode(bytes[0]) +
+      String.fromCharCode(bytes[1]) +
+      String.fromCharCode(bytes[2]) +
+      String.fromCharCode(bytes[3]);
     this.dataSource_.read(4);
     this.parseFtypVersion_(atom, cb);
   }.bind(this));
