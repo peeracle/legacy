@@ -476,6 +476,66 @@ MP4.prototype.parseStsd_ = function parseStsd_(atom, cb) {
     cb(true);
   }.bind(this));
 };
+MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
+  this.dataSource_.seek(atom.offset);
+  this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
+    var bstream;
+    var version;
+    var timeScale;
+    var time;
+    var offset;
+    var count;
+    var i;
+    var ref;
+    var duration;
+    var refs = [];
+    /** @type {Cue} */
+    var cue;
+
+    if (!bytes) {
+      cb(false);
+      return;
+    }
+
+    bstream = new BinaryStream(bytes);
+    bstream.seek(8);
+    version = bstream.readByte();
+    if (version) {
+      cb(false);
+      return;
+    }
+
+    bstream.seek(16);
+    timeScale = bstream.readUInt32();
+    time = bstream.readUInt32();
+    offset = bstream.readUInt32() + atom.offset + atom.size;
+    bstream.seek(30);
+
+    count = bstream.readInt16();
+    for (i = 0; i < count; ++i) {
+      ref = {};
+      cue = {
+        timecode: -1,
+        track: -1,
+        offset: -1,
+        size: -1
+      };
+      cue.size = bstream.readUInt32() & 0x8FFFFFFF;
+      duration = bstream.readUInt32();
+      bstream.readUInt32();
+      cue.timecode = time;
+      cue.track = -1;
+      cue.offset = offset;
+      this.cues.push(cue);
+      offset += cue.size;
+      time += duration;
+    }
+    console.log(this.cues);
+
+    this.dataSource_.seek(atom.offset + atom.size);
+    cb(true);
+  }.bind(this));
+};
 
 /**
  * @param cb
@@ -493,7 +553,8 @@ MP4.prototype.parse_ = function parse_(cb) {
       'hdlr': this.parseHdlr_,
       'minf': this.digAtom_,
       'stbl': this.digAtom_,
-      'stsd': this.parseStsd_
+      'stsd': this.parseStsd_,
+      'sidx': this.parseSidx_
     };
     console.log('get Next Atom', atom);
 
