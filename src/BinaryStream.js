@@ -111,6 +111,45 @@ BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
   this.offset += bytes.length;
 };
 
+/**
+ * @returns {number}
+ */
+BinaryStream.prototype.readFloat4 = function readFloat4() {
+  var i;
+  var val = 0;
+  var sign;
+  var exponent;
+  var significand;
+  var number = this.readBytes(4);
+
+  for (i = 0; i < 4; ++i) {
+    val <<= 8;
+    val |= number[i] & 0xff;
+  }
+
+  sign = val >> 31;
+  exponent = ((val >> 23) & 0xff) - 127;
+  significand = val & 0x7fffff;
+  if (exponent > -127) {
+    if (exponent === 128) {
+      if (significand === 0) {
+        if (sign === 0) {
+          return Number.POSITIVE_INFINITY;
+        }
+        return Number.NEGATIVE_INFINITY;
+      }
+      return NaN;
+    }
+    significand |= 0x800000;
+  } else {
+    if (significand === 0) {
+      return 0;
+    }
+    exponent = -126;
+  }
+
+  return Math.pow(-1, sign) * (significand * Math.pow(2, -23)) *
+    Math.pow(2, exponent);
 };
 
 /**
