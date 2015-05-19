@@ -55,6 +55,18 @@ function MP4(dataSource) {
   this.track_ = null;
 
   /**
+   * @member {MP4Atom}
+   * @private
+   */
+  this.ftypAtom_ = null;
+
+  /**
+   * @member {MP4Atom}
+   * @private
+   */
+  this.moovAtom_ = null;
+
+  /**
    * @member {string}
    * @private
    */
@@ -251,6 +263,7 @@ MP4.prototype.parseFtypMajorBrand_ = function parseFtypMajorBrand_(atom, cb) {
 };
 
 MP4.prototype.parseFtyp_ = function parseFtyp_(atom, cb) {
+  this.ftypAtom_ = atom;
   this.parseFtypMajorBrand_(atom, cb);
 };
 
@@ -359,6 +372,12 @@ MP4.prototype.parseHdlr_ = function parseHdlr_(atom, cb) {
   }.bind(this));
 };
 
+MP4.prototype.parseMoov_ = function parseMoov_(atom, cb) {
+  this.moovAtom_ = atom;
+  this.dataSource_.seek(atom.offset + 8);
+  cb(true);
+};
+
 MP4.prototype.digAtom_ = function digAtom_(atom, cb) {
   this.dataSource_.seek(atom.offset + 8);
   cb(true);
@@ -370,6 +389,7 @@ MP4.prototype.parseSampleVideo_ = function parseSampleVideo_(bstream) {
   this.track_.height = bstream.readInt16();
   bstream.seek(bstream.offset + 46);
   this.track_.bitDepth = bstream.readInt16();
+  console.log(this.track_);
   return true;
 };
 
@@ -377,6 +397,7 @@ MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
   this.track_.numChannels = bstream.readInt16();
   bstream.seek(bstream.offset + 6);
   this.track_.samplingFrequency = bstream.readInt16();
+  console.log(this.track_);
   return true;
 };
 
@@ -463,7 +484,7 @@ MP4.prototype.parse_ = function parse_(cb) {
   this.readNextAtom_(function readNextAtomCb(atom) {
     var atomMap = {
       'ftyp': this.parseFtyp_,
-      'moov': this.digAtom_,
+      'moov': this.parseMoov_,
       'mvhd': this.parseMvhd_,
       'trak': this.parseTrak_,
       'tkhd': this.parseTkhd_,
@@ -480,17 +501,23 @@ MP4.prototype.parse_ = function parse_(cb) {
       return;
     }
 
+    if (this.moovAtom_ &&
+      atom.offset === this.moovAtom_.offset + this.moovAtom_.size) {
+      cb(true);
+      return;
+    }
+
     if (!atomMap.hasOwnProperty(atom.type)) {
-      this.parse_(cb);
+      this.readNextAtom_(readNextAtomCb.bind(this));
       return;
     }
 
     atomMap[atom.type].call(this, atom, function parseCb_(result) {
       if (!result) {
-        cb(null);
+        cb(false);
         return;
       }
-      this.parse_(cb);
+      this.readNextAtom_(readNextAtomCb.bind(this));
     }.bind(this));
   }.bind(this));
 };
@@ -501,7 +528,7 @@ MP4.prototype.parse_ = function parse_(cb) {
  * @param cb
  */
 MP4.prototype.getInitSegment = function getInitSegment(cb) {
-  if (!this.ftypAtom_) {
+  if (!this.ftypAtom_ && !this.moovAtom_) {
     this.parse_(function parseCb(result) {
       if (!result) {
         cb(null);
@@ -511,7 +538,11 @@ MP4.prototype.getInitSegment = function getInitSegment(cb) {
     }.bind(this));
     return;
   }
-  cb(null);
+  this.dataSource_.seek(this.ftypAtom_.offset);
+  this.dataSource_.fetchBytes(this.moovAtom_.offset +
+    this.moovAtom_.size, function fetchCb(bytes) {
+    cb(bytes);
+  });
 };
 
 /**
