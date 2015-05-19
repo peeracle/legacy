@@ -185,6 +185,7 @@ MP4.prototype.readNextAtom_ = function readNextAtom_(cb) {
   this.dataSource_.fetchBytes(8, function fetchSize(bytes) {
     if (!bytes || bytes.length !== 8) {
       cb(null);
+      return;
     }
 
     atom.size = ((bytes[0] << 24) +
