@@ -1,17 +1,20 @@
 language: node_js
 node_js:
-  - "0.12"
+- '0.12'
 before_install:
-  - mkdir build
-  - wget -P build http://dl.google.com/closure-compiler/compiler-latest.zip
-  - unzip build/compiler-latest.zip -d build/
-  - rm build/compiler-latest.zip
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libncurses5-dev libssl-dev libnss3-dev libexpat-dev
-  - npm install -g grunt-cli
-  - npm install -g jasmine
-  - npm install -g istanbul
+- mkdir build
+- wget -P build http://dl.google.com/closure-compiler/compiler-latest.zip
+- unzip build/compiler-latest.zip -d build/
+- rm build/compiler-latest.zip
+- sudo apt-get update -qq
+- sudo apt-get install -qq libncurses5-dev libssl-dev libnss3-dev libexpat-dev
+- npm install -g grunt-cli
+- npm install -g jasmine
+- npm install -g istanbul
 install:
-  - npm install
+- npm install
 before_script:
-  - grunt build
+- grunt build
+notifications:
+  slack:
+    secure: qQYajn4wj2pq7VSSyT6BCYWE4Dr1t0wSMXpokZW/c8yGNBvTHmIs0QB1D2VKxrvHmsSKHTwVY0RNNf/T9lCrDCQK+NP8IU4D+uCpLqyasAIuGXozxulF1WmBdHl1B8n7q0GL7K2KTgX0NX79+f8B5AlvQBS/3KmeKWefVBouRJc=
