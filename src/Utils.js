@@ -54,4 +54,21 @@ Utils.stringToArray = function stringToArray(str) {
   return arr;
 };
 
+/**
+ *
+ * @param {number} d
+ * @param {number} padding
+ * @returns {string}
+ */
+Utils.decimalToHex = function decimalToHex(d, padding) {
+  var hex = Number(d).toString(16);
+  var pad = padding;
+
+  pad = typeof (pad) === 'undefined' || pad === null ? pad = 2 : pad;
+  while (hex.length < pad) {
+    hex = '0' + hex;
+  }
+  return hex;
+};
+
 module.exports = Utils;

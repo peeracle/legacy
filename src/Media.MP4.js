@@ -30,6 +30,8 @@
  */
 
 // @exclude
+/** @type {Utils} **/
+var Utils = require('./Utils');
 /** @type {Media} **/
 var Media = require('./Media');
 /** @type {BinaryStream} **/
@@ -384,13 +386,64 @@ MP4.prototype.digAtom_ = function digAtom_(atom, cb) {
   cb(true);
 };
 
+MP4.prototype.parseVideoDecoderConfig_ =
+  function parseVideoDecoderConfig_(bstream) {
+    var size;
+    var type;
+    var profile;
+    var compat;
+    var level;
+
+    size = bstream.readUInt32();
+    if (!size || size < 1) {
+      return false;
+    }
+
+    type = bstream.readString(4);
+    if (!type || type !== 'avcC') {
+      return false;
+    }
+
+    bstream.readByte();
+    profile = bstream.readByte();
+    compat = bstream.readByte();
+    level = bstream.readByte();
+
+    this.track_.codec += '.' + Utils.decimalToHex(profile);
+    this.track_.codec += Utils.decimalToHex(compat);
+    this.track_.codec += Utils.decimalToHex(level);
+    return true;
+  };
+
 MP4.prototype.parseSampleVideo_ = function parseSampleVideo_(bstream) {
   bstream.seek(bstream.offset + 8);
   this.track_.width = bstream.readInt16();
   this.track_.height = bstream.readInt16();
   bstream.seek(bstream.offset + 46);
   this.track_.bitDepth = bstream.readInt16();
-  console.log(this.track_);
+
+  this.width = this.track_.width;
+  this.height = this.track_.height;
+  this.bitDepth = this.track_.bitDepth;
+  bstream.readInt16();
+
+  return this.parseVideoDecoderConfig_(bstream);
+};
+
+MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
+  var size;
+  var type;
+
+  size = bstream.readUInt32();
+  if (!size || size < 1) {
+    return false;
+  }
+
+  type = bstream.readString(4);
+  if (!type || type !== 'esds') {
+    return false;
+  }
+
   return true;
 };
 
