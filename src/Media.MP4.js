@@ -612,14 +612,9 @@ MP4.prototype.parse_ = function parse_(cb) {
     };
     console.log('get Next Atom', atom);
 
+    // TODO: check if we've got everything required by the MediaSource API
     if (!atom) {
-      cb(false);
-      return;
-    }
-
-    if (this.moovAtom_ &&
-      atom.offset === this.moovAtom_.offset + this.moovAtom_.size) {
-      cb(true);
+      cb(this.ftypAtom_ && this.moovAtom_);
       return;
     }
 
