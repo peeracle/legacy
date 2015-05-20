@@ -444,6 +444,7 @@ MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
     return false;
   }
 
+  // TODO: parse audio descriptor to retrieve the real mp4a codec name
   return true;
 };
 
@@ -452,7 +453,12 @@ MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
   bstream.seek(bstream.offset + 6);
   this.track_.samplingFrequency = bstream.readInt16();
   console.log(this.track_);
-  return true;
+
+  this.numChannels = this.track_.numChannels;
+  this.samplingFrequency = this.track_.samplingFrequency;
+  bstream.readInt16();
+
+  return this.parseAudioDescriptor_(bstream);
 };
 
 /**
