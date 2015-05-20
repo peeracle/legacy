@@ -452,7 +452,6 @@ MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
   this.track_.numChannels = bstream.readInt16();
   bstream.seek(bstream.offset + 6);
   this.track_.samplingFrequency = bstream.readInt16();
-  console.log(this.track_);
 
   this.numChannels = this.track_.numChannels;
   this.samplingFrequency = this.track_.samplingFrequency;
@@ -584,7 +583,6 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
       offset += cue.size;
       time += duration;
     }
-    console.log(this.cues);
 
     this.dataSource_.seek(atom.offset + atom.size);
     cb(true);
@@ -610,7 +608,6 @@ MP4.prototype.parse_ = function parse_(cb) {
       'stsd': this.parseStsd_,
       'sidx': this.parseSidx_
     };
-    console.log('get Next Atom', atom);
 
     // TODO: check if we've got everything required by the MediaSource API
     if (!atom) {
@@ -681,7 +678,6 @@ MP4.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
 
   this.dataSource_.seek(cue.offset);
   this.dataSource_.fetchBytes(cue.size, function fetchMediaCb(bytes) {
-    console.log(timecode, bytes.length, 'bytes');
     cb(bytes);
   });
 };
