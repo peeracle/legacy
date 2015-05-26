@@ -39,6 +39,8 @@ Peeracle.DataSource = require('./src/DataSource');
 Peeracle.DataSource.File = require('./src/DataSource.File');
 Peeracle.DataSource.Http = require('./src/DataSource.Http');
 
+Peeracle.Listenable = require('./src/Listenable');
+
 Peeracle.Media = require('./src/Media');
 Peeracle.Media.WebM = require('./src/Media.WebM');
 Peeracle.Media.MP4 = require('./src/Media.MP4');
