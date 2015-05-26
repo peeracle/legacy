@@ -45,6 +45,9 @@ Peeracle.Metadata = require('./src/Metadata');
 Peeracle.MetadataSerializer = require('./src/MetadataSerializer');
 Peeracle.MetadataUnserializer = require('./src/MetadataUnserializer');
 
+Peeracle.Storage = require('./src/Storage');
+Peeracle.Storage.NodeFile = require('./src/Storage.NodeFile');
+Peeracle.Storage.Memory = require('./src/Storage.Memory');
 
 Peeracle.Tracker = require('./src/Tracker');
 Peeracle.Tracker.Client = require('./src/Tracker.Client');
