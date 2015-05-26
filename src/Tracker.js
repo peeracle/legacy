@@ -22,12 +22,7 @@
 
 'use strict';
 
-var Tracker = {
-  // @exclude
-  Client: require('./Tracker.Client.js'),
-  Message: require('./Tracker.Message.js'),
-  Server: require('./Tracker.Server.js')
-  // @endexclude
-};
+function Tracker() {
+}
 
 module.exports = Tracker;
