@@ -24,40 +24,40 @@
  * Peeracle
  * @namespace Peeracle
  */
+function Peeracle() {
+}
 
-(function () {
-  'use strict';
+// @exclude
+Peeracle.BinaryStream = require('./src/BinaryStream');
 
-  var Crypto = require('./src/Crypto');
-  Crypto.Crc32 = require('./src/Crypto.Crc32');
+Peeracle.Crypto = require('./src/Crypto');
+Peeracle.Crypto.Crc32 = require('./src/Crypto.Crc32');
 
-  var DataSource = require('./src/DataSource');
-  DataSource.File = require('./src/DataSource.File');
-  DataSource.Http = require('./src/DataSource.Http');
+Peeracle.DataSource = require('./src/DataSource');
+Peeracle.DataSource.File = require('./src/DataSource.File');
+Peeracle.DataSource.Http = require('./src/DataSource.Http');
 
-  var Media = require('./src/Media');
-  Media.WebM = require('./src/Media.WebM');
-  Media.MP4 = require('./src/Media.MP4');
+Peeracle.Media = require('./src/Media');
+Peeracle.Media.WebM = require('./src/Media.WebM');
+Peeracle.Media.MP4 = require('./src/Media.MP4');
 
-  var Tracker = {
-    Client: require('./src/Tracker.Client'),
-    Server: require('./src/Tracker.Server')
-  };
+Peeracle.Metadata = require('./src/Metadata');
+Peeracle.MetadataSerializer = require('./src/MetadataSerializer');
+Peeracle.MetadataUnserializer = require('./src/MetadataUnserializer');
 
-  module.exports = {
-    BinaryStream: require('./src/BinaryStream'),
-    Crypto: Crypto,
-    DataSource: DataSource,
-    Media: require('./src/Media'),
-    Metadata: require('./src/Metadata'),
-    MetadataSerializer: require('./src/MetadataSerializer'),
-    MetadataUnserializer: require('./src/MetadataUnserializer'),
-    Tracker: Tracker,
-    //Node: require('./node'),
-    //Peer: require('./peer'),
-    Utils: require('./src/Utils')
-  };
-})();
+
+Peeracle.Tracker = require('./src/Tracker');
+Peeracle.Tracker.Client = require('./src/Tracker.Client');
+Peeracle.Tracker.Message = require('./src/Tracker.Message');
+Peeracle.Tracker.Server = require('./src/Tracker.Server');
+
+Peeracle.Utils = require('./src/Utils');
+
+module.exports = Peeracle;
+
+return;
+// @endexclude
+
 window['Peeracle'] = Peeracle;
 
 var RTCPeerConnection = window.mozRTCPeerConnection ||
