@@ -44,6 +44,10 @@ var Media = require('./Media');
  * @implements {Peeracle.Media}
  */
 function WebM(dataSource) {
+  if (!(dataSource instanceof Peeracle.DataSource)) {
+    throw new TypeError('dataSource must be an instance of Peeracle.DataSource');
+  }
+
   /**
    * @member {Peeracle.DataSource}
    * @private
@@ -150,6 +154,11 @@ function WebM(dataSource) {
    * @member {Array.<Cue>}
    */
   this.cues = [];
+
+  /**
+   * @member {number}
+   */
+  this.bandwidth = 0;
 }
 
 WebM.TAG_SUFFIX_ = 'Tag_';
@@ -369,16 +378,16 @@ WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) 
 };
 
 WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
+  var cuePointStart = start + tag.headerSize;
+  var cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
+  var previousCue;
   /** @type {Cue} */
   var cue = {
     timecode: -1,
     track: -1,
     offset: -1,
-    size: -1
+    size: 0
   };
-
-  var cuePointStart = start + tag.headerSize;
-  var cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
 
   while (cuePointTag) {
     if (cuePointTag.str === 'b3') {
@@ -394,6 +403,13 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
     }
     cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
   }
+
+  if (this.cues.length) {
+    previousCue = this.cues[this.cues.length - 1];
+    previousCue.size = cue.offset - previousCue.offset;
+    this.bandwidth += 8 * previousCue.size;
+  }
+
   this.cues.push(cue);
 };
 
@@ -406,6 +422,7 @@ WebM.prototype.parseCues_ = function parseCues_(cb) {
   this.readTagBytes_(this.cuesTag_, function readBytesCb(bytes) {
     var cueStart = this.cuesTag_.headerSize;
     var cueTag = this.readBufferedTag_(cueStart, bytes);
+    var lastCue;
 
     while (cueTag) {
       if (cueTag.str !== 'bb') {
@@ -418,6 +435,11 @@ WebM.prototype.parseCues_ = function parseCues_(cb) {
         break;
       }
       cueTag = this.readBufferedTag_(cueStart, bytes);
+    }
+
+    if (this.cues.length) {
+      lastCue = this.cues[this.cues.length - 1];
+      lastCue.size = this.dataSource_.length - lastCue.offset;
     }
     cb();
   }.bind(this));
@@ -528,7 +550,7 @@ WebM.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
   var cue = null;
 
   for (i = 0, l = this.cues.length; i < l; ++i) {
-    if (this.cues[i].timecode === timecode) {
+    if (timecode <= this.cues[i].timecode) {
       cue = this.cues[i];
       break;
     }
