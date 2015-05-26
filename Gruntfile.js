@@ -80,6 +80,7 @@ module.exports = function (grunt) {
           'src/Storage.File.js',
           'src/Storage.Memory.js',
           'src/Storage.PouchDB.js',
+          'src/Stream.js',
           'src/Tracker.js',
           'src/Tracker.Client.js',
           'src/Tracker.Message.js',
