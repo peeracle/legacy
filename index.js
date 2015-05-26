@@ -72,3 +72,26 @@ var RTCIceCandidate = window.mozRTCIceCandidate ||
   window.webkitRTCIceCandidate ||
   window.RTCIceCandidate;
 
+function bindMedia(media) {
+  if (media.dataset && media.dataset.hasOwnProperty('peeracleIgnore')) {
+    return;
+  }
+
+  media.pause();
+  media.src = '';
+}
+
+function bindMedias() {
+  var medias = document.querySelectorAll('audio, video');
+  var i;
+  var l = medias.length;
+
+  for (i = 0; i < l; ++i) {
+    var media = medias[i];
+    if (media instanceof HTMLVideoElement) {
+      bindMedia(media);
+    }
+  }
+}
+
+bindMedias();

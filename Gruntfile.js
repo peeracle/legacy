@@ -58,6 +58,7 @@ module.exports = function (grunt) {
       },
       dist: {
         src: [
+          'index.js',
           'src/BinaryStream.js',
           'src/Crypto.js',
           'src/Crypto.Crc32.js',
