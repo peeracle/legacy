@@ -58,3 +58,17 @@
     Utils: require('./src/Utils')
   };
 })();
+window['Peeracle'] = Peeracle;
+
+var RTCPeerConnection = window.mozRTCPeerConnection ||
+  window.webkitRTCPeerConnection ||
+  window.RTCPeerConnection;
+
+var RTCSessionDescription = window.mozRTCSessionDescription ||
+  window.webkitRTCSessionDescription ||
+  window.RTCSessionDescription;
+
+var RTCIceCandidate = window.mozRTCIceCandidate ||
+  window.webkitRTCIceCandidate ||
+  window.RTCIceCandidate;
+

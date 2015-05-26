@@ -38,19 +38,7 @@ module.exports = function (grunt) {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n\n' +
         '(function(){\n' +
-        'window[\'Peeracle\'] = {};\n' +
-        'var Peeracle = window.Peeracle;\n\n' +
-        'var RTCPeerConnection = window.mozRTCPeerConnection ||\n' +
-        '  window.webkitRTCPeerConnection ||\n' +
-        '  window.RTCPeerConnection;\n\n' +
-
-        'var RTCSessionDescription = window.mozRTCSessionDescription ||\n' +
-        '  window.webkitRTCSessionDescription ||\n' +
-        '  window.RTCSessionDescription;\n\n' +
-
-        'var RTCIceCandidate = window.mozRTCIceCandidate ||\n' +
-        '  window.webkitRTCIceCandidate ||\n' +
-        '  window.RTCIceCandidate;\n\n',
+        '\n',
 
         footer: '})();\n',
 
