@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+'use strict';
+
 /**
  * Peeracle
  * @namespace Peeracle
