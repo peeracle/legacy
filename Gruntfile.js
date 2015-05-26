@@ -58,6 +58,8 @@ module.exports = function (grunt) {
       },
       dist: {
         src: [
+          'src/Listenable.js',
+          'src/Peeracle.js',
           'index.js',
           'src/BinaryStream.js',
           'src/Crypto.js',
@@ -65,7 +67,6 @@ module.exports = function (grunt) {
           'src/DataSource.js',
           'src/DataSource.File.js',
           'src/DataSource.Http.js',
-          'src/Listenable.js',
           'src/Manager.js',
           'src/Media.js',
           'src/Media.MP4.js',

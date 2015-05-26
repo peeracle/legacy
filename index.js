@@ -26,10 +26,10 @@
  * Peeracle
  * @namespace Peeracle
  */
-function Peeracle() {
-}
 
 // @exclude
+var Peeracle = require('./src/Peeracle');
+
 Peeracle.BinaryStream = require('./src/BinaryStream');
 
 Peeracle.Crypto = require('./src/Crypto');

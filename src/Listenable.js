@@ -90,4 +90,6 @@ Listenable.prototype.emit = function emit(type) {
   }
 };
 
+// @exclude
 module.exports = Listenable;
+// @endexclude
