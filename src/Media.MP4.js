@@ -433,6 +433,13 @@ MP4.prototype.parseSampleVideo_ = function parseSampleVideo_(bstream) {
 MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
   var size;
   var type;
+  var version;
+  var flags;
+  var length;
+  var ESId;
+  var streamPriority;
+  var objectTypeId;
+  var SLConfig;
 
   size = bstream.readUInt32();
   if (!size || size < 1) {
@@ -444,7 +451,56 @@ MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
     return false;
   }
 
-  // TODO: parse audio descriptor to retrieve the real mp4a codec name
+  version = bstream.readByte();
+  flags = bstream.readBytes(3);
+
+  if (bstream.readByte() === 0x3) {
+    length = bstream.readByte();
+    if (length < 20) {
+      return false;
+    }
+    bstream.seek(bstream.offset + 3);
+  } else {
+    bstream.seek(bstream.offset + 2);
+  }
+
+  if (bstream.readByte() !== 0x4) {
+    return false;
+  }
+
+  if (bstream.readByte() < 15) {
+    return false;
+  }
+  objectTypeId = bstream.readByte();
+
+  /*
+   esds->streamType = stream_read_char(s); 1
+   esds->bufferSizeDB = stream_read_int24(s); 3
+   esds->maxBitrate = stream_read_dword(s); 4
+   esds->avgBitrate = stream_read_dword(s); 4
+   */
+
+  bstream.seek(bstream.offset + 12);
+  if (bstream.readByte() !== 5) {
+    return false;
+  }
+
+  length = bstream.readByte();
+  bstream.seek(bstream.offset + length);
+  if (bstream.readByte() !== 6) {
+    return false;
+  }
+
+  length = bstream.readByte();
+  if (length === 1) {
+    SLConfig = bstream.readByte();
+  } else {
+    return false;
+  }
+
+  this.track_.codec += '.' + Utils.decimalToHex(objectTypeId);
+  this.track_.codec += '.' + SLConfig.toString(16);
+  this.tracks.push(this.track_);
   return true;
 };
 
@@ -589,6 +645,44 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
   }.bind(this));
 };
 
+MP4.prototype.createMimeType_ = function createMimeType_() {
+  var i;
+  var l;
+  var track;
+  var mimeType;
+  var isVideo = false;
+  var isAudio = false;
+  var codecs = [];
+  var type = '';
+
+  for (i = 0, l = this.tracks.length; i < l; ++i) {
+    track = this.tracks[i];
+    if (track.type === 1) {
+      isVideo = true;
+    } else if (track.type === 2) {
+      isAudio = true;
+    }
+
+    codecs.push(track.codec);
+  }
+
+  if (isVideo) {
+    type = 'video/mp4';
+  } else if (isAudio) {
+    type = 'audio/mp4';
+  }
+
+  mimeType = type + ';codecs="';
+  for (i = 0; i < codecs.length; ++i) {
+    mimeType += codecs[i];
+    if (i + 1 !== codecs.length) {
+      mimeType += ',';
+    }
+  }
+
+  this.mimeType = mimeType + '"';
+};
+
 /**
  * @param cb
  * @private
@@ -611,6 +705,7 @@ MP4.prototype.parse_ = function parse_(cb) {
 
     // TODO: check if we've got everything required by the MediaSource API
     if (!atom) {
+      this.createMimeType_();
       cb(this.ftypAtom_ && this.moovAtom_);
       return;
     }
