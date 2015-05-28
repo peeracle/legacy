@@ -140,6 +140,27 @@ Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
   r.send();
 };
 
+Http.prototype.doFetch_ = function doFetchBytes_(cb) {
+  /** @type {XMLHttpRequest} */
+  var r = new XMLHttpRequest();
+  /** @type {Uint8Array} */
+  var bytes;
+
+  r.open('GET', this.url_);
+  r.responseType = 'arraybuffer';
+  r.onreadystatechange = function onreadystatechange() {
+  };
+  r.onload = function onload() {
+    if (r.status >= 200 && r.status < 400) {
+      bytes = new Uint8Array(r.response);
+      cb(bytes);
+      return;
+    }
+    cb(null);
+  };
+  r.send();
+};
+
 /**
  * @function
  * @param length
@@ -170,6 +191,14 @@ Http.prototype.fetchBytes = function fetchBytes(length, cb) {
   }
 
   this.doFetchBytes_(length, cb);
+};
+
+Http.prototype.fetch = function fetch(cb) {
+  if (typeof cb !== 'function') {
+    throw new TypeError('second argument must be a callback');
+  }
+
+  this.doFetch_(cb);
 };
 
 module.exports = Http;
