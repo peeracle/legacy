@@ -25,10 +25,102 @@
 (function() {
 
   /**
+   * @class
+   * @memberof Peeracle
+   * @constructor
+   */
+  function Listenable() {
+    this.listeners = {};
+  }
+
+  /**
+   *
+   * @param type
+   * @param listener
+   */
+  Listenable.prototype.on = function on(type, listener) {
+    this.listeners[type] = this.listeners[type] || [];
+    this.listeners[type].push(listener);
+  };
+
+  /**
+   *
+   * @param type
+   * @param listener
+   */
+  Listenable.prototype.once = function once(type, listener) {
+    var self = this;
+
+    function wrappedListener() {
+      self.off(type, wrappedListener);
+      listener.apply(null, arguments);
+    }
+
+    wrappedListener.__originalListener = listener;
+    this.on(type, wrappedListener);
+  };
+
+  /**
+   *
+   * @param type
+   * @param listener
+   */
+  Listenable.prototype.off = function off(type, listener) {
+    if (this.listeners[type]) {
+      if (listener) {
+        this.listeners[type] = this.listeners[type].filter(function filterListener(
+          l) {
+          return l !== listener && l.__originalListener !== listener;
+        });
+      } else {
+        delete this.listeners[type];
+      }
+    }
+  };
+
+  /**
+   *
+   * @param type
+   */
+  Listenable.prototype.emit = function emit(type) {
+    var args;
+
+    if (this.listeners[type]) {
+      args = [].slice.call(arguments, 1);
+      this.listeners[type].forEach(function applyListener(listener) {
+        listener.apply(null, args);
+      });
+    }
+  };
+
+  function Peeracle() {
+    Listenable.call(this);
+  }
+
+  Peeracle.prototype = Object.create(Listenable.prototype);
+  Peeracle.prototype.constructor = Peeracle;
+
+  Peeracle.prototype.bind = function bind(parm) {
+    var media = parm;
+
+    if (typeof media === 'string') {
+      media = document.getElementById(media);
+    }
+
+    if (!media || !(media instanceof HTMLMediaElement) ||
+      media.dataset && media.dataset.hasOwnProperty('peeracleIgnore')) {
+      return null;
+    }
+
+    return new Peeracle.Player(media);
+  };
+
+  Peeracle.Listenable = Listenable;
+
+  /**
    * Peeracle
    * @namespace Peeracle
    */
-  function Peeracle() {}
 
   window['Peeracle'] = Peeracle;
 
@@ -45,12 +137,14 @@
     window.RTCIceCandidate;
 
   function bindMedia(media) {
+    var src;
     if (media.dataset && media.dataset.hasOwnProperty('peeracleIgnore')) {
       return;
     }
 
     media.pause();
-    media.src = '';
+    src = media.src;
+    media.src = ''
   }
 
   function bindMedias() {
@@ -60,7 +154,8 @@
 
     for (i = 0; i < l; ++i) {
       var media = medias[i];
-      if (media instanceof HTMLVideoElement) {
+      if (media instanceof HTMLMediaElement) {
+        console.log('bind', media);
         bindMedia(media);
       }
     }
@@ -74,7 +169,6 @@
    * @param {!Uint8Array} buffer
    * @constructor
    */
-
   function BinaryStream(buffer) {
     if (!buffer || !(buffer instanceof Uint8Array)) {
       throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
@@ -84,6 +178,12 @@
      * @member {Uint8Array}
      */
     this.bytes = buffer;
+
+    /**
+     * @member {DataView}
+     * @private
+     */
+    this.dataview_ = new DataView(this.bytes.buffer);
 
     /**
      * @member {number}
@@ -101,33 +201,64 @@
   BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
   BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
 
-  /**
-   * @returns {number}
-   */
-  BinaryStream.prototype.readByte = function readByte() {
-    if (this.offset + 1 >= this.length_) {
-      throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
+  BinaryStream.prototype.read = function read(type) {
+    var result;
+    var typeMap = {
+      'Int8': [this.dataview_.getInt8, 1],
+      'Int16': [this.dataview_.getInt16, 2],
+      'Int32': [this.dataview_.getInt32, 4],
+      'UInt8': [this.dataview_.getUint8, 1],
+      'UInt16': [this.dataview_.getUint16, 2],
+      'UInt32': [this.dataview_.getUint32, 4],
+      'Float32': [this.dataview_.getFloat32, 4],
+      'Float64': [this.dataview_.getFloat64, 8]
+    };
+
+    if (!typeMap.hasOwnProperty(type)) {
+      return null;
     }
-    return this.bytes[this.offset++];
+
+    result = typeMap[type][0].bind(this.dataview_)(this.offset);
+    this.offset += typeMap[type][1];
+    return result;
   };
 
-  /**
-   * @param value
-   */
-  BinaryStream.prototype.writeByte = function writeByte(value) {
+  BinaryStream.prototype.write = function write(type, value) {
+    var typeMap = {
+      'Int8': [this.dataview_.setInt8, 1],
+      'Int16': [this.dataview_.setInt16, 2],
+      'Int32': [this.dataview_.setInt32, 4],
+      'UInt8': [this.dataview_.setUint8, 1],
+      'UInt16': [this.dataview_.setUint16, 2],
+      'UInt32': [this.dataview_.setUint32, 4],
+      'Float32': [this.dataview_.setFloat32, 4],
+      'Float64': [this.dataview_.setFloat64, 8]
+    };
+
     if (typeof value !== 'number') {
       throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
     }
-    if (value < 0 || value > 255) {
-      throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
+
+    if (!typeMap.hasOwnProperty(type)) {
+      return;
     }
-    this.bytes.set(new Uint8Array([value]), this.offset++);
+
+    if (this.offset + typeMap[type][1] > this.length_) {
+      throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
+    }
+
+    typeMap[type][0].bind(this.dataview_)(this.offset, value);
+    this.offset += typeMap[type][1];
   };
 
-  /**
-   * @param length
-   * @returns {Uint8Array}
-   */
+  BinaryStream.prototype.readByte = function readByte() {
+    return this.read('UInt8');
+  };
+
+  BinaryStream.prototype.writeByte = function writeByte(value) {
+    return this.write('UInt8', value);
+  };
+
   BinaryStream.prototype.readBytes = function readBytes(length) {
     var bytes;
 
@@ -145,9 +276,6 @@
     return bytes;
   };
 
-  /**
-   * @param {Uint8Array} bytes
-   */
   BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
     if (!(bytes instanceof Uint8Array)) {
       throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
@@ -157,152 +285,52 @@
     this.offset += bytes.length;
   };
 
-  /**
-   * @returns {number}
-   */
   BinaryStream.prototype.readFloat4 = function readFloat4() {
-    var i;
-    var val = 0;
-    var sign;
-    var exponent;
-    var significand;
-    var number = this.readBytes(4);
-
-    for (i = 0; i < 4; ++i) {
-      val <<= 8;
-      val |= number[i] & 0xff;
-    }
-
-    sign = val >> 31;
-    exponent = ((val >> 23) & 0xff) - 127;
-    significand = val & 0x7fffff;
-    if (exponent > -127) {
-      if (exponent === 128) {
-        if (significand === 0) {
-          if (sign === 0) {
-            return Number.POSITIVE_INFINITY;
-          }
-          return Number.NEGATIVE_INFINITY;
-        }
-        return NaN;
-      }
-      significand |= 0x800000;
-    } else {
-      if (significand === 0) {
-        return 0;
-      }
-      exponent = -126;
-    }
-
-    return Math.pow(-1, sign) * (significand * Math.pow(2, -23)) *
-      Math.pow(2, exponent);
+    return this.read('Float32');
   };
 
-  /**
-   * @returns {number}
-   */
+  BinaryStream.prototype.writeFloat4 = function writeFloat4(value) {
+    return this.write('Float32', value);
+  };
+
   BinaryStream.prototype.readFloat8 = function readFloat8() {
-    var number = this.readBytes(8);
-    var f = new Float64Array(number.buffer);
-    return f[0];
+    return this.read('Float64');
   };
 
-  /**
-   * @param {number} value
-   */
   BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
-    var f;
-    var u;
-
-    if (typeof value !== 'number') {
-      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
-    }
-
-    f = new Float64Array([value]);
-    u = new Uint8Array(f.buffer);
-
-    this.writeBytes(u);
+    return this.write('Float64', value);
   };
 
-  /**
-   * @param {boolean?} unsigned
-   * @returns {number}
-   */
-  BinaryStream.prototype.readInt16 = function readInt16(unsigned) {
-    var number = this.readBytes(2);
-    var value = (number[0] << 8);
-
-    if (unsigned) {
-      return value + number[1] >>> 0;
-    }
-
-    return value + number[1];
+  BinaryStream.prototype.readInt16 = function readInt16() {
+    return this.read('Int16');
   };
 
-  /**
-   * @param {boolean?} unsigned
-   * @returns {number}
-   */
-  BinaryStream.prototype.readInt32 = function readInt32(unsigned) {
-    var number = this.readBytes(4);
-    var value = (number[0] << 24) +
-      (number[1] << 16) +
-      (number[2] << 8);
-
-    if (unsigned) {
-      return value + number[3] >>> 0;
-    }
-
-    return value + number[3];
+  BinaryStream.prototype.writeInt16 = function writeInt16(value) {
+    return this.write('Int16', value);
   };
 
-  /**
-   * @param {number} value
-   * @param {boolean?} unsigned
-   */
-  BinaryStream.prototype.writeInt32 = function writeInt32(value, unsigned) {
-    var l = 0;
-    var bytes;
-    var val = value;
-
-    if (typeof val !== 'number') {
-      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
-    }
-
-    if (unsigned) {
-      val = val >>> 0;
-    } else if (val < -0x7FFFFFFF || val > 0x7FFFFFFF) {
-      throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-    }
-
-    bytes = [];
-    while (l < 4) {
-      bytes[l] = (val & 0xFF);
-      val = val >> 8;
-      ++l;
-    }
-
-    this.writeBytes(new Uint8Array(bytes.reverse()));
+  BinaryStream.prototype.readInt32 = function readInt32() {
+    return this.read('Int32');
   };
 
-  /**
-   * @returns {number}
-   */
+  BinaryStream.prototype.writeInt32 = function writeInt32(value) {
+    return this.write('Int32', value);
+  };
+
+  BinaryStream.prototype.readUInt16 = function readUInt16() {
+    return this.read('UInt16');
+  };
+
+  BinaryStream.prototype.writeUInt16 = function writeUInt16(value) {
+    return this.write('UInt16', value);
+  };
+
   BinaryStream.prototype.readUInt32 = function readUInt32() {
-    return this.readInt32(true);
+    return this.read('UInt32');
   };
 
-  /**
-   * @param {number} value
-   */
   BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
-    if (typeof value !== 'number') {
-      throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
-    }
-    if (value < 0 || value > 0xFFFFFFFF) {
-      throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-    }
-    this.writeInt32(value, true);
+    return this.write('UInt32', value);
   };
 
   /**
@@ -818,6 +846,26 @@
     r.send();
   };
 
+  Http.prototype.doFetch_ = function doFetchBytes_(cb) {
+    /** @type {XMLHttpRequest} */
+    var r = new XMLHttpRequest();
+    /** @type {Uint8Array} */
+    var bytes;
+
+    r.open('GET', this.url_);
+    r.responseType = 'arraybuffer';
+    r.onreadystatechange = function onreadystatechange() {};
+    r.onload = function onload() {
+      if (r.status >= 200 && r.status < 400) {
+        bytes = new Uint8Array(r.response);
+        cb(bytes);
+        return;
+      }
+      cb(null);
+    };
+    r.send();
+  };
+
   /**
    * @function
    * @param length
@@ -836,6 +884,8 @@
       throw new TypeError('second argument must be a callback');
     }
 
+    console.log('call fetchBytes', length);
+
     if (this.length === -1) {
       this.retrieveLength_(function retrieveLengthCb(result) {
         if (!result) {
@@ -850,78 +900,17 @@
     this.doFetchBytes_(length, cb);
   };
 
+  Http.prototype.fetch = function fetch(cb) {
+    if (typeof cb !== 'function') {
+      throw new TypeError('second argument must be a callback');
+    }
+
+    console.log('call fetch');
+
+    this.doFetch_(cb);
+  };
+
   Peeracle.DataSource.Http = Http;
-
-  /**
-   * @class
-   * @memberof Peeracle
-   * @constructor
-   */
-  function Listenable() {
-    this.listeners = {};
-  }
-
-  /**
-   *
-   * @param type
-   * @param listener
-   */
-  Listenable.prototype.on = function on(type, listener) {
-    this.listeners[type] = this.listeners[type] || [];
-    this.listeners[type].push(listener);
-  };
-
-  /**
-   *
-   * @param type
-   * @param listener
-   */
-  Listenable.prototype.once = function once(type, listener) {
-    var self = this;
-
-    function wrappedListener() {
-      self.off(type, wrappedListener);
-      listener.apply(null, arguments);
-    }
-
-    wrappedListener.__originalListener = listener;
-    this.on(type, wrappedListener);
-  };
-
-  /**
-   *
-   * @param type
-   * @param listener
-   */
-  Listenable.prototype.off = function off(type, listener) {
-    if (this.listeners[type]) {
-      if (listener) {
-        this.listeners[type] = this.listeners[type].filter(function filterListener(
-          l) {
-          return l !== listener && l.__originalListener !== listener;
-        });
-      } else {
-        delete this.listeners[type];
-      }
-    }
-  };
-
-  /**
-   *
-   * @param type
-   */
-  Listenable.prototype.emit = function emit(type) {
-    var args;
-
-    if (this.listeners[type]) {
-      args = [].slice.call(arguments, 1);
-      this.listeners[type].forEach(function applyListener(listener) {
-        listener.apply(null, args);
-      });
-    }
-  };
-
-  Peeracle.Listenable = Listenable;
 
   function Manager() {
 
@@ -1110,13 +1099,13 @@
      *
      * @member {number}
      */
-    this.timecodeScale = -1;
+    this.timecodeScale = 0;
 
     /**
      *
      * @member {number}
      */
-    this.duration = -1;
+    this.duration = 0;
 
     /**
      *
@@ -1287,7 +1276,7 @@
   MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
     this.dataSource_.seek(atom.offset);
     this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
-      var bstream;
+      /*var bstream;
       var version;
 
       if (!bytes) {
@@ -1305,7 +1294,7 @@
 
       bstream.seek(20);
       this.timecodeScale = bstream.readUInt32();
-      this.duration = bstream.readUInt32();
+      this.duration = bstream.readUInt32();*/
 
       this.dataSource_.seek(atom.offset + atom.size);
       cb(true);
@@ -1313,10 +1302,6 @@
   };
 
   MP4.prototype.parseTrak_ = function parseTrak_(atom, cb) {
-    if (this.track_) {
-      this.tracks.push(this.track_);
-    }
-
     this.track_ = {
       id: -1,
       type: -1,
@@ -1426,6 +1411,8 @@
       this.track_.codec += '.' + Utils.decimalToHex(profile);
       this.track_.codec += Utils.decimalToHex(compat);
       this.track_.codec += Utils.decimalToHex(level);
+
+      this.tracks.push(this.track_);
       return true;
     };
 
@@ -1448,6 +1435,13 @@
     bstream) {
     var size;
     var type;
+    var version;
+    var flags;
+    var length;
+    var ESId;
+    var streamPriority;
+    var objectTypeId;
+    var SLConfig;
 
     size = bstream.readUInt32();
     if (!size || size < 1) {
@@ -1459,14 +1453,63 @@
       return false;
     }
 
-    // TODO: parse audio descriptor to retrieve the real mp4a codec name
+    version = bstream.readByte();
+    flags = bstream.readBytes(3);
+
+    if (bstream.readByte() === 0x3) {
+      length = bstream.readByte();
+      if (length < 20) {
+        return false;
+      }
+      bstream.seek(bstream.offset + 3);
+    } else {
+      bstream.seek(bstream.offset + 2);
+    }
+
+    if (bstream.readByte() !== 0x4) {
+      return false;
+    }
+
+    if (bstream.readByte() < 15) {
+      return false;
+    }
+    objectTypeId = bstream.readByte();
+
+    /*
+     esds->streamType = stream_read_char(s); 1
+     esds->bufferSizeDB = stream_read_int24(s); 3
+     esds->maxBitrate = stream_read_dword(s); 4
+     esds->avgBitrate = stream_read_dword(s); 4
+     */
+
+    bstream.seek(bstream.offset + 12);
+    if (bstream.readByte() !== 5) {
+      return false;
+    }
+
+    length = bstream.readByte();
+    bstream.seek(bstream.offset + length);
+    if (bstream.readByte() !== 6) {
+      return false;
+    }
+
+    length = bstream.readByte();
+    if (length === 1) {
+      SLConfig = bstream.readByte();
+    } else {
+      return false;
+    }
+
+    this.track_.codec += '.' + Utils.decimalToHex(objectTypeId);
+    this.track_.codec += '.' + SLConfig.toString(16);
+    this.tracks.push(this.track_);
     return true;
   };
 
   MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
-    this.track_.numChannels = bstream.readInt16();
+    this.track_.numChannels = bstream.readUInt16();
     bstream.seek(bstream.offset + 6);
-    this.track_.samplingFrequency = bstream.readInt16();
+    this.track_.samplingFrequency = bstream.readUInt16();
 
     this.numChannels = this.track_.numChannels;
     this.samplingFrequency = this.track_.samplingFrequency;
@@ -1556,6 +1599,9 @@
     this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
       var bstream;
       var version;
+      var flags;
+      var referenceId;
+      var timeScale;
       var time;
       var offset;
       var count;
@@ -1577,6 +1623,10 @@
         return;
       }
 
+      flags = bstream.readBytes(3);
+      referenceId = bstream.readUInt32();
+      this.timecodeScale = bstream.readUInt32();
+
       bstream.seek(20);
       time = bstream.readUInt32();
       offset = bstream.readUInt32() + atom.offset + atom.size;
@@ -1593,7 +1643,7 @@
         cue.size = bstream.readUInt32() & 0x8FFFFFFF;
         duration = bstream.readUInt32();
         bstream.readUInt32();
-        cue.timecode = time;
+        cue.timecode = (time / this.timecodeScale) * 1000;
         cue.track = -1;
         cue.offset = offset;
         this.cues.push(cue);
@@ -1601,9 +1651,48 @@
         time += duration;
       }
 
+      this.duration = (time / this.timecodeScale) * 1000;
       this.dataSource_.seek(atom.offset + atom.size);
       cb(true);
     }.bind(this));
+  };
+
+  MP4.prototype.createMimeType_ = function createMimeType_() {
+    var i;
+    var l;
+    var track;
+    var mimeType;
+    var isVideo = false;
+    var isAudio = false;
+    var codecs = [];
+    var type = '';
+
+    for (i = 0, l = this.tracks.length; i < l; ++i) {
+      track = this.tracks[i];
+      if (track.type === 1) {
+        isVideo = true;
+      } else if (track.type === 2) {
+        isAudio = true;
+      }
+
+      codecs.push(track.codec);
+    }
+
+    if (isVideo) {
+      type = 'video/mp4';
+    } else if (isAudio) {
+      type = 'audio/mp4';
+    }
+
+    mimeType = type + ';codecs="';
+    for (i = 0; i < codecs.length; ++i) {
+      mimeType += codecs[i];
+      if (i + 1 !== codecs.length) {
+        mimeType += ',';
+      }
+    }
+
+    this.mimeType = mimeType + '"';
   };
 
   /**
@@ -1628,6 +1717,7 @@
 
       // TODO: check if we've got everything required by the MediaSource API
       if (!atom) {
+        this.createMimeType_();
         cb(this.ftypAtom_ && this.moovAtom_);
         return;
       }
@@ -1720,6 +1810,11 @@
    * @implements {Peeracle.Media}
    */
   function WebM(dataSource) {
+    if (!(dataSource instanceof DataSource)) {
+      throw new TypeError(
+        'dataSource must be an instance of Peeracle.DataSource');
+    }
+
     /**
      * @member {Peeracle.DataSource}
      * @private
@@ -1826,6 +1921,11 @@
      * @member {Array.<Cue>}
      */
     this.cues = [];
+
+    /**
+     * @member {number}
+     */
+    this.bandwidth = 0;
   }
 
   WebM.TAG_SUFFIX_ = 'Tag_';
@@ -2047,21 +2147,24 @@
   };
 
   WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
+    var cuePointStart = start + tag.headerSize;
+    var cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
+    var previousCue;
     /** @type {Cue} */
     var cue = {
       timecode: -1,
       track: -1,
       offset: -1,
-      size: -1
+      size: 0
     };
-
-    var cuePointStart = start + tag.headerSize;
-    var cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
 
     while (cuePointTag) {
       if (cuePointTag.str === 'b3') {
         cue.timecode = this.readUInt_(bytes,
           cuePointStart + cuePointTag.headerSize, cuePointTag.dataSize);
+        cue.timecode *= 1000;
+        cue.timecode /= this.timecodeScale;
+        cue.timecode *= 1000;
       } else if (cuePointTag.str === 'b7') {
         this.parseCueTrack_(cue, cuePointStart + cuePointTag.headerSize,
           cuePointTag, bytes);
@@ -2072,6 +2175,13 @@
       }
       cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
     }
+
+    if (this.cues.length) {
+      previousCue = this.cues[this.cues.length - 1];
+      previousCue.size = cue.offset - previousCue.offset;
+      this.bandwidth += 8 * previousCue.size;
+    }
+
     this.cues.push(cue);
   };
 
@@ -2084,6 +2194,7 @@
     this.readTagBytes_(this.cuesTag_, function readBytesCb(bytes) {
       var cueStart = this.cuesTag_.headerSize;
       var cueTag = this.readBufferedTag_(cueStart, bytes);
+      var lastCue;
 
       while (cueTag) {
         if (cueTag.str !== 'bb') {
@@ -2096,6 +2207,11 @@
           break;
         }
         cueTag = this.readBufferedTag_(cueStart, bytes);
+      }
+
+      if (this.cues.length) {
+        lastCue = this.cues[this.cues.length - 1];
+        lastCue.size = this.dataSource_.length - lastCue.offset;
       }
       cb();
     }.bind(this));
@@ -2208,7 +2324,7 @@
     var cue = null;
 
     for (i = 0, l = this.cues.length; i < l; ++i) {
-      if (this.cues[i].timecode === timecode) {
+      if (timecode <= this.cues[i].timecode) {
         cue = this.cues[i];
         break;
       }
@@ -2892,6 +3008,7 @@
       this.stream_.writeString(metadata.cryptoId);
       this.stream_.writeUInt32(metadata.timecodeScale);
       this.stream_.writeFloat8(metadata.duration);
+      console.log('write duration = ', metadata.duration);
     };
 
   /**
@@ -3399,24 +3516,194 @@
 
   Peeracle.PeerConnection = PeerConnection;
 
-  function Storage() {}
+  function MediaBuffer() {
+    Peeracle.Listenable.call(this);
+  }
 
-  Peeracle.Storage = Storage;
+  MediaBuffer.prototype = Object.create(Peeracle.Listenable.prototype);
+  MediaBuffer.prototype.constructor = MediaBuffer;
 
-  function File() {}
+  /**
+   * @class
+   * @param {HTMLMediaElement} mediaElement
+   * @constructor
+   */
+  function MediaController(mediaElement) {
+    Peeracle.Listenable.call(this);
 
-  File.prototype = Object.create(Storage.prototype);
-  File.prototype.constructor = File;
+    /**
+     * @member {HTMLMediaElement}
+     */
+    this.element_ = mediaElement;
 
-  function Memory() {}
+    this.init_();
+  }
 
-  Memory.prototype = Object.create(Storage.prototype);
-  Memory.prototype.constructor = Memory;
+  MediaController.prototype = Object.create(Peeracle.Listenable.prototype);
+  MediaController.prototype.constructor = MediaController;
 
-  function PouchDB() {}
+  MediaController.prototype.init_ = function init_() {};
 
-  PouchDB.prototype = Object.create(Storage.prototype);
-  PouchDB.prototype.constructor = PouchDB;
+  /**
+   * @class
+   * @param {HTMLMediaElement} media
+   * @constructor
+   */
+  function Player(media) {
+    Peeracle.Listenable.call(this);
+
+    /**
+     * @member {HTMLMediaElement}
+     */
+    this.element_ = media;
+    if (!(this.element_ instanceof HTMLMediaElement)) {
+      throw new TypeError(
+        'argument must be an instance of HTMLMediaElement');
+    }
+
+    /**
+     * @member {string}
+     */
+    this.src_ = media.src;
+    if (typeof this.src_ !== 'string') {
+      throw new TypeError('src attribute must be a string');
+    }
+
+    /**
+     * @member {MediaController}
+     */
+    this.mediaController_ = null;
+
+    /**
+     * @member {MediaBuffer}
+     */
+    this.mediaBuffer_ = null;
+
+    this.mediaSource_ = null;
+    this.sourceBuffer_ = null;
+
+    this.tracker_ = null;
+
+    this.init_();
+  }
+
+  Player.prototype = Object.create(Peeracle.Listenable.prototype);
+  Player.prototype.constructor = Player;
+
+  Player.prototype.init_ = function init_() {
+    var tab;
+    var ext;
+    var extMap = {
+      'peeracle': this.initPeeracle_.bind(this),
+      'mp4': this.initMP4_.bind(this),
+      'webm': this.initWebM_.bind(this)
+    };
+
+    tab = this.src_.split('.');
+    if (!tab.length) {
+      throw new TypeError('invalid source URL');
+    }
+
+    ext = tab[tab.length - 1];
+    if (!extMap.hasOwnProperty(ext)) {
+      throw new TypeError('unsupported extension ' + ext);
+    }
+
+    this.element_.pause();
+    this.element_.src = '';
+
+    extMap[ext]();
+  };
+
+  Player.prototype.loadMetadata_ = function loadMetadata_(bytes) {
+    var metadata = new Peeracle.Metadata();
+    var unserializer = new Peeracle.MetadataUnserializer();
+    var bstream = new Peeracle.BinaryStream(bytes);
+
+    unserializer.unserialize(bstream, metadata);
+
+    var mediaSourceOpen_ = function mediaSourceOpen_() {
+      console.log('mediaSourceOpen_');
+
+      var sourceBufferUpdateStart_ = function sourceBufferUpdateStart_() {
+        console.log('sourceBufferUpdateStart_');
+      }.bind(this);
+
+      var sourceBufferUpdate_ = function sourceBufferUpdate_() {
+        console.log('sourceBufferUpdate_');
+      }.bind(this);
+
+      var sourceBufferUpdateEnd_ = function sourceBufferUpdateEnd_() {
+        console.log('sourceBufferUpdateEnd_');
+      }.bind(this);
+
+      var sourceBufferError_ = function sourceBufferError_() {
+        console.log('sourceBufferError_');
+      }.bind(this);
+
+      var sourceBufferAbort_ = function sourceBufferAbort_() {
+        console.log('sourceBufferAbort_');
+      }.bind(this);
+
+      this.sourceBuffer_ = this.mediaSource_.addSourceBuffer(metadata.streams[
+        0].mimeType);
+      this.sourceBuffer_.addEventListener('updatestart',
+        sourceBufferUpdateStart_);
+      this.sourceBuffer_.addEventListener('update', sourceBufferUpdate_);
+      this.sourceBuffer_.addEventListener('updateend',
+        sourceBufferUpdateEnd_);
+      this.sourceBuffer_.addEventListener('error', sourceBufferError_);
+      this.sourceBuffer_.addEventListener('abort', sourceBufferAbort_);
+      this.sourceBuffer_.appendBuffer(metadata.streams[0].init);
+
+      this.tracker_ = new Peeracle.Tracker.Client();
+      this.tracker_.connect('ws://127.0.0.1:8080');
+    }.bind(this);
+
+    var mediaSourceClose_ = function mediaSourceClose_() {
+      console.log('mediaSourceClose_');
+    }.bind(this);
+
+    var mediaSourceEnd_ = function mediaSourceEnd_() {
+      console.log('mediaSourceEnd_');
+    }.bind(this);
+
+    this.mediaSource_ = new MediaSource();
+    this.mediaSource_.addEventListener('sourceopen', mediaSourceOpen_);
+    this.mediaSource_.addEventListener('sourceclose', mediaSourceClose_);
+    this.mediaSource_.addEventListener('sourceend', mediaSourceEnd_);
+    this.element_.src = window.URL.createObjectURL(this.mediaSource_);
+  };
+
+  Player.prototype.initPeeracle_ = function initPeeracle_() {
+    var dataSource = new Peeracle.DataSource.Http(this.src_);
+    dataSource.fetch(function fetchCb(bytes) {
+      this.loadMetadata_(bytes);
+    }.bind(this));
+  };
+
+  Player.prototype.initMP4_ = function initMP4_() {
+
+  };
+
+  Player.prototype.initWebM_ = function initWebM_() {
+
+  };
+
+  Peeracle.Player = Player;
+
+  function Stream(media) {
+    Listenable.call(this);
+
+    this.src = media.src;
+
+    media.pause();
+    media.src = '';
+  }
+
+  Stream.prototype = Object.create(Listenable.prototype);
+
+  Peeracle.Stream = Stream;
 
   function Tracker() {}
 
@@ -3437,13 +3724,33 @@
   Client.prototype.constructor = Client;
 
   Client.prototype.onOpen_ = function onOpen_() {
-    console.log('[Peeracle.Tracker.Client] onOpen');
-    this.ws_.send(new Uint8Array([0, 0]));
+    var msg = new Peeracle.Tracker.Message({
+      type: Peeracle.Tracker.Message.Type.Hello
+    });
+    var bytes = msg.serialize();
+    console.log('[Peeracle.Tracker.Client] onOpen', bytes);
+    this.ws_.send(bytes);
   };
 
   Client.prototype.onMessage_ = function onMessage_(e) {
-    var data = e.data;
-    console.log('[Peeracle.Tracker.Client] onMessage', data);
+    var data = new Uint8Array(e.data);
+    var msg = new Tracker.Message(data);
+    var typeMap = {};
+
+    if (!msg.hasOwnProperty('props') || !msg.props.hasOwnProperty('type')) {
+      return;
+    }
+
+    typeMap[Tracker.Message.Type.Welcome] = function welcomeMsg(msg) {
+      console.log('my ID =', msg.props.id);
+    };
+
+    if (!typeMap.hasOwnProperty(msg.props.type)) {
+      return;
+    }
+
+    typeMap[msg.props.type](msg);
+    console.log('[Peeracle.Tracker.Client] onMessage', msg);
   };
 
   Client.prototype.onError_ = function onError_() {
@@ -3459,7 +3766,8 @@
   Client.prototype.connect = function connect(url) {
     this.url_ = url;
 
-    this.ws_ = new WebSocket(this.url_, 'prcl-0.0.1', this.url_);
+    this.ws_ = new WebSocket(this.url_, 'prcl-0.0.1');
+    this.ws_.binaryType = 'arraybuffer';
     this.ws_.onopen = this.onOpen_.bind(this);
     this.ws_.onmessage = this.onMessage_.bind(this);
     this.ws_.onerror = this.onError_.bind(this);
@@ -3470,24 +3778,16 @@
 
   /**
    * @class
-   * @param {Uint8Array?} bytes
+   * @param {Uint8Array?} parm
    * @constructor
    */
-  function Message(bytes) {
-    /**
-     * @member {Message.Type}
-     */
-    this.type = Message.Type.None;
+  function Message(parm) {
+    this.props = {};
 
-    /**
-     * @member {?BinaryStream}
-     * @private
-     */
-    this.stream_ = null;
-
-    if (bytes && typeof bytes === ArrayBuffer) {
-      this.stream_ = new BinaryStream(bytes);
-      // this.readFromBytes_(bytes);
+    if (parm instanceof Uint8Array) {
+      this.unserialize_(parm);
+    } else if (typeof parm === 'object') {
+      this.createFromObject_(parm);
     }
   }
 
@@ -3498,6 +3798,65 @@
     None: 0,
     Hello: 1,
     Welcome: 2
+  };
+
+  Message.prototype.createFromObject_ = function createFromObject_(obj) {
+    var k;
+
+    for (k in obj) {
+      if (!obj.hasOwnProperty(k)) {
+        continue;
+      }
+      this.props[k] = obj[k];
+    }
+  };
+
+  Message.prototype.serializeHello_ = function serializeHello_() {
+    return new Uint8Array([Message.Type.Hello]);
+  };
+
+  Message.prototype.serializeWelcome_ = function serializeWelcome_() {
+    var bytes = new Uint8Array(5);
+    var bstream = new BinaryStream(bytes);
+
+    bstream.writeByte(Message.Type.Welcome);
+    bstream.writeUInt32(this.props.id);
+    return bytes;
+  };
+
+  Message.prototype.serialize = function serialize() {
+    var typeMap = {};
+
+    typeMap[Message.Type.Hello] = this.serializeHello_;
+    typeMap[Message.Type.Welcome] = this.serializeWelcome_;
+
+    if (!typeMap.hasOwnProperty(this.props.type)) {
+      return null;
+    }
+
+    return typeMap[this.props.type].bind(this)();
+  };
+
+  Message.prototype.unserializeHello_ = function unserializeHello_(bstream) {};
+
+  Message.prototype.unserializeWelcome_ = function unserializeWelcome_(
+    bstream) {
+    this.props.id = bstream.readUInt32();
+  };
+
+  Message.prototype.unserialize_ = function unserialize_(bytes) {
+    var bstream = new BinaryStream(bytes);
+    var typeMap = {};
+
+    typeMap[Message.Type.Hello] = this.unserializeHello_;
+    typeMap[Message.Type.Welcome] = this.unserializeWelcome_;
+
+    this.props.type = bstream.readByte();
+    if (!typeMap.hasOwnProperty(this.props.type)) {
+      return null;
+    }
+
+    typeMap[this.props.type].bind(this)(bstream);
   };
 
   Peeracle.Tracker.Message = Message;
