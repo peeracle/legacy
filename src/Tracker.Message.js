@@ -28,24 +28,16 @@ var BinaryStream = require('./BinaryStream');
 
 /**
  * @class
- * @param {Uint8Array?} bytes
+ * @param {Uint8Array?} parm
  * @constructor
  */
-function Message(bytes) {
-  /**
-   * @member {Message.Type}
-   */
-  this.type = Message.Type.None;
+function Message(parm) {
+  this.props = {};
 
-  /**
-   * @member {?BinaryStream}
-   * @private
-   */
-  this.stream_ = null;
-
-  if (bytes && typeof bytes === ArrayBuffer) {
-    this.stream_ = new BinaryStream(bytes);
-    // this.readFromBytes_(bytes);
+  if (parm instanceof Uint8Array) {
+    this.unserialize_(parm);
+  } else if (typeof parm === 'object') {
+    this.createFromObject_(parm);
   }
 }
 
@@ -56,6 +48,65 @@ Message.Type = {
   None: 0,
   Hello: 1,
   Welcome: 2
+};
+
+Message.prototype.createFromObject_ = function createFromObject_(obj) {
+  var k;
+
+  for (k in obj) {
+    if (!obj.hasOwnProperty(k)) {
+      continue;
+    }
+    this.props[k] = obj[k];
+  }
+};
+
+Message.prototype.serializeHello_ = function serializeHello_() {
+  return new Uint8Array([Message.Type.Hello]);
+};
+
+Message.prototype.serializeWelcome_ = function serializeWelcome_() {
+  var bytes = new Uint8Array(5);
+  var bstream = new BinaryStream(bytes);
+
+  bstream.writeByte(Message.Type.Welcome);
+  bstream.writeUInt32(this.props.id);
+  return bytes;
+};
+
+Message.prototype.serialize = function serialize() {
+  var typeMap = {};
+
+  typeMap[Message.Type.Hello] = this.serializeHello_;
+  typeMap[Message.Type.Welcome] = this.serializeWelcome_;
+
+  if (!typeMap.hasOwnProperty(this.props.type)) {
+    return null;
+  }
+
+  return typeMap[this.props.type].bind(this)();
+};
+
+Message.prototype.unserializeHello_ = function unserializeHello_(bstream) {
+};
+
+Message.prototype.unserializeWelcome_ = function unserializeWelcome_(bstream) {
+  this.props.id = bstream.readUInt32();
+};
+
+Message.prototype.unserialize_ = function unserialize_(bytes) {
+  var bstream = new BinaryStream(bytes);
+  var typeMap = {};
+
+  typeMap[Message.Type.Hello] = this.unserializeHello_;
+  typeMap[Message.Type.Welcome] = this.unserializeWelcome_;
+
+  this.props.type = bstream.readByte();
+  if (!typeMap.hasOwnProperty(this.props.type)) {
+    return null;
+  }
+
+  typeMap[this.props.type].bind(this)(bstream);
 };
 
 module.exports = Message;
