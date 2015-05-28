@@ -96,13 +96,13 @@ function MP4(dataSource) {
    *
    * @member {number}
    */
-  this.timecodeScale = -1;
+  this.timecodeScale = 0;
 
   /**
    *
    * @member {number}
    */
-  this.duration = -1;
+  this.duration = 0;
 
   /**
    *
