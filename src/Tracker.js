@@ -25,4 +25,10 @@
 function Tracker() {
 }
 
+// @exclude
+Tracker.Client = require('./Tracker.Client');
+Tracker.Message = require('./Tracker.Message');
+Tracker.Server = require('./Tracker.Server');
+// @endexclude
+
 module.exports = Tracker;
