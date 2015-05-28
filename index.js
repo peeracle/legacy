@@ -54,9 +54,6 @@ Peeracle.Storage.NodeFile = require('./src/Storage.NodeFile');
 Peeracle.Storage.Memory = require('./src/Storage.Memory');
 
 Peeracle.Tracker = require('./src/Tracker');
-Peeracle.Tracker.Client = require('./src/Tracker.Client');
-Peeracle.Tracker.Message = require('./src/Tracker.Message');
-Peeracle.Tracker.Server = require('./src/Tracker.Server');
 
 Peeracle.Utils = require('./src/Utils');
 
