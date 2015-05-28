@@ -273,7 +273,7 @@ MP4.prototype.parseFtyp_ = function parseFtyp_(atom, cb) {
 MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
   this.dataSource_.seek(atom.offset);
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
-    var bstream;
+    /*var bstream;
     var version;
 
     if (!bytes) {
@@ -291,7 +291,7 @@ MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
 
     bstream.seek(20);
     this.timecodeScale = bstream.readUInt32();
-    this.duration = bstream.readUInt32();
+    this.duration = bstream.readUInt32();*/
 
     this.dataSource_.seek(atom.offset + atom.size);
     cb(true);
