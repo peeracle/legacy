@@ -593,6 +593,9 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     var bstream;
     var version;
+    var flags;
+    var referenceId;
+    var timeScale;
     var time;
     var offset;
     var count;
@@ -614,6 +617,10 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
       return;
     }
 
+    flags = bstream.readBytes(3);
+    referenceId = bstream.readUInt32();
+    this.timecodeScale = bstream.readUInt32();
+
     bstream.seek(20);
     time = bstream.readUInt32();
     offset = bstream.readUInt32() + atom.offset + atom.size;
@@ -630,7 +637,7 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
       cue.size = bstream.readUInt32() & 0x8FFFFFFF;
       duration = bstream.readUInt32();
       bstream.readUInt32();
-      cue.timecode = time;
+      cue.timecode = (time / this.timecodeScale) * 1000;
       cue.track = -1;
       cue.offset = offset;
       this.cues.push(cue);
@@ -638,6 +645,7 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
       time += duration;
     }
 
+    this.duration = (time / this.timecodeScale) * 1000;
     this.dataSource_.seek(atom.offset + atom.size);
     cb(true);
   }.bind(this));
