@@ -25,6 +25,7 @@
 // @exclude
 var Listenable = require('./Listenable');
 var WebSocket = require('websocket').w3cwebsocket;
+var Tracker = require('./Tracker');
 // @endexclude
 
 /**
@@ -42,13 +43,31 @@ Client.prototype = Object.create(Listenable.prototype);
 Client.prototype.constructor = Client;
 
 Client.prototype.onOpen_ = function onOpen_() {
-  console.log('[Peeracle.Tracker.Client] onOpen');
-  this.ws_.send(new Uint8Array([0, 0]));
+  var msg = new Peeracle.Tracker.Message({type: Peeracle.Tracker.Message.Type.Hello});
+  var bytes = msg.serialize();
+  console.log('[Peeracle.Tracker.Client] onOpen', bytes);
+  this.ws_.send(bytes);
 };
 
 Client.prototype.onMessage_ = function onMessage_(e) {
-  var data = e.data;
-  console.log('[Peeracle.Tracker.Client] onMessage', data);
+  var data = new Uint8Array(e.data);
+  var msg = new Tracker.Message(data);
+  var typeMap = {};
+
+  if (!msg.hasOwnProperty('props') || !msg.props.hasOwnProperty('type')) {
+    return;
+  }
+
+  typeMap[Tracker.Message.Type.Welcome] = function welcomeMsg(msg) {
+    console.log('my ID =', msg.props.id);
+  };
+
+  if (!typeMap.hasOwnProperty(msg.props.type)) {
+    return;
+  }
+
+  typeMap[msg.props.type](msg);
+  console.log('[Peeracle.Tracker.Client] onMessage', msg);
 };
 
 Client.prototype.onError_ = function onError_() {
@@ -64,7 +83,8 @@ Client.prototype.onClose_ = function onClose_(e) {
 Client.prototype.connect = function connect(url) {
   this.url_ = url;
 
-  this.ws_ = new WebSocket(this.url_, 'prcl-0.0.1', this.url_);
+  this.ws_ = new WebSocket(this.url_, 'prcl-0.0.1');
+  this.ws_.binaryType = 'arraybuffer';
   this.ws_.onopen = this.onOpen_.bind(this);
   this.ws_.onmessage = this.onMessage_.bind(this);
   this.ws_.onerror = this.onError_.bind(this);
