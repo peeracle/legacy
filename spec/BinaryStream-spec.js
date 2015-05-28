@@ -111,18 +111,9 @@ describe('Peeracle.BinaryStream', function () {
 
     it('should throw an error for reading outside the stream', function () {
       expect(function () {
-        binaryStream.seek(31);
+        binaryStream.seek(32);
         binaryStream.readByte();
       }).toThrowError(Peeracle.BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
-    });
-
-    it('should throw an error for byte overflow', function () {
-      expect(function () {
-        binaryStream.writeByte(-26);
-      }).toThrowError(Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-      expect(function () {
-        binaryStream.writeByte(9000);
-      }).toThrowError(Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
     });
 
     it('should read a zero', function () {
@@ -256,15 +247,6 @@ describe('Peeracle.BinaryStream', function () {
       expect(result).toEqual(value);
     });
 
-    it('should throw an error for unsigned integer overflow', function () {
-      expect(function () {
-        binaryStream.writeUInt32(-9000);
-      }).toThrowError(Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-      expect(function () {
-        binaryStream.writeUInt32(0xFFFFFFFFFF);
-      }).toThrowError(Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-    });
-
     it('should throw an error for invalid unsigned integer', function () {
       expect(function () {
         binaryStream.writeUInt32('hey');
@@ -317,15 +299,6 @@ describe('Peeracle.BinaryStream', function () {
       expect(function () {
         binaryStream.writeInt32(new Uint8Array([2, 3, 4]));
       }).toThrowError(Peeracle.BinaryStream.ERR_INVALID_ARGUMENT);
-    });
-
-    it('should throw an error for signed integer overflow', function () {
-      expect(function () {
-        binaryStream.writeInt32(-0xFFFFFFFFFF);
-      }).toThrowError(Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-      expect(function () {
-        binaryStream.writeInt32(0xFFFFFFFFFF);
-      }).toThrowError(Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
     });
   });
 

@@ -28,7 +28,6 @@
  * @param {!Uint8Array} buffer
  * @constructor
  */
-
 function BinaryStream(buffer) {
   if (!buffer || !(buffer instanceof Uint8Array)) {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
@@ -38,6 +37,12 @@ function BinaryStream(buffer) {
    * @member {Uint8Array}
    */
   this.bytes = buffer;
+
+  /**
+   * @member {DataView}
+   * @private
+   */
+  this.dataview_ = new DataView(this.bytes.buffer);
 
   /**
    * @member {number}
@@ -55,33 +60,64 @@ BinaryStream.ERR_INVALID_ARGUMENT = 'Invalid argument';
 BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
 BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
 
-/**
- * @returns {number}
- */
-BinaryStream.prototype.readByte = function readByte() {
-  if (this.offset + 1 >= this.length_) {
-    throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
+BinaryStream.prototype.read = function read(type) {
+  var result;
+  var typeMap = {
+    'Int8': [this.dataview_.getInt8, 1],
+    'Int16': [this.dataview_.getInt16, 2],
+    'Int32': [this.dataview_.getInt32, 4],
+    'UInt8': [this.dataview_.getUint8, 1],
+    'UInt16': [this.dataview_.getUint16, 2],
+    'UInt32': [this.dataview_.getUint32, 4],
+    'Float32': [this.dataview_.getFloat32, 4],
+    'Float64': [this.dataview_.getFloat64, 8]
+  };
+
+  if (!typeMap.hasOwnProperty(type)) {
+    return null;
   }
-  return this.bytes[this.offset++];
+
+  result = typeMap[type][0].bind(this.dataview_)(this.offset);
+  this.offset += typeMap[type][1];
+  return result;
 };
 
-/**
- * @param value
- */
-BinaryStream.prototype.writeByte = function writeByte(value) {
+BinaryStream.prototype.write = function write(type, value) {
+  var typeMap = {
+    'Int8': [this.dataview_.setInt8, 1],
+    'Int16': [this.dataview_.setInt16, 2],
+    'Int32': [this.dataview_.setInt32, 4],
+    'UInt8': [this.dataview_.setUint8, 1],
+    'UInt16': [this.dataview_.setUint16, 2],
+    'UInt32': [this.dataview_.setUint32, 4],
+    'Float32': [this.dataview_.setFloat32, 4],
+    'Float64': [this.dataview_.setFloat64, 8]
+  };
+
   if (typeof value !== 'number') {
     throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
   }
-  if (value < 0 || value > 255) {
-    throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
+
+  if (!typeMap.hasOwnProperty(type)) {
+    return;
   }
-  this.bytes.set(new Uint8Array([value]), this.offset++);
+
+  if (this.offset + typeMap[type][1] > this.length_) {
+    throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
+  }
+
+  typeMap[type][0].bind(this.dataview_)(this.offset, value);
+  this.offset += typeMap[type][1];
 };
 
-/**
- * @param length
- * @returns {Uint8Array}
- */
+BinaryStream.prototype.readByte = function readByte() {
+  return this.read('UInt8');
+};
+
+BinaryStream.prototype.writeByte = function writeByte(value) {
+  return this.write('UInt8', value);
+};
+
 BinaryStream.prototype.readBytes = function readBytes(length) {
   var bytes;
 
@@ -99,9 +135,6 @@ BinaryStream.prototype.readBytes = function readBytes(length) {
   return bytes;
 };
 
-/**
- * @param {Uint8Array} bytes
- */
 BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
   if (!(bytes instanceof Uint8Array)) {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
@@ -111,152 +144,52 @@ BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
   this.offset += bytes.length;
 };
 
-/**
- * @returns {number}
- */
 BinaryStream.prototype.readFloat4 = function readFloat4() {
-  var i;
-  var val = 0;
-  var sign;
-  var exponent;
-  var significand;
-  var number = this.readBytes(4);
-
-  for (i = 0; i < 4; ++i) {
-    val <<= 8;
-    val |= number[i] & 0xff;
-  }
-
-  sign = val >> 31;
-  exponent = ((val >> 23) & 0xff) - 127;
-  significand = val & 0x7fffff;
-  if (exponent > -127) {
-    if (exponent === 128) {
-      if (significand === 0) {
-        if (sign === 0) {
-          return Number.POSITIVE_INFINITY;
-        }
-        return Number.NEGATIVE_INFINITY;
-      }
-      return NaN;
-    }
-    significand |= 0x800000;
-  } else {
-    if (significand === 0) {
-      return 0;
-    }
-    exponent = -126;
-  }
-
-  return Math.pow(-1, sign) * (significand * Math.pow(2, -23)) *
-    Math.pow(2, exponent);
+  return this.read('Float32');
 };
 
-/**
- * @returns {number}
- */
+BinaryStream.prototype.writeFloat4 = function writeFloat4(value) {
+  return this.write('Float32', value);
+};
+
 BinaryStream.prototype.readFloat8 = function readFloat8() {
-  var number = this.readBytes(8);
-  var f = new Float64Array(number.buffer);
-  return f[0];
+  return this.read('Float64');
 };
 
-/**
- * @param {number} value
- */
 BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
-  var f;
-  var u;
-
-  if (typeof value !== 'number') {
-    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
-  }
-
-  f = new Float64Array([value]);
-  u = new Uint8Array(f.buffer);
-
-  this.writeBytes(u);
+  return this.write('Float64', value);
 };
 
-/**
- * @param {boolean?} unsigned
- * @returns {number}
- */
-BinaryStream.prototype.readInt16 = function readInt16(unsigned) {
-  var number = this.readBytes(2);
-  var value = (number[0] << 8);
-
-  if (unsigned) {
-    return value + number[1] >>> 0;
-  }
-
-  return value + number[1];
+BinaryStream.prototype.readInt16 = function readInt16() {
+  return this.read('Int16');
 };
 
-/**
- * @param {boolean?} unsigned
- * @returns {number}
- */
-BinaryStream.prototype.readInt32 = function readInt32(unsigned) {
-  var number = this.readBytes(4);
-  var value = (number[0] << 24) +
-    (number[1] << 16) +
-    (number[2] << 8);
-
-  if (unsigned) {
-    return value + number[3] >>> 0;
-  }
-
-  return value + number[3];
+BinaryStream.prototype.writeInt16 = function writeInt16(value) {
+  return this.write('Int16', value);
 };
 
-/**
- * @param {number} value
- * @param {boolean?} unsigned
- */
-BinaryStream.prototype.writeInt32 = function writeInt32(value, unsigned) {
-  var l = 0;
-  var bytes;
-  var val = value;
-
-  if (typeof val !== 'number') {
-    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
-  }
-
-  if (unsigned) {
-    val = val >>> 0;
-  } else if (val < -0x7FFFFFFF || val > 0x7FFFFFFF) {
-    throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-  }
-
-  bytes = [];
-  while (l < 4) {
-    bytes[l] = (val & 0xFF);
-    val = val >> 8;
-    ++l;
-  }
-
-  this.writeBytes(new Uint8Array(bytes.reverse()));
+BinaryStream.prototype.readInt32 = function readInt32() {
+  return this.read('Int32');
 };
 
-/**
- * @returns {number}
- */
+BinaryStream.prototype.writeInt32 = function writeInt32(value) {
+  return this.write('Int32', value);
+};
+
+BinaryStream.prototype.readUInt16 = function readUInt16() {
+  return this.read('UInt16');
+};
+
+BinaryStream.prototype.writeUInt16 = function writeUInt16(value) {
+  return this.write('UInt16', value);
+};
+
 BinaryStream.prototype.readUInt32 = function readUInt32() {
-  return this.readInt32(true);
+  return this.read('UInt32');
 };
 
-/**
- * @param {number} value
- */
 BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
-  if (typeof value !== 'number') {
-    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
-  }
-  if (value < 0 || value > 0xFFFFFFFF) {
-    throw new Error(BinaryStream.ERR_VALUE_OUT_OF_BOUNDS);
-  }
-  this.writeInt32(value, true);
+  return this.write('UInt32', value);
 };
 
 /**
