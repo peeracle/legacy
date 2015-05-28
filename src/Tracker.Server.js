@@ -24,7 +24,6 @@
 
 var http = require('http');
 var WebSocketServer = require('websocket').server;
-var winston = require('winston');
 var Tracker = require('./Tracker');
 
 /**
@@ -35,35 +34,6 @@ var Tracker = require('./Tracker');
 function Server() {
   this.server_ = null;
   this.ws_ = null;
-
-  winston.loggers.add('Server', {
-    console: {
-      level: 'info',
-      colorize: true,
-      label: 'Server'
-    }
-  });
-
-  this.log_ = new (winston.Logger)({
-    transports: [
-      new (winston.transports.Console)({
-        timestamp: function timestamp() {
-          return Date.now();
-        },
-        formatter: function formatter(options) {
-          return options.timestamp().toLocaleString() + ' [' +
-            options.level.toUpperCase() + '] ' +
-            (undefined !== options.message ? options.message : '') +
-            (options.meta && Object.keys(options.meta).length ?
-            '\n\t' + JSON.stringify(options.meta) : '');
-        }
-      }),
-      new (winston.transports.DailyRotateFile)({
-        filename: 'tracker',
-        datePattern: '.yyyy-MM-dd'
-      })
-    ]
-  });
 }
 
 Server.prototype.listen = function listen(host, port) {
@@ -71,7 +41,6 @@ Server.prototype.listen = function listen(host, port) {
     response.writeHead(404);
     response.end();
   }).listen(port, host, function httpListen() {
-    this.log_.log('info', 'Listening on ' + host + ':' + parseInt(port, 10));
   }.bind(this));
 
   this.ws_ = new WebSocketServer({
@@ -88,7 +57,6 @@ Server.prototype.listen = function listen(host, port) {
       return;
     }
 
-    this.log_.log('info', 'new user connected from ' + sock.remoteAddress);
     sock.on('message', function onMessage(message) {
       var msg;
       if (message.type !== 'binary') {
@@ -96,11 +64,9 @@ Server.prototype.listen = function listen(host, port) {
       }
 
       msg = new Tracker.Message(new Uint8Array(message.binaryData));
-      this.log_.log('info', 'Got new message', msg);
     }.bind(this));
 
     sock.on('close', function onClose(reasonCode, description) {
-      this.log_.log('info', 'closed', {reasonCode: reasonCode, description: description});
     }.bind(this));
   }.bind(this));
 };
