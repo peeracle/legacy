@@ -299,10 +299,6 @@ MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
 };
 
 MP4.prototype.parseTrak_ = function parseTrak_(atom, cb) {
-  if (this.track_) {
-    this.tracks.push(this.track_);
-  }
-
   this.track_ = {
     id: -1,
     type: -1,
@@ -412,6 +408,8 @@ MP4.prototype.parseVideoDecoderConfig_ =
     this.track_.codec += '.' + Utils.decimalToHex(profile);
     this.track_.codec += Utils.decimalToHex(compat);
     this.track_.codec += Utils.decimalToHex(level);
+
+    this.tracks.push(this.track_);
     return true;
   };
 
