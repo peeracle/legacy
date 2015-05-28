@@ -503,9 +503,9 @@ MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
 };
 
 MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
-  this.track_.numChannels = bstream.readInt16();
+  this.track_.numChannels = bstream.readUInt16();
   bstream.seek(bstream.offset + 6);
-  this.track_.samplingFrequency = bstream.readInt16();
+  this.track_.samplingFrequency = bstream.readUInt16();
 
   this.numChannels = this.track_.numChannels;
   this.samplingFrequency = this.track_.samplingFrequency;
