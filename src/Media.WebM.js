@@ -394,6 +394,9 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
     if (cuePointTag.str === 'b3') {
       cue.timecode = this.readUInt_(bytes,
         cuePointStart + cuePointTag.headerSize, cuePointTag.dataSize);
+      cue.timecode *= 1000;
+      cue.timecode /= this.timecodeScale;
+      cue.timecode *= 1000;
     } else if (cuePointTag.str === 'b7') {
       this.parseCueTrack_(cue, cuePointStart + cuePointTag.headerSize,
         cuePointTag, bytes);
