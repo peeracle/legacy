@@ -34,13 +34,53 @@ var Tracker = require('./Tracker');
 function Server() {
   this.server_ = null;
   this.ws_ = null;
+  this.id_ = 1;
 }
+
+Server.prototype.incomingRequest_ = function incomingRequest_(request) {
+  var sock;
+
+  var onMessage_ = function onMessage_(message) {
+    var msg;
+    if (message.type !== 'binary') {
+      return;
+    }
+
+    msg = new Tracker.Message(new Uint8Array(message.binaryData));
+    console.log(msg);
+
+    if (msg.props.type === Tracker.Message.Type.Hello) {
+      console.log('hello message received');
+      sock.id = this.id_++;
+      msg = new Tracker.Message({
+        type: Tracker.Message.Type.Welcome,
+        id: sock.id
+      });
+      sock.send(new Buffer(msg.serialize()));
+    }
+  };
+
+  var onClose_ = function onClose_(reasonCode, description) {
+    console.log('info', 'closed', {reasonCode: reasonCode, description: description});
+  };
+
+  try {
+    sock = request.accept('prcl-0.0.1', request.origin);
+    sock.id = null;
+    sock.on('message', onMessage_.bind(this));
+    sock.on('close', onClose_.bind(this));
+    console.log('info', 'user origin ' + request.origin);
+  } catch (e) {
+    console.log(e);
+  }
+};
 
 Server.prototype.listen = function listen(host, port) {
   this.server_ = http.createServer(function createServer(request, response) {
     response.writeHead(404);
     response.end();
   }).listen(port, host, function httpListen() {
+    console.log('info', 'Listening on ' + host + ':' + parseInt(port, 10));
   }.bind(this));
 
   this.ws_ = new WebSocketServer({
@@ -48,27 +88,7 @@ Server.prototype.listen = function listen(host, port) {
     autoAcceptConnections: false
   });
 
-  this.ws_.on('request', function onRequest(request) {
-    // TODO: detect origin
-    var sock;
-    try {
-      sock = request.accept('prcl-0.0.1', request.origin);
-    } catch (e) {
-      return;
-    }
-
-    sock.on('message', function onMessage(message) {
-      var msg;
-      if (message.type !== 'binary') {
-        return;
-      }
-
-      msg = new Tracker.Message(new Uint8Array(message.binaryData));
-    }.bind(this));
-
-    sock.on('close', function onClose(reasonCode, description) {
-    }.bind(this));
-  }.bind(this));
+  this.ws_.on('request', this.incomingRequest_.bind(this));
 };
 
 module.exports = Server;
