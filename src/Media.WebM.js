@@ -34,6 +34,7 @@
 // @exclude
 /** @type {Media} **/
 var Media = require('./Media');
+var DataSource = require('./DataSource');
 // @endexclude
 
 /**
@@ -44,7 +45,7 @@ var Media = require('./Media');
  * @implements {Peeracle.Media}
  */
 function WebM(dataSource) {
-  if (!(dataSource instanceof Peeracle.DataSource)) {
+  if (!(dataSource instanceof DataSource)) {
     throw new TypeError('dataSource must be an instance of Peeracle.DataSource');
   }
 
