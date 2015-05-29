@@ -24,6 +24,7 @@
 
 // @exclude
 var BinaryStream = require('./BinaryStream');
+var Tracker = require('./Tracker');
 // @endexclude
 
 /**
@@ -31,7 +32,7 @@ var BinaryStream = require('./BinaryStream');
  * @param {Uint8Array?} parm
  * @constructor
  */
-function Message(parm) {
+Tracker.Message = function Message(parm) {
   this.props = {};
 
   if (parm instanceof Uint8Array) {
@@ -39,34 +40,35 @@ function Message(parm) {
   } else if (typeof parm === 'object') {
     this.createFromObject_(parm);
   }
-}
+};
 
 /**
  * @enum {number}
  */
-Message.Type = {
+Tracker.Message.Type = {
   None: 0,
   Hello: 1,
   Welcome: 2
 };
 
-Message.prototype.createFromObject_ = function createFromObject_(obj) {
-  var k;
+Tracker.Message.prototype.createFromObject_ =
+  function createFromObject_(obj) {
+    var k;
 
-  for (k in obj) {
-    if (!obj.hasOwnProperty(k)) {
-      continue;
+    for (k in obj) {
+      if (!obj.hasOwnProperty(k)) {
+        continue;
+      }
+      this.props[k] = obj[k];
     }
-    this.props[k] = obj[k];
-  }
-};
+  };
 
-Message.prototype.serializeHello_ = function serializeHello_() {
   return new Uint8Array([Message.Type.Hello]);
+Tracker.Message.prototype.serializeHello_ = function serializeHello_() {
 };
 
-Message.prototype.serializeWelcome_ = function serializeWelcome_() {
   var bytes = new Uint8Array(5);
+Tracker.Message.prototype.serializeWelcome_ = function serializeWelcome_() {
   var bstream = new BinaryStream(bytes);
 
   bstream.writeByte(Message.Type.Welcome);
@@ -74,11 +76,11 @@ Message.prototype.serializeWelcome_ = function serializeWelcome_() {
   return bytes;
 };
 
-Message.prototype.serialize = function serialize() {
+Tracker.Message.prototype.serialize = function serialize() {
   var typeMap = {};
 
-  typeMap[Message.Type.Hello] = this.serializeHello_;
-  typeMap[Message.Type.Welcome] = this.serializeWelcome_;
+  typeMap[Tracker.Message.Type.Hello] = this.serializeHello_;
+  typeMap[Tracker.Message.Type.Welcome] = this.serializeWelcome_;
 
   if (!typeMap.hasOwnProperty(this.props.type)) {
     return null;
@@ -87,19 +89,19 @@ Message.prototype.serialize = function serialize() {
   return typeMap[this.props.type].bind(this)();
 };
 
-Message.prototype.unserializeHello_ = function unserializeHello_(bstream) {
+Tracker.Message.prototype.unserializeHello_ = function unserializeHello_(bstream) {
 };
 
-Message.prototype.unserializeWelcome_ = function unserializeWelcome_(bstream) {
+Tracker.Message.prototype.unserializeWelcome_ = function unserializeWelcome_(bstream) {
   this.props.id = bstream.readUInt32();
 };
 
-Message.prototype.unserialize_ = function unserialize_(bytes) {
+Tracker.Message.prototype.unserialize_ = function unserialize_(bytes) {
   var bstream = new BinaryStream(bytes);
   var typeMap = {};
 
-  typeMap[Message.Type.Hello] = this.unserializeHello_;
-  typeMap[Message.Type.Welcome] = this.unserializeWelcome_;
+  typeMap[Tracker.Message.Type.Hello] = this.unserializeHello_;
+  typeMap[Tracker.Message.Type.Welcome] = this.unserializeWelcome_;
 
   this.props.type = bstream.readByte();
   if (!typeMap.hasOwnProperty(this.props.type)) {
@@ -109,4 +111,4 @@ Message.prototype.unserialize_ = function unserialize_(bytes) {
   typeMap[this.props.type].bind(this)(bstream);
 };
 
-module.exports = Message;
+module.exports = Tracker.Message;

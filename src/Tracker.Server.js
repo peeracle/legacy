@@ -31,13 +31,13 @@ var Tracker = require('./Tracker');
  * @memberof Peeracle.Tracker
  * @constructor
  */
-function Server() {
+Tracker.Server = function Server() {
   this.server_ = null;
   this.ws_ = null;
   this.id_ = 1;
-}
+};
 
-Server.prototype.incomingRequest_ = function incomingRequest_(request) {
+Tracker.Server.prototype.incomingRequest_ = function incomingRequest_(request) {
   var sock;
 
   var onMessage_ = function onMessage_(message) {
@@ -75,7 +75,7 @@ Server.prototype.incomingRequest_ = function incomingRequest_(request) {
   }
 };
 
-Server.prototype.listen = function listen(host, port) {
+Tracker.Server.prototype.listen = function listen(host, port) {
   this.server_ = http.createServer(function createServer(request, response) {
     response.writeHead(404);
     response.end();
@@ -91,4 +91,4 @@ Server.prototype.listen = function listen(host, port) {
   this.ws_.on('request', this.incomingRequest_.bind(this));
 };
 
-module.exports = Server;
+module.exports = Tracker.Server;

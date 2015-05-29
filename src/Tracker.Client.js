@@ -34,22 +34,22 @@ var Tracker = require('./Tracker');
  * @augments Listenable
  * @constructor
  */
-function Client() {
+Tracker.Client = function Client() {
   this.url_ = null;
   this.ws_ = null;
-}
+};
 
-Client.prototype = Object.create(Listenable.prototype);
-Client.prototype.constructor = Client;
+Tracker.Client.prototype = Object.create(Listenable.prototype);
+Tracker.Client.prototype.constructor = Tracker.Client;
 
-Client.prototype.onOpen_ = function onOpen_() {
-  var msg = new Peeracle.Tracker.Message({type: Peeracle.Tracker.Message.Type.Hello});
+Tracker.Client.prototype.onOpen_ = function onOpen_() {
+  var msg = new Tracker.Message({type: Tracker.Message.Type.Hello});
   var bytes = msg.serialize();
   console.log('[Peeracle.Tracker.Client] onOpen', bytes);
   this.ws_.send(bytes);
 };
 
-Client.prototype.onMessage_ = function onMessage_(e) {
+Tracker.Client.prototype.onMessage_ = function onMessage_(e) {
   var data = new Uint8Array(e.data);
   var msg = new Tracker.Message(data);
   var typeMap = {};
@@ -58,8 +58,8 @@ Client.prototype.onMessage_ = function onMessage_(e) {
     return;
   }
 
-  typeMap[Tracker.Message.Type.Welcome] = function welcomeMsg(msg) {
-    console.log('my ID =', msg.props.id);
+  typeMap[Tracker.Message.Type.Welcome] = function welcomeMsg(m) {
+    console.log('my ID =', m.props.id);
   };
 
   if (!typeMap.hasOwnProperty(msg.props.type)) {
@@ -70,17 +70,17 @@ Client.prototype.onMessage_ = function onMessage_(e) {
   console.log('[Peeracle.Tracker.Client] onMessage', msg);
 };
 
-Client.prototype.onError_ = function onError_() {
+Tracker.Client.prototype.onError_ = function onError_() {
   console.log('[Peeracle.Tracker.Client] onError');
 };
 
-Client.prototype.onClose_ = function onClose_(e) {
+Tracker.Client.prototype.onClose_ = function onClose_(e) {
   var code = e.code;
   var reason = e.reason;
   console.log('[Peeracle.Tracker.Client] onClose', code, reason);
 };
 
-Client.prototype.connect = function connect(url) {
+Tracker.Client.prototype.connect = function connect(url) {
   this.url_ = url;
 
   this.ws_ = new WebSocket(this.url_, 'prcl-0.0.1');
@@ -91,4 +91,4 @@ Client.prototype.connect = function connect(url) {
   this.ws_.onclose = this.onClose_.bind(this);
 };
 
-module.exports = Client;
+module.exports = Tracker.Client;
