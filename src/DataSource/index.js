@@ -22,23 +22,63 @@
 
 'use strict';
 
-function Downloader() {
+// @exclude
+var Peeracle = require('../Peeracle');
+// @endexclude
 
+/* istanbul ignore next */
+/**
+ * @interface
+ * @memberof Peeracle
+ * @param {*} handle
+ * @constructor
+ */
+function DataSource(handle) {
+  /**
+   * @readonly
+   * @member {number}
+   */
+  this.offset = 0;
+
+  /**
+   * @readonly
+   * @member {number}
+   */
+  this.length = 0;
 }
 
 /* istanbul ignore next */
-Downloader.prototype.retrieveInitSegment =
-  function retrieveInitSegment(cb) {
-  };
+/**
+ * @function
+ * @param length
+ */
+DataSource.prototype.read = function read(length) {
+};
 
 /* istanbul ignore next */
-Downloader.prototype.retrieveMediaSegment =
-  function retrieveMediaSegment(timecode, cb) {
-  };
+/**
+ * @function
+ * @param position
+ */
+DataSource.prototype.seek = function seek(position) {
+};
+
+/* istanbul ignore next */
+/**
+ * @function
+ * @param length
+ * @param cb
+ */
+DataSource.prototype.fetchBytes = function fetchBytes(length, cb) {
+};
+
+/* eslint-enable */
 
 // @exclude
-Downloader.Http = require('./Downloader.Http');
-Downloader.P2P = require('./Downloader.P2P');
+module.exports = DataSource;
+
+DataSource.File = require('./File');
+DataSource.Http = require('./Http');
 // @endexclude
 
-module.exports = Downloader;
+Peeracle.DataSource = DataSource;

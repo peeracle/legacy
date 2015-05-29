@@ -23,8 +23,8 @@
 'use strict';
 
 // @exclude
-var Crypto = require('./Crypto');
-var Utils = require('./Utils');
+var Crypto = require('./');
+var Utils = require('./../Utils');
 // @endexclude
 
 /**
@@ -35,7 +35,7 @@ var Utils = require('./Utils');
  * @memberof Peeracle.Crypto
  * @implements {Peeracle.Crypto}
  */
-function Crc32() {
+Crypto.Crc32 = function Crc32() {
   /**
    * @type {number}
    * @private
@@ -47,13 +47,13 @@ function Crc32() {
    * @private
    */
   this.crcTable_ = null;
-}
+};
 
-Crc32.prototype = Object.create(Crypto.prototype);
-Crc32.prototype.constructor = Crc32;
+Crypto.Crc32.prototype = Object.create(Crypto.prototype);
+Crypto.Crc32.prototype.constructor = Crypto.Crc32;
 
 /** @type {string} */
-Crc32.IDENTIFIER = 'crc32';
+Crypto.Crc32.IDENTIFIER = 'crc32';
 
 /**
  * Generate the crc32 table.
@@ -61,7 +61,7 @@ Crc32.IDENTIFIER = 'crc32';
  * @function
  * @private
  */
-Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
+Crypto.Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
   var c;
   var n;
   var k;
@@ -83,7 +83,7 @@ Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
  * @param array
  * @returns {*}
  */
-Crc32.prototype.checksum = function checksum(array) {
+Crypto.Crc32.prototype.checksum = function checksum(array) {
   var arr = array;
 
   if (typeof arr === 'string') {
@@ -100,7 +100,7 @@ Crc32.prototype.checksum = function checksum(array) {
  *
  * @function
  */
-Crc32.prototype.init = function init() {
+Crypto.Crc32.prototype.init = function init() {
   if (!this.crcTable_) {
     this.generateCrc32Table_();
   }
@@ -114,7 +114,7 @@ Crc32.prototype.init = function init() {
  * @function
  * @param array
  */
-Crc32.prototype.update = function update(array) {
+Crypto.Crc32.prototype.update = function update(array) {
   var i;
   var l;
   var arr = array;
@@ -135,7 +135,7 @@ Crc32.prototype.update = function update(array) {
  * @function
  * @returns {number}
  */
-Crc32.prototype.finish = function finish() {
+Crypto.Crc32.prototype.finish = function finish() {
   return (this.crc_ ^ (-1)) >>> 0;
 };
 
@@ -146,7 +146,7 @@ Crc32.prototype.finish = function finish() {
  * @param value
  * @param {BinaryStream} binaryStream
  */
-Crc32.prototype.serialize = function serialize(value, binaryStream) {
+Crypto.Crc32.prototype.serialize = function serialize(value, binaryStream) {
   binaryStream.writeUInt32(value);
 };
 
@@ -157,8 +157,8 @@ Crc32.prototype.serialize = function serialize(value, binaryStream) {
  * {BinaryStream} binaryStream
  * @returns {*}
  */
-Crc32.prototype.unserialize = function unserialize(binaryStream) {
+Crypto.Crc32.prototype.unserialize = function unserialize(binaryStream) {
   return binaryStream.readUInt32();
 };
 
-module.exports = Crc32;
+module.exports = Crypto.Crc32;

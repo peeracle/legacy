@@ -22,6 +22,10 @@
 
 'use strict';
 
+// @exclude
+var Peeracle = require('../Peeracle');
+// @endexclude
+
 /* istanbul ignore next */
 /**
  * @interface
@@ -109,5 +113,10 @@ Crypto.prototype.unserialize = function unserialize(binaryStream) {
 };
 
 /* eslint-enable */
-
+// @exclude
 module.exports = Crypto;
+
+Crypto.Crc32 = require('./Crc32');
+// @endexclude
+
+Peeracle.Crypto = Crypto;

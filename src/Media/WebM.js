@@ -33,8 +33,8 @@
 
 // @exclude
 /** @type {Media} **/
-var Media = require('./Media');
-var DataSource = require('./DataSource');
+var Media = require('./');
+var DataSource = require('./../DataSource');
 // @endexclude
 
 /**
@@ -44,7 +44,7 @@ var DataSource = require('./DataSource');
  * @memberof Peeracle.Media
  * @implements {Peeracle.Media}
  */
-function WebM(dataSource) {
+Media.WebM = function WebM(dataSource) {
   if (!(dataSource instanceof DataSource)) {
     throw new TypeError('dataSource must be an instance of Peeracle.DataSource');
   }
@@ -160,27 +160,27 @@ function WebM(dataSource) {
    * @member {number}
    */
   this.bandwidth = 0;
-}
+};
 
-WebM.TAG_SUFFIX_ = 'Tag_';
+Media.WebM.TAG_SUFFIX_ = 'Tag_';
 
-WebM.CODEC_VP8 = 'V_VP8';
-WebM.CODEC_VP9 = 'V_VP9';
-WebM.CODEC_VORBIS = 'A_VORBIS';
-WebM.CODEC_OPUS = 'A_OPUS';
+Media.WebM.CODEC_VP8 = 'V_VP8';
+Media.WebM.CODEC_VP9 = 'V_VP9';
+Media.WebM.CODEC_VORBIS = 'A_VORBIS';
+Media.WebM.CODEC_OPUS = 'A_OPUS';
 
-WebM.ERR_INVALID_WEBM = 'Invalid WebM file';
-WebM.ERR_EMPTY_WEBM = 'Nothing to read after the EBML tag';
+Media.WebM.ERR_INVALID_WEBM = 'Invalid WebM file';
+Media.WebM.ERR_EMPTY_WEBM = 'Nothing to read after the EBML tag';
 
-WebM.prototype = Object.create(Media.prototype);
-WebM.prototype.constructor = WebM;
+Media.WebM.prototype = Object.create(Media.prototype);
+Media.WebM.prototype.constructor = Media.WebM;
 
 /**
  *
  * @param {DataSource} dataSource
  * @param cb
  */
-WebM.checkHeader = function checkHeader(dataSource, cb) {
+Media.WebM.checkHeader = function checkHeader(dataSource, cb) {
   dataSource.seek(0);
   dataSource.fetchBytes(4, function fetchBytesCb(bytes) {
     if (bytes && bytes.length === 4 &&
@@ -201,7 +201,7 @@ WebM.checkHeader = function checkHeader(dataSource, cb) {
  * @param start
  * @private
  */
-WebM.prototype.parseInfoTag_ = function parseInfoTag_(tag, bytes, start) {
+Media.WebM.prototype.parseInfoTag_ = function parseInfoTag_(tag, bytes, start) {
   if (tag.str === '2ad7b1') {
     this.timecodeScale = this.readUInt_(bytes, start + tag.headerSize,
       tag.dataSize);
@@ -216,7 +216,7 @@ WebM.prototype.parseInfoTag_ = function parseInfoTag_(tag, bytes, start) {
  * @param cb
  * @private
  */
-WebM.prototype.parseInfos_ = function parseInfos_(cb) {
+Media.WebM.prototype.parseInfos_ = function parseInfos_(cb) {
   this.readTagBytes_(this.infoTag_, function parseInfosReadTagBytesCb(bytes) {
     var start = this.infoTag_.headerSize;
     var tag = this.readBufferedTag_(start, bytes);
@@ -229,7 +229,7 @@ WebM.prototype.parseInfos_ = function parseInfos_(cb) {
   }.bind(this));
 };
 
-WebM.prototype.parseTrackVideo_ =
+Media.WebM.prototype.parseTrackVideo_ =
   function parseTrackVideo_(track, start, tag, bytes) {
     var videoStart = start + tag.headerSize;
     var videoTag = this.readBufferedTag_(videoStart, bytes);
@@ -253,7 +253,7 @@ WebM.prototype.parseTrackVideo_ =
     }
   };
 
-WebM.prototype.parseTrackAudio_ =
+Media.WebM.prototype.parseTrackAudio_ =
   function parseTrackAudio_(track, start, tag, bytes) {
     var audioStart = start + tag.headerSize;
     var audioTag = this.readBufferedTag_(audioStart, bytes);
@@ -278,7 +278,7 @@ WebM.prototype.parseTrackAudio_ =
     }
   };
 
-WebM.prototype.parseTrack_ = function parseTrack_(start, tag, bytes) {
+Media.WebM.prototype.parseTrack_ = function parseTrack_(start, tag, bytes) {
   var entryStart = start + tag.headerSize;
   var entryTag = this.readBufferedTag_(entryStart, bytes);
   var track = {
@@ -328,7 +328,7 @@ WebM.prototype.parseTrack_ = function parseTrack_(start, tag, bytes) {
  * @param cb
  * @private
  */
-WebM.prototype.parseTracks_ = function parseTracks_(cb) {
+Media.WebM.prototype.parseTracks_ = function parseTracks_(cb) {
   this.readTagBytes_(this.tracksTag_, function readBytesCb(bytes) {
     /** @type {Track} */
     var track;
@@ -355,7 +355,7 @@ WebM.prototype.parseTracks_ = function parseTracks_(cb) {
   }.bind(this));
 };
 
-WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) {
+Media.WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) {
   var cueTrackStart = start;
   var cueTrackTag = this.readBufferedTag_(cueTrackStart, bytes);
 
@@ -378,7 +378,7 @@ WebM.prototype.parseCueTrack_ = function parseCueTrack_(cue, start, tag, bytes) 
   }
 };
 
-WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
+Media.WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
   var cuePointStart = start + tag.headerSize;
   var cuePointTag = this.readBufferedTag_(cuePointStart, bytes);
   var previousCue;
@@ -422,7 +422,7 @@ WebM.prototype.parseCue_ = function parseCue_(start, tag, bytes) {
  * @param cb
  * @private
  */
-WebM.prototype.parseCues_ = function parseCues_(cb) {
+Media.WebM.prototype.parseCues_ = function parseCues_(cb) {
   this.readTagBytes_(this.cuesTag_, function readBytesCb(bytes) {
     var cueStart = this.cuesTag_.headerSize;
     var cueTag = this.readBufferedTag_(cueStart, bytes);
@@ -449,7 +449,7 @@ WebM.prototype.parseCues_ = function parseCues_(cb) {
   }.bind(this));
 };
 
-WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
+Media.WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
   var t;
 
   this.readNextTag_(function processSegmentTag(tag) {
@@ -463,7 +463,7 @@ WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
 
     if (!tag) {
       for (t = tagMap.length; t > 0; --t) {
-        if (!this[tagMap[t] + WebM.TAG_SUFFIX_]) {
+        if (!this[tagMap[t] + Media.WebM.TAG_SUFFIX_]) {
           // TODO: Create a special exception type for this
           cb(new Error('No ' + tagMap[t] + ' tag found'));
           return;
@@ -482,8 +482,8 @@ WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
       return;
     }
 
-    if (tagMap.hasOwnProperty(tag.str) && !this[tagMap[tag.str] + WebM.TAG_SUFFIX_]) {
-      this[tagMap[tag.str] + WebM.TAG_SUFFIX_] = tag;
+    if (tagMap.hasOwnProperty(tag.str) && !this[tagMap[tag.str] + Media.WebM.TAG_SUFFIX_]) {
+      this[tagMap[tag.str] + Media.WebM.TAG_SUFFIX_] = tag;
     }
 
     this.dataSource_.read(tag.dataSize);
@@ -491,11 +491,11 @@ WebM.prototype.parseEBMLSegmentInfo_ = function parseEBMLSegmentInfo_(cb) {
   }.bind(this));
 };
 
-WebM.prototype.parseEBML_ = function parseEBML_(cb) {
+Media.WebM.prototype.parseEBML_ = function parseEBML_(cb) {
   this.dataSource_.read(this.ebmlTag_.dataSize);
   this.readNextTag_(function parseEBMLReadNextTagCb(tag) {
     if (!tag) {
-      cb(new Error(WebM.ERR_EMPTY_WEBM));
+      cb(new Error(Media.WebM.ERR_EMPTY_WEBM));
       return;
     }
 
@@ -509,11 +509,11 @@ WebM.prototype.parseEBML_ = function parseEBML_(cb) {
   }.bind(this));
 };
 
-WebM.prototype.parse_ = function parse_(cb) {
+Media.WebM.prototype.parse_ = function parse_(cb) {
   this.dataSource_.seek(0);
   this.readNextTag_(function parseReadNextTagCb(tag) {
     if (!tag || tag.str !== '1a45dfa3') {
-      cb(new Error(WebM.ERR_INVALID_WEBM));
+      cb(new Error(Media.WebM.ERR_INVALID_WEBM));
       return;
     }
     this.ebmlTag_ = tag;
@@ -526,7 +526,7 @@ WebM.prototype.parse_ = function parse_(cb) {
  * @function
  * @param cb
  */
-WebM.prototype.getInitSegment = function getInitSegment(cb) {
+Media.WebM.prototype.getInitSegment = function getInitSegment(cb) {
   if (!this.ebmlTag_) {
     this.parse_(function parseCb(err) {
       if (err) {
@@ -547,7 +547,7 @@ WebM.prototype.getInitSegment = function getInitSegment(cb) {
  * @param timecode
  * @param cb
  */
-WebM.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
+Media.WebM.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
   var i;
   var l;
   /** @type {Cue} */
@@ -576,7 +576,7 @@ WebM.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
  *
  * @private
  */
-WebM.prototype.createMimeType_ = function createMimeType_() {
+Media.WebM.prototype.createMimeType_ = function createMimeType_() {
   var i;
   var l;
   var track;
@@ -591,13 +591,13 @@ WebM.prototype.createMimeType_ = function createMimeType_() {
       isVideo = true;
     }
 
-    if (track.codec === WebM.CODEC_VP8) {
+    if (track.codec === Media.WebM.CODEC_VP8) {
       codecs.push('vp8');
-    } else if (track.codec === WebM.CODEC_VP9) {
+    } else if (track.codec === Media.WebM.CODEC_VP9) {
       codecs.push('vp9');
-    } else if (track.codec === WebM.CODEC_VORBIS) {
+    } else if (track.codec === Media.WebM.CODEC_VORBIS) {
       codecs.push('vorbis');
-    } else if (track.codec === WebM.CODEC_OPUS) {
+    } else if (track.codec === Media.WebM.CODEC_OPUS) {
       codecs.push('opus');
     }
   }
@@ -627,7 +627,7 @@ WebM.prototype.createMimeType_ = function createMimeType_() {
  * @returns {*}
  * @private
  */
-WebM.prototype.readVariableInt_ = function readVariableInt_(buffer, start, maxSize) {
+Media.WebM.prototype.readVariableInt_ = function readVariableInt_(buffer, start, maxSize) {
   var length;
   var readBytes = 1;
   var lengthMask = 0x80;
@@ -666,7 +666,7 @@ WebM.prototype.readVariableInt_ = function readVariableInt_(buffer, start, maxSi
  * @returns {EBMLTag}
  * @private
  */
-WebM.prototype.readBufferedTag_ = function readBufferedTag_(start, buffer) {
+Media.WebM.prototype.readBufferedTag_ = function readBufferedTag_(start, buffer) {
   /** @type {EBMLTag} */
   var tag = {};
 
@@ -690,7 +690,7 @@ WebM.prototype.readBufferedTag_ = function readBufferedTag_(start, buffer) {
  * @param cb
  * @private
  */
-WebM.prototype.readNextTag_ = function readNextTag_(cb) {
+Media.WebM.prototype.readNextTag_ = function readNextTag_(cb) {
   this.dataSource_.fetchBytes(12, function fetchBytesCb(bytes) {
     var headerOffset = this.dataSource_.offset;
     var tag;
@@ -714,7 +714,7 @@ WebM.prototype.readNextTag_ = function readNextTag_(cb) {
  * @returns {*}
  * @private
  */
-WebM.prototype.readFloat4_ = function readFloat4_(buf, start) {
+Media.WebM.prototype.readFloat4_ = function readFloat4_(buf, start) {
   var i;
   var val = 0;
   var sign;
@@ -758,7 +758,7 @@ WebM.prototype.readFloat4_ = function readFloat4_(buf, start) {
  * @returns {*}
  * @private
  */
-WebM.prototype.readFloat8_ = function readFloat8_(buf, start) {
+Media.WebM.prototype.readFloat8_ = function readFloat8_(buf, start) {
   var i;
   var sign = (buf[start] >> 7) & 0x1;
   var exponent = (((buf[start] & 0x7f) << 4) |
@@ -803,7 +803,7 @@ WebM.prototype.readFloat8_ = function readFloat8_(buf, start) {
  * @returns {*}
  * @private
  */
-WebM.prototype.readFloat_ = function readFloat_(buf, start, size) {
+Media.WebM.prototype.readFloat_ = function readFloat_(buf, start, size) {
   if (size === 4) {
     return this.readFloat4_(buf, start);
   } else if (size === 8) {
@@ -820,7 +820,7 @@ WebM.prototype.readFloat_ = function readFloat_(buf, start, size) {
  * @returns {*}
  * @private
  */
-WebM.prototype.readUInt_ = function readUInt_(buf, start, size) {
+Media.WebM.prototype.readUInt_ = function readUInt_(buf, start, size) {
   var i;
   var val = 0;
 
@@ -844,7 +844,7 @@ WebM.prototype.readUInt_ = function readUInt_(buf, start, size) {
  * @returns {*}
  * @private
  */
-WebM.prototype.readString_ = function readString_(buf, start, size) {
+Media.WebM.prototype.readString_ = function readString_(buf, start, size) {
   var i;
   var val = '';
 
@@ -865,7 +865,7 @@ WebM.prototype.readString_ = function readString_(buf, start, size) {
  * @param cb
  * @private
  */
-WebM.prototype.readTagBytes_ = function readTagBytes_(tag, cb) {
+Media.WebM.prototype.readTagBytes_ = function readTagBytes_(tag, cb) {
   this.dataSource_.seek(tag.headerOffset);
   this.dataSource_.fetchBytes(tag.headerSize + tag.dataSize, function fetchBytesCb(bytes) {
     if (!bytes) {
@@ -878,4 +878,4 @@ WebM.prototype.readTagBytes_ = function readTagBytes_(tag, cb) {
   }.bind(this));
 };
 
-module.exports = WebM;
+module.exports = Media.WebM;

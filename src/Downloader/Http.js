@@ -23,7 +23,7 @@
 'use strict';
 
 // @exclude
-var Downloader = require('./Downloader');
+var Downloader = require('./');
 // @endexclude
 
 Downloader.Http = function Http() {

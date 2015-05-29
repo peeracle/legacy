@@ -31,11 +31,11 @@
 
 // @exclude
 /** @type {Utils} **/
-var Utils = require('./Utils');
+var Utils = require('./../Utils');
 /** @type {Media} **/
-var Media = require('./Media');
+var Media = require('./');
 /** @type {BinaryStream} **/
-var BinaryStream = require('./BinaryStream');
+var BinaryStream = require('./../BinaryStream');
 // @endexclude
 
 /**
@@ -43,7 +43,7 @@ var BinaryStream = require('./BinaryStream');
  * @param {Peeracle.DataSource} dataSource
  * @constructor
  */
-function MP4(dataSource) {
+Media.MP4 = function MP4(dataSource) {
   /**
    * @member {Peeracle.DataSource}
    * @private
@@ -144,17 +144,17 @@ function MP4(dataSource) {
    * @member {Array.<Cue>}
    */
   this.cues = [];
-}
+};
 
-MP4.prototype = Object.create(Media.prototype);
-MP4.prototype.constructor = MP4;
+Media.MP4.prototype = Object.create(Media.prototype);
+Media.MP4.prototype.constructor = Media.MP4;
 
 /**
  *
  * @param {DataSource} dataSource
  * @param cb
  */
-MP4.checkHeader = function checkHeader(dataSource, cb) {
+Media.MP4.checkHeader = function checkHeader(dataSource, cb) {
   dataSource.seek(0);
   dataSource.fetchBytes(8, function fetchBytesCb(bytes) {
     if (bytes && bytes.length === 8 &&
@@ -162,7 +162,7 @@ MP4.checkHeader = function checkHeader(dataSource, cb) {
       bytes[5] === 't'.charCodeAt(0) &&
       bytes[6] === 'y'.charCodeAt(0) &&
       bytes[7] === 'p'.charCodeAt(0)) {
-      cb(new MP4(dataSource));
+      cb(new Media.MP4(dataSource));
       return;
     }
     cb(null);
@@ -173,7 +173,7 @@ MP4.checkHeader = function checkHeader(dataSource, cb) {
  * @param cb
  * @private
  */
-MP4.prototype.readNextAtom_ = function readNextAtom_(cb) {
+Media.MP4.prototype.readNextAtom_ = function readNextAtom_(cb) {
   /**
    * @type {MP4Atom}
    */
@@ -205,7 +205,7 @@ MP4.prototype.readNextAtom_ = function readNextAtom_(cb) {
   }.bind(this));
 };
 
-MP4.prototype.parseFtypCompatibleBrands_ =
+Media.MP4.prototype.parseFtypCompatibleBrands_ =
   function parseFtypCompatibleBrands_(atom, cb) {
     var i = 16;
     this.dataSource_.fetchBytes(4, function getNextBrand(bytes) {
@@ -232,7 +232,7 @@ MP4.prototype.parseFtypCompatibleBrands_ =
     }.bind(this));
   };
 
-MP4.prototype.parseFtypVersion_ = function parseFtypVersion_(atom, cb) {
+Media.MP4.prototype.parseFtypVersion_ = function parseFtypVersion_(atom, cb) {
   this.dataSource_.fetchBytes(4, function getVersion(bytes) {
     if (!bytes) {
       cb(false);
@@ -249,7 +249,7 @@ MP4.prototype.parseFtypVersion_ = function parseFtypVersion_(atom, cb) {
   }.bind(this));
 };
 
-MP4.prototype.parseFtypMajorBrand_ = function parseFtypMajorBrand_(atom, cb) {
+Media.MP4.prototype.parseFtypMajorBrand_ = function parseFtypMajorBrand_(atom, cb) {
   this.dataSource_.seek(atom.offset + 8);
   this.dataSource_.fetchBytes(4, function getMajorBrand(bytes) {
     if (!bytes) {
@@ -265,12 +265,12 @@ MP4.prototype.parseFtypMajorBrand_ = function parseFtypMajorBrand_(atom, cb) {
   }.bind(this));
 };
 
-MP4.prototype.parseFtyp_ = function parseFtyp_(atom, cb) {
+Media.MP4.prototype.parseFtyp_ = function parseFtyp_(atom, cb) {
   this.ftypAtom_ = atom;
   this.parseFtypMajorBrand_(atom, cb);
 };
 
-MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
+Media.MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
   this.dataSource_.seek(atom.offset);
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     /*var bstream;
@@ -298,7 +298,7 @@ MP4.prototype.parseMvhd_ = function parseMvhd_(atom, cb) {
   }.bind(this));
 };
 
-MP4.prototype.parseTrak_ = function parseTrak_(atom, cb) {
+Media.MP4.prototype.parseTrak_ = function parseTrak_(atom, cb) {
   this.track_ = {
     id: -1,
     type: -1,
@@ -313,7 +313,7 @@ MP4.prototype.parseTrak_ = function parseTrak_(atom, cb) {
   this.digAtom_(atom, cb);
 };
 
-MP4.prototype.parseTkhd_ = function parseTkhd_(atom, cb) {
+Media.MP4.prototype.parseTkhd_ = function parseTkhd_(atom, cb) {
   this.dataSource_.seek(atom.offset);
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     var bstream;
@@ -339,7 +339,7 @@ MP4.prototype.parseTkhd_ = function parseTkhd_(atom, cb) {
   }.bind(this));
 };
 
-MP4.prototype.parseHdlr_ = function parseHdlr_(atom, cb) {
+Media.MP4.prototype.parseHdlr_ = function parseHdlr_(atom, cb) {
   this.dataSource_.seek(atom.offset);
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     var bstream;
@@ -371,18 +371,18 @@ MP4.prototype.parseHdlr_ = function parseHdlr_(atom, cb) {
   }.bind(this));
 };
 
-MP4.prototype.parseMoov_ = function parseMoov_(atom, cb) {
+Media.MP4.prototype.parseMoov_ = function parseMoov_(atom, cb) {
   this.moovAtom_ = atom;
   this.dataSource_.seek(atom.offset + 8);
   cb(true);
 };
 
-MP4.prototype.digAtom_ = function digAtom_(atom, cb) {
+Media.MP4.prototype.digAtom_ = function digAtom_(atom, cb) {
   this.dataSource_.seek(atom.offset + 8);
   cb(true);
 };
 
-MP4.prototype.parseVideoDecoderConfig_ =
+Media.MP4.prototype.parseVideoDecoderConfig_ =
   function parseVideoDecoderConfig_(bstream) {
     var size;
     var type;
@@ -413,7 +413,7 @@ MP4.prototype.parseVideoDecoderConfig_ =
     return true;
   };
 
-MP4.prototype.parseSampleVideo_ = function parseSampleVideo_(bstream) {
+Media.MP4.prototype.parseSampleVideo_ = function parseSampleVideo_(bstream) {
   bstream.seek(bstream.offset + 8);
   this.track_.width = bstream.readInt16();
   this.track_.height = bstream.readInt16();
@@ -428,7 +428,7 @@ MP4.prototype.parseSampleVideo_ = function parseSampleVideo_(bstream) {
   return this.parseVideoDecoderConfig_(bstream);
 };
 
-MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
+Media.MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
   var size;
   var type;
   var version;
@@ -502,7 +502,7 @@ MP4.prototype.parseAudioDescriptor_ = function parseAudioDescriptor_(bstream) {
   return true;
 };
 
-MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
+Media.MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
   this.track_.numChannels = bstream.readUInt16();
   bstream.seek(bstream.offset + 6);
   this.track_.samplingFrequency = bstream.readUInt16();
@@ -519,7 +519,7 @@ MP4.prototype.parseSampleSound_ = function parseSampleSound_(bstream) {
  * @returns {boolean}
  * @private
  */
-MP4.prototype.parseSampleDescription_ = function parseSampleDescription_(bstream) {
+Media.MP4.prototype.parseSampleDescription_ = function parseSampleDescription_(bstream) {
   /**
    * @type {string}
    */
@@ -542,7 +542,7 @@ MP4.prototype.parseSampleDescription_ = function parseSampleDescription_(bstream
   return false;
 };
 
-MP4.prototype.parseStsd_ = function parseStsd_(atom, cb) {
+Media.MP4.prototype.parseStsd_ = function parseStsd_(atom, cb) {
   this.dataSource_.seek(atom.offset);
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     /**
@@ -588,7 +588,7 @@ MP4.prototype.parseStsd_ = function parseStsd_(atom, cb) {
     cb(true);
   }.bind(this));
 };
-MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
+Media.MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
   this.dataSource_.seek(atom.offset);
   this.dataSource_.fetchBytes(atom.size, function fetchCb(bytes) {
     var bstream;
@@ -651,7 +651,7 @@ MP4.prototype.parseSidx_ = function parseStsd_(atom, cb) {
   }.bind(this));
 };
 
-MP4.prototype.createMimeType_ = function createMimeType_() {
+Media.MP4.prototype.createMimeType_ = function createMimeType_() {
   var i;
   var l;
   var track;
@@ -693,7 +693,7 @@ MP4.prototype.createMimeType_ = function createMimeType_() {
  * @param cb
  * @private
  */
-MP4.prototype.parse_ = function parse_(cb) {
+Media.MP4.prototype.parse_ = function parse_(cb) {
   this.readNextAtom_(function readNextAtomCb(atom) {
     var atomMap = {
       'ftyp': this.parseFtyp_,
@@ -736,7 +736,7 @@ MP4.prototype.parse_ = function parse_(cb) {
  * @function
  * @param cb
  */
-MP4.prototype.getInitSegment = function getInitSegment(cb) {
+Media.MP4.prototype.getInitSegment = function getInitSegment(cb) {
   if (!this.ftypAtom_ && !this.moovAtom_) {
     this.parse_(function parseCb(result) {
       if (!result) {
@@ -760,7 +760,7 @@ MP4.prototype.getInitSegment = function getInitSegment(cb) {
  * @param timecode
  * @param cb
  */
-MP4.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
+Media.MP4.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
   var i;
   var cue;
   var l = this.cues.length;
@@ -783,4 +783,4 @@ MP4.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
   });
 };
 
-module.exports = MP4;
+module.exports = Media.MP4;

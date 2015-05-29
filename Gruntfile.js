@@ -60,20 +60,25 @@ module.exports = function (grunt) {
         src: [
           'src/Listenable.js',
           'src/Peeracle.js',
-          'index.js',
           'src/BinaryStream.js',
-          'src/Crypto.js',
-          'src/Crypto.Crc32.js',
-          'src/DataSource.js',
-          'src/DataSource.File.js',
-          'src/DataSource.Http.js',
-          'src/Downloader.js',
-          'src/Downloader.Http.js',
-          'src/Downloader.P2P.js',
+
+          'src/Crypto/index.js',
+          'src/Crypto/Crc32.js',
+
+          'src/DataSource/index.js',
+          'src/DataSource/File.js',
+          'src/DataSource/Http.js',
+
+          'src/Downloader/index.js',
+          'src/Downloader/Http.js',
+          'src/Downloader/P2P.js',
+
           'src/Manager.js',
-          'src/Media.js',
-          'src/Media.MP4.js',
-          'src/Media.WebM.js',
+
+          'src/Media/index.js',
+          'src/Media/MP4.js',
+          'src/Media/WebM.js',
+
           'src/Metadata.js',
           'src/MetadataSerializer.js',
           'src/MetadataUnserializer.js',

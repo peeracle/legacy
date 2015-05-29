@@ -21,54 +21,23 @@
  */
 
 'use strict';
-/* eslint-disable */
 
-/* istanbul ignore next */
-/**
- * @interface
- * @memberof Peeracle
- * @param {*} handle
- * @constructor
- */
-function DataSource(handle) {
-  /**
-   * @readonly
-   * @member {number}
-   */
-  this.offset = 0;
+// @exclude
+var Downloader = require('./');
+// @endexclude
 
-  /**
-   * @readonly
-   * @member {number}
-   */
-  this.length = 0;
-}
-
-/* istanbul ignore next */
-/**
- * @function
- * @param length
- */
-DataSource.prototype.read = function read(length) {
+Downloader.P2P = function P2P(metadata, trackers) {
+  this.metadata_ = metadata;
+  this.trackers_ = trackers ? trackers : {};
 };
 
-/* istanbul ignore next */
-/**
- * @function
- * @param position
- */
-DataSource.prototype.seek = function seek(position) {
-};
+Downloader.P2P.prototype.retrieveInitSegment =
+  function retrieveInitSegment(cb) {
+    cb(this.metadata_.init);
+  };
 
-/* istanbul ignore next */
-/**
- * @function
- * @param length
- * @param cb
- */
-DataSource.prototype.fetchBytes = function fetchBytes(length, cb) {
-};
+Downloader.P2P.prototype.retrieveMediaSegment =
+  function retrieveMediaSegment(timecode, cb) {
+  };
 
-/* eslint-enable */
-
-module.exports = DataSource;
+module.exports = Downloader.P2P;

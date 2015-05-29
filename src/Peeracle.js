@@ -36,32 +36,17 @@ Peeracle.prototype.constructor = Peeracle;
 
 // @exclude
 Peeracle.BinaryStream = require('./BinaryStream');
-
 Peeracle.Crypto = require('./Crypto');
-Peeracle.Crypto.Crc32 = require('./Crypto.Crc32');
-
 Peeracle.DataSource = require('./DataSource');
-Peeracle.DataSource.File = require('./DataSource.File');
-Peeracle.DataSource.Http = require('./DataSource.Http');
-
 Peeracle.Downloader = require('./Downloader');
-
 Peeracle.Listenable = Listenable;
-
 Peeracle.Media = require('./Media');
-Peeracle.Media.WebM = require('./Media.WebM');
-Peeracle.Media.MP4 = require('./Media.MP4');
-
 Peeracle.Metadata = require('./Metadata');
 Peeracle.MetadataSerializer = require('./MetadataSerializer');
 Peeracle.MetadataUnserializer = require('./MetadataUnserializer');
 
 Peeracle.Storage = require('./Storage');
-Peeracle.Storage.NodeFile = require('./Storage.NodeFile');
-Peeracle.Storage.Memory = require('./Storage.Memory');
-
 Peeracle.Tracker = require('./Tracker');
-
 Peeracle.Utils = require('./Utils');
 // @endexclude
 

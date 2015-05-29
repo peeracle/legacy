@@ -42,6 +42,10 @@
  * @property {number} size
  */
 
+// @exclude
+var Peeracle = require('../Peeracle');
+// @endexclude
+
 /**
  * @interface
  * @memberof Peeracle
@@ -138,4 +142,11 @@ Media.prototype.getMediaSegment = function getMediaSegment(timecode, cb) {
 
 /* eslint-enable */
 
+// @exclude
 module.exports = Media;
+
+Media.MP4 = require('./MP4');
+Media.WebM = require('./WebM');
+// @endexclude
+
+Peeracle.Media = Media;

@@ -24,7 +24,7 @@
 
 // @exclude
 /** @type {DataSource} */
-var DataSource = require('./DataSource');
+var DataSource = require('./');
 var XMLHttpRequest = require('xhr2');
 // @endexclude
 
@@ -35,7 +35,7 @@ var XMLHttpRequest = require('xhr2');
  * @param {string} handle
  * @constructor
  */
-function Http(handle) {
+DataSource.Http = function Http(handle) {
   if (typeof handle !== 'string') {
     throw new TypeError('first argument must be a string');
   }
@@ -60,14 +60,14 @@ function Http(handle) {
   this.url_ = handle;
 }
 
-Http.prototype = Object.create(DataSource.prototype);
-Http.prototype.constructor = Http;
+DataSource.Http.prototype = Object.create(DataSource.prototype);
+DataSource.Http.prototype.constructor = DataSource.Http;
 
 /**
  * @function
  * @param length
  */
-Http.prototype.read = function read(length) {
+DataSource.Http.prototype.read = function read(length) {
   if (typeof length !== 'number') {
     throw new TypeError('Invalid argument, expected number');
   }
@@ -81,7 +81,7 @@ Http.prototype.read = function read(length) {
  * @function
  * @param position
  */
-Http.prototype.seek = function seek(position) {
+DataSource.Http.prototype.seek = function seek(position) {
   if (typeof position !== 'number') {
     throw new TypeError('Invalid argument, expected number');
   }
@@ -91,7 +91,7 @@ Http.prototype.seek = function seek(position) {
   this.offset = position;
 };
 
-Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
+DataSource.Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
   var r = new XMLHttpRequest();
 
   r.open('HEAD', this.url_);
@@ -116,7 +116,7 @@ Http.prototype.retrieveLength_ = function retrieveLength_(cb) {
   r.send();
 };
 
-Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
+DataSource.Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
   /** @type {XMLHttpRequest} */
   var r = new XMLHttpRequest();
   /** @type {Uint8Array} */
@@ -140,7 +140,7 @@ Http.prototype.doFetchBytes_ = function doFetchBytes_(length, cb) {
   r.send();
 };
 
-Http.prototype.doFetch_ = function doFetchBytes_(cb) {
+DataSource.Http.prototype.doFetch_ = function doFetchBytes_(cb) {
   /** @type {XMLHttpRequest} */
   var r = new XMLHttpRequest();
   /** @type {Uint8Array} */
@@ -166,7 +166,7 @@ Http.prototype.doFetch_ = function doFetchBytes_(cb) {
  * @param length
  * @param cb
  */
-Http.prototype.fetchBytes = function fetchBytes(length, cb) {
+DataSource.Http.prototype.fetchBytes = function fetchBytes(length, cb) {
   if (typeof length !== 'number') {
     throw new TypeError('first argument must be a number');
   }
@@ -193,7 +193,7 @@ Http.prototype.fetchBytes = function fetchBytes(length, cb) {
   this.doFetchBytes_(length, cb);
 };
 
-Http.prototype.fetch = function fetch(cb) {
+DataSource.Http.prototype.fetch = function fetch(cb) {
   if (typeof cb !== 'function') {
     throw new TypeError('second argument must be a callback');
   }
@@ -201,4 +201,4 @@ Http.prototype.fetch = function fetch(cb) {
   this.doFetch_(cb);
 };
 
-module.exports = Http;
+module.exports = DataSource.Http;

@@ -23,7 +23,7 @@
 'use strict';
 
 // @exclude
-var DataSource = require('./DataSource');
+var DataSource = require('./');
 var fs = require('fs');
 // @endexclude
 
@@ -34,7 +34,7 @@ var fs = require('fs');
  * @param {Blob|string} handle
  * @constructor
  */
-function File(handle) {
+DataSource.File = function File(handle) {
   // @exclude
   var stats;
   // @endexclude
@@ -62,16 +62,16 @@ function File(handle) {
   this.length = stats.size;
   this.handle_ = fs.openSync(this.handle_, 'r');
   // @endexclude
-}
+};
 
-File.prototype = Object.create(DataSource.prototype);
-File.prototype.constructor = File;
+DataSource.File.prototype = Object.create(DataSource.prototype);
+DataSource.File.prototype.constructor = DataSource.File;
 
 /**
  *
  * @param length
  */
-File.prototype.read = function read(length) {
+DataSource.File.prototype.read = function read(length) {
   this.offset += length;
 };
 
@@ -79,7 +79,7 @@ File.prototype.read = function read(length) {
  *
  * @param position
  */
-File.prototype.seek = function seek(position) {
+DataSource.File.prototype.seek = function seek(position) {
   this.offset = position;
 };
 
@@ -90,25 +90,26 @@ File.prototype.seek = function seek(position) {
  * @param cb
  * @private
  */
-File.prototype.nodeFetchBytes_ = function nodeFetchBytes_(length, cb) {
-  var bytes = new Buffer(length);
-  var count = 0;
+DataSource.File.prototype.nodeFetchBytes_ =
+  function nodeFetchBytes_(length, cb) {
+    var bytes = new Buffer(length);
+    var count = 0;
 
-  fs.read(this.handle_, bytes, count, length, this.offset,
-    function doRead(err, bytesRead) {
-      if (err) {
-        throw err;
-      }
+    fs.read(this.handle_, bytes, count, length, this.offset,
+      function doRead(err, bytesRead) {
+        if (err) {
+          throw err;
+        }
 
-      count += bytesRead;
-      if (count >= length) {
-        cb(new Uint8Array(bytes));
-        return;
+        count += bytesRead;
+        if (count >= length) {
+          cb(new Uint8Array(bytes));
+          return;
+        }
+        fs.read(this.handle_, bytes, count, length, this.offset + count, doRead);
       }
-      fs.read(this.handle_, bytes, count, length, this.offset + count, doRead);
-    }
-  );
-};
+    );
+  };
 // @endexclude
 
 /**
@@ -116,7 +117,7 @@ File.prototype.nodeFetchBytes_ = function nodeFetchBytes_(length, cb) {
  * @param length
  * @param cb
  */
-File.prototype.fetchBytes = function fetchBytes(length, cb) {
+DataSource.File.prototype.fetchBytes = function fetchBytes(length, cb) {
   var reader;
 
   if (this.length > -1 && this.offset + length > this.length) {
@@ -139,4 +140,4 @@ File.prototype.fetchBytes = function fetchBytes(length, cb) {
   // @endexclude
 };
 
-module.exports = File;
+module.exports = DataSource.File;

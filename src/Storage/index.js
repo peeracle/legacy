@@ -30,9 +30,9 @@ function Storage() {
 }
 
 // @exclude
-Storage.Memory = require('./Memory');
-
 module.exports = Storage;
+
+Storage.Memory = require('./Memory');
 // @endexclude
 
 Peeracle.Storage = Storage;

@@ -29,4 +29,7 @@ var Storage = require('./');
 Storage.Memory = function Memory() {
 };
 
+Storage.Memory.prototype = Object.create(Storage.prototype);
+Storage.Memory.prototype.constructor = Storage.Memory;
+
 module.exports = Storage.Memory;

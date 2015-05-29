@@ -23,21 +23,28 @@
 'use strict';
 
 // @exclude
-var Downloader = require('./Downloader');
+var Peeracle = require('../Peeracle');
 // @endexclude
 
-Downloader.P2P = function P2P(metadata, trackers) {
-  this.metadata_ = metadata;
-  this.trackers_ = trackers ? trackers : {};
-};
+function Downloader() {
 
-Downloader.P2P.prototype.retrieveInitSegment =
+}
+
+/* istanbul ignore next */
+Downloader.prototype.retrieveInitSegment =
   function retrieveInitSegment(cb) {
-    cb(this.metadata_.init);
   };
 
-Downloader.P2P.prototype.retrieveMediaSegment =
+/* istanbul ignore next */
+Downloader.prototype.retrieveMediaSegment =
   function retrieveMediaSegment(timecode, cb) {
   };
 
-module.exports = Downloader.P2P;
+// @exclude
+module.exports = Downloader;
+
+Downloader.Http = require('./Http');
+Downloader.P2P = require('./P2P');
+// @endexclude
+
+Peeracle.Downloader = Downloader;
