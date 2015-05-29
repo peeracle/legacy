@@ -23,11 +23,16 @@
 'use strict';
 
 // @exclude
-var Storage = require('./Storage');
+var Peeracle = require('../Peeracle');
 // @endexclude
 
-function Memory() {
+function Storage() {
 }
 
-Memory.prototype = Object.create(Storage.prototype);
-Memory.prototype.constructor = Memory;
+// @exclude
+Storage.Memory = require('./Memory');
+
+module.exports = Storage;
+// @endexclude
+
+Peeracle.Storage = Storage;

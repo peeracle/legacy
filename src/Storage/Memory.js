@@ -22,7 +22,11 @@
 
 'use strict';
 
-function Storage() {
-}
+// @exclude
+var Storage = require('./');
+// @endexclude
 
-module.exports = Storage;
+Storage.Memory = function Memory() {
+};
+
+module.exports = Storage.Memory;

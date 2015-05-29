@@ -79,10 +79,9 @@ module.exports = function (grunt) {
           'src/MetadataUnserializer.js',
           'src/Peer.js',
           'src/PeerConnection.js',
-          'src/Storage.js',
-          'src/Storage.File.js',
-          'src/Storage.Memory.js',
-          'src/Storage.PouchDB.js',
+          'src/Storage/index.js',
+          'src/Storage/Memory.js',
+
           'src/Stream.js',
 
           'src/Tracker/index.js',
