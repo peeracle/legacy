@@ -26,35 +26,6 @@
  * Peeracle
  * @namespace Peeracle
  */
-
-// @exclude
 var Peeracle = require('./src/Peeracle');
-
-Peeracle.BinaryStream = require('./src/BinaryStream');
-
-Peeracle.Crypto = require('./src/Crypto');
-Peeracle.Crypto.Crc32 = require('./src/Crypto.Crc32');
-
-Peeracle.DataSource = require('./src/DataSource');
-Peeracle.DataSource.File = require('./src/DataSource.File');
-Peeracle.DataSource.Http = require('./src/DataSource.Http');
-
-Peeracle.Listenable = require('./src/Listenable');
-
-Peeracle.Media = require('./src/Media');
-Peeracle.Media.WebM = require('./src/Media.WebM');
-Peeracle.Media.MP4 = require('./src/Media.MP4');
-
-Peeracle.Metadata = require('./src/Metadata');
-Peeracle.MetadataSerializer = require('./src/MetadataSerializer');
-Peeracle.MetadataUnserializer = require('./src/MetadataUnserializer');
-
-Peeracle.Storage = require('./src/Storage');
-Peeracle.Storage.NodeFile = require('./src/Storage.NodeFile');
-Peeracle.Storage.Memory = require('./src/Storage.Memory');
-
-Peeracle.Tracker = require('./src/Tracker');
-
-Peeracle.Utils = require('./src/Utils');
 
 module.exports = Peeracle;
