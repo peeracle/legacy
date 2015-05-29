@@ -23,8 +23,8 @@
 'use strict';
 
 // @exclude
-var BinaryStream = require('./BinaryStream');
-var Tracker = require('./Tracker');
+var BinaryStream = require('./../BinaryStream');
+var Tracker = require('./');
 // @endexclude
 
 /**
@@ -48,7 +48,8 @@ Tracker.Message = function Message(parm) {
 Tracker.Message.Type = {
   None: 0,
   Hello: 1,
-  Welcome: 2
+  Welcome: 2,
+  Announce: 3
 };
 
 Tracker.Message.prototype.createFromObject_ =
@@ -63,30 +64,56 @@ Tracker.Message.prototype.createFromObject_ =
     }
   };
 
-  return new Uint8Array([Message.Type.Hello]);
 Tracker.Message.prototype.serializeHello_ = function serializeHello_() {
+  return new Uint8Array([]);
 };
 
-  var bytes = new Uint8Array(5);
 Tracker.Message.prototype.serializeWelcome_ = function serializeWelcome_() {
+  var bytes = new Uint8Array(4);
   var bstream = new BinaryStream(bytes);
-
-  bstream.writeByte(Message.Type.Welcome);
   bstream.writeUInt32(this.props.id);
+
+  return bytes;
+};
+
+Tracker.Message.prototype.serializeAnnounce_ = function serializeAnnounce_() {
+  var g;
+  var bytes;
+  var length = 0;
+  var bstream;
+
+  length += this.props.hash.length;
+  length += this.props.got.length * 4;
+
+  bytes = new Uint8Array(length);
+  bstream = new BinaryStream(bytes);
+  bstream.writeUInt32(this.props.id);
+
+  for (g = 0; g < this.props.got.length; ++g) {
+    bstream.writeUInt32(this.props.got[g]);
+  }
+
   return bytes;
 };
 
 Tracker.Message.prototype.serialize = function serialize() {
+  var bytes;
+  var result;
   var typeMap = {};
 
   typeMap[Tracker.Message.Type.Hello] = this.serializeHello_;
   typeMap[Tracker.Message.Type.Welcome] = this.serializeWelcome_;
+  typeMap[Tracker.Message.Type.Announce] = this.serializeAnnounce_;
 
   if (!typeMap.hasOwnProperty(this.props.type)) {
     return null;
   }
 
-  return typeMap[this.props.type].bind(this)();
+  result = typeMap[this.props.type].bind(this)();
+  bytes = new Uint8Array(result.length + 1);
+  bytes.set(new Uint8Array([this.props.type]), 0);
+  bytes.set(result, 1);
+  return bytes;
 };
 
 Tracker.Message.prototype.unserializeHello_ = function unserializeHello_(bstream) {
@@ -96,12 +123,21 @@ Tracker.Message.prototype.unserializeWelcome_ = function unserializeWelcome_(bst
   this.props.id = bstream.readUInt32();
 };
 
+Tracker.Message.prototype.unserializeAnnounce_ = function unserializeAnnounce_(bstream) {
+  this.props.id = bstream.readUInt32();
+  this.props.got = [];
+  while (bstream.offset < bstream.length) {
+    this.props.got.push(bstream.readUInt32());
+  }
+};
+
 Tracker.Message.prototype.unserialize_ = function unserialize_(bytes) {
   var bstream = new BinaryStream(bytes);
   var typeMap = {};
 
   typeMap[Tracker.Message.Type.Hello] = this.unserializeHello_;
   typeMap[Tracker.Message.Type.Welcome] = this.unserializeWelcome_;
+  typeMap[Tracker.Message.Type.Announce] = this.unserializeAnnounce_;
 
   this.props.type = bstream.readByte();
   if (!typeMap.hasOwnProperty(this.props.type)) {

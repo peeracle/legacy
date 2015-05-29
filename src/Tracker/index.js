@@ -22,13 +22,19 @@
 
 'use strict';
 
+// @exclude
+var Peeracle = require('../Peeracle');
+// @endexclude
+
 function Tracker() {
 }
 
 // @exclude
-Tracker.Client = require('./Tracker.Client');
-Tracker.Message = require('./Tracker.Message');
-Tracker.Server = require('./Tracker.Server');
-// @endexclude
+Tracker.Client = require('./Client');
+Tracker.Message = require('./Message');
+Tracker.Server = require('./Server');
 
 module.exports = Tracker;
+// @endexclude
+
+Peeracle.Tracker = Tracker;

@@ -24,7 +24,7 @@
 
 var http = require('http');
 var WebSocketServer = require('websocket').server;
-var Tracker = require('./Tracker');
+var Tracker = require('./');
 
 /**
  * @class

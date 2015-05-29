@@ -23,9 +23,9 @@
 'use strict';
 
 // @exclude
-var Listenable = require('./Listenable');
+var Listenable = require('./../Listenable');
 var WebSocket = require('websocket').w3cwebsocket;
-var Tracker = require('./Tracker');
+var Tracker = require('./');
 // @endexclude
 
 /**
@@ -78,6 +78,10 @@ Tracker.Client.prototype.onClose_ = function onClose_(e) {
   var code = e.code;
   var reason = e.reason;
   console.log('[Peeracle.Tracker.Client] onClose', code, reason);
+};
+
+Tracker.Client.prototype.announce = function announce(hash, got) {
+
 };
 
 Tracker.Client.prototype.connect = function connect(url) {

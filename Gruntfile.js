@@ -84,9 +84,11 @@ module.exports = function (grunt) {
           'src/Storage.Memory.js',
           'src/Storage.PouchDB.js',
           'src/Stream.js',
-          'src/Tracker.js',
-          'src/Tracker.Client.js',
-          'src/Tracker.Message.js',
+
+          'src/Tracker/index.js',
+          'src/Tracker/Client.js',
+          'src/Tracker/Message.js',
+
           'src/Utils.js'
         ],
         dest: 'dist/<%= pkg.name %>-<%= pkg.version %>.js'
