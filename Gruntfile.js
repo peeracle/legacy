@@ -46,7 +46,7 @@ module.exports = function (grunt) {
         'var RTCIceCandidate = window.mozRTCIceCandidate || window.webkitRTCIceCandidate || \
         window.RTCIceCandidate;\n',
 
-        footer: '})();\n',
+        footer: '\nwindow[\'Peeracle\'] = Peeracle;\n})();\n',
 
         process: function (src, filepath) {
           var moduleName = filepath.slice(4, filepath.length - 3);
