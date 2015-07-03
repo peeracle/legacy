@@ -30,9 +30,18 @@ var Peeracle = {
 // @endexclude
 
 /**
+ * @typedef {Object} TrackerPeer
+ * @property {string} id
+ * @property {Array.<Number>} got
+ */
+
+/**
  * @class
  * @memberof {Peeracle.Tracker}
+ * @param {?Uint8Array} parm
  * @constructor
+ *
+ * @property {Object.<string, *>} props
  */
 Peeracle.Tracker.Message = function Message(parm) {
   this.props = {};
@@ -45,15 +54,25 @@ Peeracle.Tracker.Message = function Message(parm) {
 };
 
 /**
+ * Enum for tracker message types.
+ * @readonly
  * @enum {number}
  */
 Peeracle.Tracker.Message.Type = {
   None: 0,
   Hello: 1,
   Welcome: 2,
-  Announce: 3
+  Announce: 3,
+  Enter: 4,
+  Leave: 5,
+  SDP: 6
 };
 
+/**
+ * Create a new tracker message from an object.
+ * @param {Object.<string, *>} obj
+ * @private
+ */
 Peeracle.Tracker.Message.prototype.createFromObject_ =
   function createFromObject_(obj) {
     /** @type {string} */
@@ -67,6 +86,11 @@ Peeracle.Tracker.Message.prototype.createFromObject_ =
     }
   };
 
+/**
+ * Serialize a Hello message.
+ * @returns {Uint8Array}
+ * @private
+ */
 Peeracle.Tracker.Message.prototype.serializeHello_ =
   function serializeHello_() {
     return new Uint8Array([]);
@@ -80,15 +104,20 @@ Peeracle.Tracker.Message.prototype.serializeHello_ =
 Peeracle.Tracker.Message.prototype.serializeWelcome_ =
   function serializeWelcome_() {
     /** @type {Uint8Array} */
-    var bytes = new Uint8Array(4);
+    var bytes = new Uint8Array(this.props.id.length + 1);
 
     /** @type {Peeracle.BinaryStream} */
     var bstream = new Peeracle.BinaryStream(bytes);
-    bstream.writeUInt32(this.props.id);
+    bstream.writeString(this.props.id);
 
     return bytes;
   };
 
+/**
+ * Serialize a Announce message.
+ * @returns {Uint8Array}
+ * @private
+ */
 Peeracle.Tracker.Message.prototype.serializeAnnounce_ =
   function serializeAnnounce_() {
     var g;
@@ -96,7 +125,7 @@ Peeracle.Tracker.Message.prototype.serializeAnnounce_ =
     var length = 0;
     var bstream;
 
-    length += this.props.hash.length;
+    length += this.props.hash.length + 1;
     length += this.props.got.length * 4;
 
     bytes = new Uint8Array(length);
@@ -110,6 +139,97 @@ Peeracle.Tracker.Message.prototype.serializeAnnounce_ =
     return bytes;
   };
 
+/**
+ * Serialize a Enter message.
+ * @returns {Uint8Array}
+ * @private
+ */
+Peeracle.Tracker.Message.prototype.serializeEnter_ =
+  function serializeEnter_() {
+    var length = 0;
+    var bytes;
+    var bstream;
+    var g;
+    var p;
+
+    /** @type {TrackerPeer} */
+    var peer;
+
+    length += this.props.hash.length + 1;
+    length += 1;
+    for (p = 0; p < this.props.peers.length; ++p) {
+      peer = this.props.peers[p];
+      length += peer.id.length + 1;
+      length += 1;
+      length += peer.got.length * 4;
+    }
+
+    bytes = new Uint8Array(length);
+    bstream = new Peeracle.BinaryStream(bytes);
+    bstream.writeString(this.props.hash);
+    bstream.writeByte(this.props.peers.length);
+    for (p = 0; p < this.props.peers.length; ++p) {
+      peer = this.props.peers[p];
+      bstream.writeString(peer.id);
+      bstream.writeByte(peer.got.length);
+      for (g = 0; g < peer.got.length; ++g) {
+        bstream.writeUInt32(peer.got[g]);
+      }
+    }
+
+    return bytes;
+  };
+
+/**
+ * Serialize a Leave message.
+ * @returns {Uint8Array}
+ * @private
+ */
+Peeracle.Tracker.Message.prototype.serializeLeave_ =
+  function serializeLeave_() {
+    var length = 0;
+    var bytes;
+    var bstream;
+
+    length += this.props.id.length + 1;
+    length += this.props.hash.length + 1;
+
+    bytes = new Uint8Array(length);
+    bstream = new Peeracle.BinaryStream(bytes);
+    bstream.writeString(this.props.id);
+    bstream.writeString(this.props.hash);
+
+    return bytes;
+  };
+
+/**
+ * Serialize a SDP message.
+ * @returns {Uint8Array}
+ * @private
+ */
+Peeracle.Tracker.Message.prototype.serializeSDP_ =
+  function serializeSDP_() {
+    var length = 0;
+    var bytes;
+    var bstream;
+
+    length += this.props.hash.length + 1;
+    length += this.props.peer.length + 1;
+    length += this.props.sdp.length + 1;
+
+    bytes = new Uint8Array(length);
+    bstream = new Peeracle.BinaryStream(bytes);
+    bstream.writeString(this.props.hash);
+    bstream.writeString(this.props.peer);
+    bstream.writeString(this.props.sdp);
+
+    return bytes;
+  };
+
+/**
+ * Serialize a message.
+ * @returns {Uint8Array}
+ */
 Peeracle.Tracker.Message.prototype.serialize =
   function serialize() {
     var bytes;
@@ -119,6 +239,9 @@ Peeracle.Tracker.Message.prototype.serialize =
     typeMap[Peeracle.Tracker.Message.Type.Hello] = this.serializeHello_;
     typeMap[Peeracle.Tracker.Message.Type.Welcome] = this.serializeWelcome_;
     typeMap[Peeracle.Tracker.Message.Type.Announce] = this.serializeAnnounce_;
+    typeMap[Peeracle.Tracker.Message.Type.Enter] = this.serializeEnter_;
+    typeMap[Peeracle.Tracker.Message.Type.Leave] = this.serializeLeave_;
+    typeMap[Peeracle.Tracker.Message.Type.SDP] = this.serializeSDP_;
 
     if (!typeMap.hasOwnProperty(this.props.type)) {
       return null;
@@ -142,11 +265,48 @@ Peeracle.Tracker.Message.prototype.unserializeWelcome_ =
 
 Peeracle.Tracker.Message.prototype.unserializeAnnounce_ =
   function unserializeAnnounce_(bstream) {
-    this.props.id = bstream.readUInt32();
+    this.props.hash = bstream.readString();
     this.props.got = [];
+    console.log('unserialized announce:', bstream.offset, bstream.length);
     while (bstream.offset < bstream.length) {
       this.props.got.push(bstream.readUInt32());
     }
+  };
+
+Peeracle.Tracker.Message.prototype.unserializeEnter_ =
+  function unserializeEnter_(bstream) {
+    var gotLength;
+    var g;
+    var p;
+    var peer;
+    var peerCount;
+
+    this.props.hash = bstream.readString();
+    this.props.peers = [];
+    peerCount = bstream.readByte();
+    for (p = 0; p < peerCount; ++p) {
+      peer = {};
+      peer.id = bstream.readString();
+      peer.got = [];
+      gotLength = bstream.readByte();
+      for (g = 0; g < gotLength; ++g) {
+        peer.got.push(bstream.readUInt32());
+      }
+      this.props.peers.push(peer);
+    }
+  };
+
+Peeracle.Tracker.Message.prototype.unserializeLeave_ =
+  function unserializeLeave_(bstream) {
+    this.props.id = bstream.readString();
+    this.props.hash = bstream.readString();
+  };
+
+Peeracle.Tracker.Message.prototype.unserializeSDP_ =
+  function unserializeSDP_(bstream) {
+    this.props.hash = bstream.readString();
+    this.props.peer = bstream.readString();
+    this.props.sdp = bstream.readString();
   };
 
 Peeracle.Tracker.Message.prototype.unserialize_ =
@@ -157,6 +317,9 @@ Peeracle.Tracker.Message.prototype.unserialize_ =
     typeMap[Peeracle.Tracker.Message.Type.Hello] = this.unserializeHello_;
     typeMap[Peeracle.Tracker.Message.Type.Welcome] = this.unserializeWelcome_;
     typeMap[Peeracle.Tracker.Message.Type.Announce] = this.unserializeAnnounce_;
+    typeMap[Peeracle.Tracker.Message.Type.Enter] = this.unserializeEnter_;
+    typeMap[Peeracle.Tracker.Message.Type.Leave] = this.unserializeLeave_;
+    typeMap[Peeracle.Tracker.Message.Type.SDP] = this.unserializeSDP_;
 
     this.props.type = bstream.readByte();
     if (!typeMap.hasOwnProperty(this.props.type)) {
