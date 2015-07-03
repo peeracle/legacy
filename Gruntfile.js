@@ -64,6 +64,7 @@ module.exports = function (grunt) {
 
           'src/Hash/index.js',
           'src/Hash/Crc32.js',
+          'src/Hash/Murmur3.js',
 
           'src/DataSource/index.js',
           'src/DataSource/File.js',

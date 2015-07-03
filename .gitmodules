@@ -1,0 +1,3 @@
+[submodule "third_party/murmurHash3.js"]
+	path = third_party/murmurHash3.js
+	url = git@github.com:peeracle/murmurHash3.js.git

@@ -37,6 +37,8 @@ Peeracle.prototype.constructor = Peeracle;
 // @exclude
 Peeracle.BinaryStream = require('./BinaryStream');
 Peeracle.Hash = require('./Hash');
+Peeracle.Hash.Murmur3 = require('./Hash/Murmur3');
+
 Peeracle.DataSource = require('./DataSource');
 Peeracle.Downloader = require('./Downloader');
 Peeracle.Listenable = Listenable;
