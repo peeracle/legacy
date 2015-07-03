@@ -22,15 +22,19 @@
 
 'use strict';
 
+// @exclude
+var Peeracle = {};
+// @endexclude
+
 /**
  * @class
  * @memberof Peeracle
  * @param {!Uint8Array} buffer
  * @constructor
  */
-function BinaryStream(buffer) {
+Peeracle.BinaryStream = function BinaryStream(buffer) {
   if (!buffer || !(buffer instanceof Uint8Array)) {
-    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+    throw new TypeError(Peeracle.BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
   /**
@@ -48,19 +52,19 @@ function BinaryStream(buffer) {
    * @member {number}
    * @private
    */
-  this.length_ = buffer.length;
+  this.length = buffer.length;
 
   /**
    * @member {number}
    */
   this.offset = 0;
-}
+};
 
-BinaryStream.ERR_INVALID_ARGUMENT = 'Invalid argument';
-BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
-BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
+Peeracle.BinaryStream.ERR_INVALID_ARGUMENT = 'Invalid argument';
+Peeracle.BinaryStream.ERR_INDEX_OUT_OF_BOUNDS = 'Index out of bounds';
+Peeracle.BinaryStream.ERR_VALUE_OUT_OF_BOUNDS = 'Value out of bounds';
 
-BinaryStream.prototype.read = function read(type) {
+Peeracle.BinaryStream.prototype.read = function read(type) {
   var result;
   var typeMap = {
     'Int8': [this.dataview_.getInt8, 1],
@@ -82,7 +86,7 @@ BinaryStream.prototype.read = function read(type) {
   return result;
 };
 
-BinaryStream.prototype.write = function write(type, value) {
+Peeracle.BinaryStream.prototype.write = function write(type, value) {
   var typeMap = {
     'Int8': [this.dataview_.setInt8, 1],
     'Int16': [this.dataview_.setInt16, 2],
@@ -95,39 +99,39 @@ BinaryStream.prototype.write = function write(type, value) {
   };
 
   if (typeof value !== 'number') {
-    throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+    throw new Error(Peeracle.BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
   if (!typeMap.hasOwnProperty(type)) {
     return;
   }
 
-  if (this.offset + typeMap[type][1] > this.length_) {
-    throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
+  if (this.offset + typeMap[type][1] > this.length) {
+    throw new RangeError(Peeracle.BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
 
   typeMap[type][0].bind(this.dataview_)(this.offset, value);
   this.offset += typeMap[type][1];
 };
 
-BinaryStream.prototype.readByte = function readByte() {
+Peeracle.BinaryStream.prototype.readByte = function readByte() {
   return this.read('UInt8');
 };
 
-BinaryStream.prototype.writeByte = function writeByte(value) {
+Peeracle.BinaryStream.prototype.writeByte = function writeByte(value) {
   return this.write('UInt8', value);
 };
 
-BinaryStream.prototype.readBytes = function readBytes(length) {
+Peeracle.BinaryStream.prototype.readBytes = function readBytes(length) {
   var bytes;
 
   if (typeof length !== 'number' || length < 1) {
-    throw new Error(BinaryStream.ERR_INVALID_ARGUMENT);
+    throw new Error(Peeracle.BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
-  if (length > this.length_ ||
-    this.offset + length > this.length_) {
-    throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
+  if (length > this.length ||
+    this.offset + length > this.length) {
+    throw new RangeError(Peeracle.BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
 
   bytes = this.bytes.subarray(this.offset, this.offset + length);
@@ -135,60 +139,60 @@ BinaryStream.prototype.readBytes = function readBytes(length) {
   return bytes;
 };
 
-BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
+Peeracle.BinaryStream.prototype.writeBytes = function writeBytes(bytes) {
   if (!(bytes instanceof Uint8Array)) {
-    throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
+    throw new TypeError(Peeracle.BinaryStream.ERR_INVALID_ARGUMENT);
   }
 
   this.bytes.set(bytes, this.offset);
   this.offset += bytes.length;
 };
 
-BinaryStream.prototype.readFloat4 = function readFloat4() {
+Peeracle.BinaryStream.prototype.readFloat4 = function readFloat4() {
   return this.read('Float32');
 };
 
-BinaryStream.prototype.writeFloat4 = function writeFloat4(value) {
+Peeracle.BinaryStream.prototype.writeFloat4 = function writeFloat4(value) {
   return this.write('Float32', value);
 };
 
-BinaryStream.prototype.readFloat8 = function readFloat8() {
+Peeracle.BinaryStream.prototype.readFloat8 = function readFloat8() {
   return this.read('Float64');
 };
 
-BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
+Peeracle.BinaryStream.prototype.writeFloat8 = function writeFloat8(value) {
   return this.write('Float64', value);
 };
 
-BinaryStream.prototype.readInt16 = function readInt16() {
+Peeracle.BinaryStream.prototype.readInt16 = function readInt16() {
   return this.read('Int16');
 };
 
-BinaryStream.prototype.writeInt16 = function writeInt16(value) {
+Peeracle.BinaryStream.prototype.writeInt16 = function writeInt16(value) {
   return this.write('Int16', value);
 };
 
-BinaryStream.prototype.readInt32 = function readInt32() {
+Peeracle.BinaryStream.prototype.readInt32 = function readInt32() {
   return this.read('Int32');
 };
 
-BinaryStream.prototype.writeInt32 = function writeInt32(value) {
+Peeracle.BinaryStream.prototype.writeInt32 = function writeInt32(value) {
   return this.write('Int32', value);
 };
 
-BinaryStream.prototype.readUInt16 = function readUInt16() {
+Peeracle.BinaryStream.prototype.readUInt16 = function readUInt16() {
   return this.read('UInt16');
 };
 
-BinaryStream.prototype.writeUInt16 = function writeUInt16(value) {
+Peeracle.BinaryStream.prototype.writeUInt16 = function writeUInt16(value) {
   return this.write('UInt16', value);
 };
 
-BinaryStream.prototype.readUInt32 = function readUInt32() {
+Peeracle.BinaryStream.prototype.readUInt32 = function readUInt32() {
   return this.read('UInt32');
 };
 
-BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
+Peeracle.BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
   return this.write('UInt32', value);
 };
 
@@ -196,7 +200,7 @@ BinaryStream.prototype.writeUInt32 = function writeUInt32(value) {
  * @param length
  * @returns {string}
  */
-BinaryStream.prototype.readString = function readString(length) {
+Peeracle.BinaryStream.prototype.readString = function readString(length) {
   var str = '';
   var bytes;
   var i;
@@ -220,7 +224,7 @@ BinaryStream.prototype.readString = function readString(length) {
 /**
  * @param {string} value
  */
-BinaryStream.prototype.writeString = function writeString(value) {
+Peeracle.BinaryStream.prototype.writeString = function writeString(value) {
   var i;
   var length;
   var bytes;
@@ -245,14 +249,16 @@ BinaryStream.prototype.writeString = function writeString(value) {
  *
  * @param value
  */
-BinaryStream.prototype.seek = function seek(value) {
+Peeracle.BinaryStream.prototype.seek = function seek(value) {
   if (typeof value !== 'number') {
     throw new TypeError(BinaryStream.ERR_INVALID_ARGUMENT);
   }
-  if (value < 0 || value >= this.length_) {
+  if (value < 0 || value >= this.length) {
     throw new RangeError(BinaryStream.ERR_INDEX_OUT_OF_BOUNDS);
   }
   this.offset = value;
 };
 
-module.exports = BinaryStream;
+// @exclude
+module.exports = Peeracle.BinaryStream;
+// @endexclude

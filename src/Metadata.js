@@ -62,7 +62,7 @@ Peeracle.Hash = require('./Hash');
  * @constructor
  * @memberof Peeracle
  */
-function Metadata() {
+Peeracle.Metadata = function Metadata() {
   /**
    * @member {?string}
    * @readonly
@@ -119,7 +119,7 @@ function Metadata() {
  * @public
  * @return {number}
  */
-Metadata.prototype.getId = function getId() {
+Peeracle.Metadata.prototype.getId = function getId() {
   var stream;
   var streamIndex;
   var streamCount = this.streams.length;
@@ -162,33 +162,34 @@ Metadata.prototype.getId = function getId() {
  * @param {Peeracle.Media} media
  * @returns {number}
  */
-Metadata.prototype.calculateChunkSize = function calculateChunkSize(media) {
-  var i;
-  var l;
-  var cue;
-  var cues = media.cues;
-  var sum = 0;
-  var last = 0;
-  var total;
+Peeracle.Metadata.prototype.calculateChunkSize =
+  function calculateChunkSize(media) {
+    var i;
+    var l;
+    var cue;
+    var cues = media.cues;
+    var sum = 0;
+    var last = 0;
+    var total;
 
-  for (i = 0, l = cues.length; i < l; ++i) {
-    cue = cues[i];
-    sum += cue.offset - last;
-    last = cue.offset;
-  }
-
-  total = (sum / l);
-  for (i = this.minChunkSize; i < this.maxChunkSize; i *= 2) {
-    if (total > i) {
-      continue;
+    for (i = 0, l = cues.length; i < l; ++i) {
+      cue = cues[i];
+      sum += cue.offset - last;
+      last = cue.offset;
     }
-    break;
-  }
 
-  return i;
-};
+    total = (sum / l);
+    for (i = this.minChunkSize; i < this.maxChunkSize; i *= 2) {
+      if (total > i) {
+        continue;
+      }
+      break;
+    }
 
-Metadata.prototype.addStreamNext_ =
+    return i;
+  };
+
+Peeracle.Metadata.prototype.addStreamNext_ =
   function addStreamNext_(stream, media, cb) {
     var i;
     var numCues = media.cues.length;
@@ -198,6 +199,7 @@ Metadata.prototype.addStreamNext_ =
     media.getMediaSegment(timecode, function getMediaSegmentCb(bytes) {
       var clusterLength;
       var chunkLength;
+      /** @type {Segment} */
       var cluster;
       var chunk;
 
@@ -244,47 +246,196 @@ Metadata.prototype.addStreamNext_ =
     }.bind(this));
   };
 
-Metadata.prototype.addStreamFirst_ = function addStream(media, bytes, cb) {
-  /** @type {Stream} */
-  var stream = {
-    type: 1,
-    mimeType: media.mimeType,
-    bandwidth: 0,
-    width: media.width,
-    height: media.height,
-    numChannels: media.numChannels,
-    samplingFrequency: media.samplingFrequency,
-    chunksize: this.calculateChunkSize(media),
-    init: bytes,
-    segments: []
+Peeracle.Metadata.prototype.addStreamFirst_ =
+  function addStreamFirst_(media, bytes, cb) {
+    /** @type {Stream} */
+    var stream = {
+      type: 1,
+      mimeType: media.mimeType,
+      bandwidth: 0,
+      width: media.width,
+      height: media.height,
+      numChannels: media.numChannels,
+      samplingFrequency: media.samplingFrequency,
+      chunksize: this.calculateChunkSize(media),
+      init: bytes,
+      segments: []
+    };
+
+    if (this.timecodeScale === -1) {
+      this.timecodeScale = media.timecodeScale;
+    }
+
+    if (this.duration === -1) {
+      this.duration = media.duration;
+    }
+
+    if (!media.cues.length) {
+      this.streams.push(stream);
+      cb();
+      return;
+    }
+
+    this.addStreamNext_(stream, media, cb);
   };
-
-  if (this.timecodeScale === -1) {
-    this.timecodeScale = media.timecodeScale;
-  }
-
-  if (this.duration === -1) {
-    this.duration = media.duration;
-  }
-
-  if (!media.cues.length) {
-    this.streams.push(stream);
-    cb();
-    return;
-  }
-
-  this.addStreamNext_(stream, media, cb);
-};
 
 /**
  *
  * @param {Media} media
  * @param cb
  */
-Metadata.prototype.addStream = function addStream(media, cb) {
+Peeracle.Metadata.prototype.addStream = function addStream(media, cb) {
   media.getInitSegment(function getInitSegmentCb(bytes) {
     this.addStreamFirst_(media, bytes, cb);
   }.bind(this));
 };
 
-module.exports = Metadata;
+Peeracle.Metadata.prototype.checkStreamNext_ =
+  function checkStreamNext_(stream, media, cb) {
+    var si = 0;
+    var numCues = media.cues.length;
+    var currentCue = 0;
+
+    var got = [];
+    var currentGot = 0;
+    var gotIndex = 0;
+
+    var timecode = media.cues[currentCue].timecode;
+    media.getMediaSegment(timecode, function checkMediaSegmentCb(bytes) {
+      var cluster;
+      var checksum;
+      var offset;
+      var index = 0;
+      var chunk;
+      var valid = true;
+      var chunkLength = stream.chunksize;
+
+      if (!bytes) {
+        cb(got);
+        return;
+      }
+
+      if (!this.hash_) {
+        this.hash_ = Peeracle.Hash.createInstance(this.hashId);
+      }
+
+      cluster = stream.segments[si++];
+
+      for (offset = 0; offset < cluster.length; offset += chunkLength) {
+        chunk = bytes.subarray(offset, offset + chunkLength);
+        checksum = this.hash_.checksum(chunk);
+
+
+        if (checksum !== cluster.chunks[index++]) {
+          valid = false;
+          break;
+        }
+
+        if (cluster.length - offset < chunkLength) {
+          chunkLength = cluster.length - offset;
+        }
+      }
+
+      if (valid) {
+        currentGot += (1 << gotIndex);
+      }
+
+      if (++gotIndex === 32) {
+        gotIndex = 0;
+        got.push(currentGot);
+        currentGot = 0;
+      }
+
+      if (++currentCue >= numCues) {
+        if (gotIndex < 32) {
+          got.push(currentGot);
+        }
+        cb(got);
+        return;
+      }
+
+      timecode = media.cues[currentCue].timecode;
+      media.getMediaSegment(timecode, checkMediaSegmentCb.bind(this));
+    }.bind(this));
+  };
+
+Peeracle.Metadata.prototype.checkStreamFirst_ =
+  function checkStreamFirst_(media, bytes, cb) {
+    var si;
+    var sl = this.streams.length;
+    var stream;
+
+    /** @type {Stream} */
+    var currentStream = {
+      type: 1,
+      mimeType: media.mimeType,
+      bandwidth: 0,
+      width: media.width,
+      height: media.height,
+      numChannels: media.numChannels,
+      samplingFrequency: media.samplingFrequency,
+      chunksize: this.calculateChunkSize(media),
+      init: bytes,
+      segments: []
+    };
+
+    if (this.timecodeScale !== -1 &&
+      this.timecodeScale !== media.timecodeScale) {
+      console.log('skipping C', this.timecodeScale, media.timecodeScale, media);
+      cb([0]);
+      return;
+    }
+
+    if (this.duration !== -1 &&
+      this.duration !== media.duration) {
+      console.log('skipping B', this.duration, media);
+      cb([0]);
+      return;
+    }
+
+    if (!media.cues.length) {
+      console.log('skipping A');
+      cb([0]);
+      return;
+    }
+
+    for (si = 0; si < sl; ++si) {
+      stream = this.streams[si];
+
+      if (stream.type !== currentStream.type ||
+        stream.mimeType !== currentStream.mimeType ||
+        stream.bandwidth !== currentStream.bandwidth ||
+        stream.width !== currentStream.width ||
+        stream.height !== currentStream.height ||
+        stream.numChannels !== currentStream.numChannels ||
+        stream.samplingFrequency !== currentStream.samplingFrequency) {
+        console.log('skipping');
+        continue;
+      }
+
+      this.checkStreamNext_(stream, media, cb);
+      return;
+    }
+
+    cb([0]);
+  };
+
+/**
+ *
+ * @param {Peeracle.Media} media
+ * @param cb
+ */
+Peeracle.Metadata.prototype.checkStream = function checkStream(media, cb) {
+  if (!media) {
+    cb([0]);
+    return;
+  }
+
+  media.getInitSegment(function getInitSegmentCb(bytes) {
+    this.checkStreamFirst_(media, bytes, cb);
+  }.bind(this));
+};
+
+// @exclude
+module.exports = Peeracle.Metadata;
+// @endexclude

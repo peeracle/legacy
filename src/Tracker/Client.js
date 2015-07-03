@@ -25,7 +25,9 @@
 // @exclude
 var Listenable = require('./../Listenable');
 var WebSocket = require('websocket').w3cwebsocket;
-var Tracker = require('./');
+var Peeracle = {
+  Tracker: require('./')
+};
 // @endexclude
 
 /**
@@ -34,22 +36,22 @@ var Tracker = require('./');
  * @augments Listenable
  * @constructor
  */
-Tracker.Client = function Client() {
+Peeracle.Tracker.Client = function Client() {
   this.url_ = null;
   this.ws_ = null;
 };
 
-Tracker.Client.prototype = Object.create(Listenable.prototype);
-Tracker.Client.prototype.constructor = Tracker.Client;
+Peeracle.Tracker.Client.prototype = Object.create(Listenable.prototype);
+Peeracle.Tracker.Client.prototype.constructor = Peeracle.Tracker.Client;
 
-Tracker.Client.prototype.onOpen_ = function onOpen_() {
+Peeracle.Tracker.Client.prototype.onOpen_ = function onOpen_() {
   var msg = new Tracker.Message({type: Tracker.Message.Type.Hello});
   var bytes = msg.serialize();
   console.log('[Peeracle.Tracker.Client] onOpen', bytes);
   this.ws_.send(bytes);
 };
 
-Tracker.Client.prototype.onMessage_ = function onMessage_(e) {
+Peeracle.Tracker.Client.prototype.onMessage_ = function onMessage_(e) {
   var data = new Uint8Array(e.data);
   var msg = new Tracker.Message(data);
   var typeMap = {};
@@ -70,11 +72,11 @@ Tracker.Client.prototype.onMessage_ = function onMessage_(e) {
   console.log('[Peeracle.Tracker.Client] onMessage', msg);
 };
 
-Tracker.Client.prototype.onError_ = function onError_() {
-  console.log('[Peeracle.Tracker.Client] onError');
+Peeracle.Tracker.Client.prototype.onError_ = function onError_(e) {
+  console.log('[Peeracle.Tracker.Client] onError', e.type);
 };
 
-Tracker.Client.prototype.onClose_ = function onClose_(e) {
+Peeracle.Tracker.Client.prototype.onClose_ = function onClose_(e) {
   var code = e.code;
   var reason = e.reason;
   console.log('[Peeracle.Tracker.Client] onClose', code, reason);
@@ -84,7 +86,7 @@ Tracker.Client.prototype.announce = function announce(hash, got) {
 
 };
 
-Tracker.Client.prototype.connect = function connect(url) {
+Peeracle.Tracker.Client.prototype.connect = function connect(url) {
   this.url_ = url;
 
   this.ws_ = new WebSocket(this.url_, 'prcl-0.0.1');
@@ -95,4 +97,6 @@ Tracker.Client.prototype.connect = function connect(url) {
   this.ws_.onclose = this.onClose_.bind(this);
 };
 
-module.exports = Tracker.Client;
+// @exclude
+module.exports = Peeracle.Tracker.Client;
+// @endexclude

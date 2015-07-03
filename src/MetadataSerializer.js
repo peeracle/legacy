@@ -24,7 +24,7 @@
 
 // @exclude
 var Peeracle = {};
-var BinaryStream = require('./BinaryStream');
+Peeracle.BinaryStream = require('./BinaryStream');
 Peeracle.Hash = require('./Hash');
 // @endexclude
 
@@ -33,7 +33,7 @@ Peeracle.Hash = require('./Hash');
  * @memberof Peeracle
  * @constructor
  */
-function MetadataSerializer() {
+Peeracle.MetadataSerializer = function MetadataSerializer() {
   /**
    * @type {Peeracle.Hash}
    * @private
@@ -41,7 +41,7 @@ function MetadataSerializer() {
   this.hash_ = null;
 
   /**
-   * @type {BinaryStream}
+   * @type {Peeracle.BinaryStream}
    * @private
    */
   this.stream_ = null;
@@ -52,7 +52,7 @@ function MetadataSerializer() {
  * @param segment
  * @private
  */
-MetadataSerializer.prototype.serializeSegment_ =
+Peeracle.MetadataSerializer.prototype.serializeSegment_ =
   function serializeSegment_(segment) {
     var ci;
     var cl;
@@ -72,7 +72,7 @@ MetadataSerializer.prototype.serializeSegment_ =
  * @param {Stream} stream
  * @private
  */
-MetadataSerializer.prototype.serializeStream_ =
+Peeracle.MetadataSerializer.prototype.serializeStream_ =
   function serializeStream_(stream) {
     var i;
     var l;
@@ -97,10 +97,10 @@ MetadataSerializer.prototype.serializeStream_ =
 
 /**
  *
- * @param {Metadata} metadata
+ * @param {Peeracle.Metadata} metadata
  * @private
  */
-MetadataSerializer.prototype.serializeStreams_ =
+Peeracle.MetadataSerializer.prototype.serializeStreams_ =
   function serializeStreams_(metadata) {
     var i;
     var l = metadata.streams.length;
@@ -113,10 +113,10 @@ MetadataSerializer.prototype.serializeStreams_ =
 
 /**
  *
- * @param {Metadata} metadata
+ * @param {Peeracle.Metadata} metadata
  * @private
  */
-MetadataSerializer.prototype.serializeTrackers_ =
+Peeracle.MetadataSerializer.prototype.serializeTrackers_ =
   function serializeTrackers_(metadata) {
     var i;
     var trackers = metadata.trackers;
@@ -129,10 +129,10 @@ MetadataSerializer.prototype.serializeTrackers_ =
 
 /**
  *
- * @param {Metadata} metadata
+ * @param {Peeracle.Metadata} metadata
  * @private
  */
-MetadataSerializer.prototype.serializeHeader_ =
+Peeracle.MetadataSerializer.prototype.serializeHeader_ =
   function serializeHeader_(metadata) {
     this.hash_ = Peeracle.Hash.createInstance(metadata.hashId);
     if (!this.hash_) {
@@ -147,11 +147,11 @@ MetadataSerializer.prototype.serializeHeader_ =
   };
 
 /**
- * @param {Metadata} metadata
+ * @param {Peeracle.Metadata} metadata
  * @returns {Uint8Array}
  * @private
  */
-MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
+Peeracle.MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
   // TODO: Fix this into something better
   var i;
   var seg;
@@ -195,11 +195,11 @@ MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
 
 /**
  *
- * @param {Metadata} metadata
+ * @param {Peeracle.Metadata} metadata
  * @returns {Uint8Array}
  */
-MetadataSerializer.prototype.serialize = function serialize(metadata) {
-  this.stream_ = new BinaryStream(this.allocate_(metadata));
+Peeracle.MetadataSerializer.prototype.serialize = function serialize(metadata) {
+  this.stream_ = new Peeracle.BinaryStream(this.allocate_(metadata));
 
   this.serializeHeader_(metadata);
   this.serializeTrackers_(metadata);
@@ -208,4 +208,6 @@ MetadataSerializer.prototype.serialize = function serialize(metadata) {
   return this.stream_.bytes;
 };
 
-module.exports = MetadataSerializer;
+// @exclude
+module.exports = Peeracle.MetadataSerializer;
+// @endexclude

@@ -32,7 +32,7 @@ Peeracle.Hash = require('./Hash');
  * @memberof Peeracle
  * @constructor
  */
-function MetadataUnserializer() {
+Peeracle.MetadataUnserializer = function MetadataUnserializer() {
   /**
    * @type {Peeracle.Hash}
    * @private
@@ -40,7 +40,7 @@ function MetadataUnserializer() {
   this.hash_ = null;
 
   /**
-   * @type {BinaryStream}
+   * @type {Peeracle.BinaryStream}
    * @private
    */
   this.stream_ = null;
@@ -51,7 +51,7 @@ function MetadataUnserializer() {
  * @returns {Segment}
  * @private
  */
-MetadataUnserializer.prototype.unserializeSegment_ =
+Peeracle.MetadataUnserializer.prototype.unserializeSegment_ =
   function unserializeSegment_() {
     /** @type {Segment} */
     var segment = {};
@@ -73,7 +73,7 @@ MetadataUnserializer.prototype.unserializeSegment_ =
     return segment;
   };
 
-MetadataUnserializer.prototype.unserializeStreamInit_ =
+Peeracle.MetadataUnserializer.prototype.unserializeStreamInit_ =
   function unserializeStreamInit_(stream) {
     /** @type {number} */
     var i;
@@ -84,7 +84,7 @@ MetadataUnserializer.prototype.unserializeStreamInit_ =
     }
   };
 
-MetadataUnserializer.prototype.unserializeStreamSegments_ =
+Peeracle.MetadataUnserializer.prototype.unserializeStreamSegments_ =
   function unserializeStreamSegments_(stream) {
     var i;
     var segment;
@@ -126,7 +126,7 @@ MetadataUnserializer.prototype.unserializeStream_ =
  * @returns {Array.<Stream>}
  * @private
  */
-MetadataUnserializer.prototype.unserializeStreams_ =
+Peeracle.MetadataUnserializer.prototype.unserializeStreams_ =
   function unserializeStreams_() {
     var i;
     var stream;
@@ -146,7 +146,7 @@ MetadataUnserializer.prototype.unserializeStreams_ =
  * @returns {Array.<string>}
  * @private
  */
-MetadataUnserializer.prototype.unserializeTrackers_ =
+Peeracle.MetadataUnserializer.prototype.unserializeTrackers_ =
   function unserializeTrackers_() {
     var i;
     var numTrackers = this.stream_.readUInt32();
@@ -163,7 +163,7 @@ MetadataUnserializer.prototype.unserializeTrackers_ =
  * @returns {Header}
  * @private
  */
-MetadataUnserializer.prototype.unserializeHeader_ =
+Peeracle.MetadataUnserializer.prototype.unserializeHeader_ =
   function unserializeHeader_() {
     /** @type {Header} */
     var header = {};
@@ -190,7 +190,7 @@ MetadataUnserializer.prototype.unserializeHeader_ =
  * @param {BinaryStream} stream
  * @param {Metadata} metadata
  */
-MetadataUnserializer.prototype.unserialize =
+Peeracle.MetadataUnserializer.prototype.unserialize =
   function unserialize(stream, metadata) {
     var header;
     var trackers;
