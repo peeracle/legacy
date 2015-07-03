@@ -23,7 +23,8 @@
 'use strict';
 
 // @exclude
-var Listenable = require('./Listenable');
+var Listenable = require('./../Listenable');
+var Peeracle = {};
 // @endexclude
 
 /**
@@ -31,13 +32,74 @@ var Listenable = require('./Listenable');
  * @constructor
  * @memberof Peeracle
  */
-function Peer() {
+Peeracle.Peer = function Peer() {
+  Listenable.call(this);
 
-}
+  this.connection_ = null;
+};
 
-Peer.prototype = Object.create(Listenable.prototype);
+// @exclude
+Peeracle.Peer.Connection = require('./Connection');
+Peeracle.Peer.Message = require('./Message');
+// @endexclude
 
-module.exports = Peer;
+Peeracle.Peer.prototype = Object.create(Listenable.prototype);
+Peeracle.Peer.prototype.constructor = Peeracle.Peer;
+
+Peeracle.Peer.prototype.createOffer = function createOffer(cb) {
+  if (!this.connection_) {
+    this.connection_ = new Peeracle.Peer.Connection();
+    this.connection_.on('icecandidate', function onIceCandidate(sdp) {
+      this.emit('icecandidate', sdp);
+    }.bind(this));
+    this.connection_.on('message', function onMessage(data) {
+      this.emit('message', data);
+    }.bind(this));
+    this.connection_.on('connected', function onConnected() {
+      this.emit('connected');
+    }.bind(this));
+  }
+  this.connection_.createOffer(cb);
+};
+
+Peeracle.Peer.prototype.createAnswer = function createAnswer(sdp, cb) {
+  if (!this.connection_) {
+    this.connection_ = new Peeracle.Peer.Connection();
+    this.connection_.on('icecandidate', function onIceCandidate(sdp) {
+      this.emit('icecandidate', sdp);
+    }.bind(this));
+    this.connection_.on('message', function onMessage(data) {
+      this.emit('message', data);
+    }.bind(this));
+    this.connection_.on('connected', function onConnected() {
+      this.emit('connected');
+    }.bind(this));
+  }
+  this.connection_.createAnswer(sdp, cb);
+};
+
+Peeracle.Peer.prototype.setAnswer = function setAnswer(sdp, cb) {
+  this.connection_.setAnswer(sdp, cb);
+};
+
+Peeracle.Peer.prototype.addICECandidate = function addICECandidate(sdp, cb) {
+  this.connection_.addICECandidate(sdp, cb);
+};
+
+Peeracle.Peer.prototype.request = function request(hash, cluster, chunk) {
+  var message = new Peeracle.Peer.Message({
+    type: Peeracle.Peer.Message.Type.Request,
+    hash: hash,
+    cluster: cluster,
+    chunk: chunk
+  });
+
+  this.connection_.send(message);
+};
+
+// @exclude
+module.exports = Peeracle.Peer;
+// @endexclude
 
 /*
  function Peer() {
