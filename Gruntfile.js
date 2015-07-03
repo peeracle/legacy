@@ -38,7 +38,13 @@ module.exports = function (grunt) {
         banner: '<%= banner %>\n' +
         '\'use strict\';\n\n' +
         '(function(){\n' +
-        '\n',
+        '\n' +
+        'var RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || \
+        window.webkitRTCPeerConnection || window.msRTCPeerConnection;\n' +
+        'var RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || \
+        window.webkitRTCSessionDescription || window.msRTCSessionDescription;\n' +
+        'var RTCIceCandidate = window.mozRTCIceCandidate || window.webkitRTCIceCandidate || \
+        window.RTCIceCandidate;\n',
 
         footer: '})();\n',
 
