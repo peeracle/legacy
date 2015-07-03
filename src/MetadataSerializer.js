@@ -185,7 +185,7 @@ Peeracle.MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
       chunks = segments[seg].chunks;
       length += 4;
       for (ch = 0; ch < chunks.length; ++ch) {
-        length += 4;
+        length += 16;
       }
     }
   }

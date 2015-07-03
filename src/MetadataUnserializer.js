@@ -102,7 +102,7 @@ Peeracle.MetadataUnserializer.prototype.unserializeStreamSegments_ =
  * @returns {Stream}
  * @private
  */
-MetadataUnserializer.prototype.unserializeStream_ =
+Peeracle.MetadataUnserializer.prototype.unserializeStream_ =
   function unserializeStream_() {
     /** @type {Stream} */
     var stream = {};
@@ -210,4 +210,6 @@ Peeracle.MetadataUnserializer.prototype.unserialize =
     metadata.getId();
   };
 
-module.exports = MetadataUnserializer;
+// @exclude
+module.exports = Peeracle.MetadataUnserializer;
+// @endexclude

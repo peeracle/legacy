@@ -78,7 +78,7 @@ Peeracle.Metadata = function Metadata() {
   /**
    * @member {string}
    */
-  this.hashId = 'crc32';
+  this.hashId = 'murmur3_x86_128';
 
   /**
    * @member {Array.<string>}
