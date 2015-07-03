@@ -50,9 +50,13 @@ module.exports = function (grunt) {
 
         process: function (src, filepath) {
           var moduleName = filepath.slice(4, filepath.length - 3);
-          var modules = moduleName.split('.');
+          var modules = moduleName.split('/');
+          console.log(modules);
           var moduleStr = 'Peeracle';
           for (var i = 0; i < modules.length; ++i) {
+            if (modules[i] === 'index') {
+              continue;
+            }
             moduleStr += '.' + modules[i];
           }
 
@@ -64,6 +68,8 @@ module.exports = function (grunt) {
       },
       dist: {
         src: [
+          'third_party/murmurHash3.js/murmurHash3.js',
+
           'src/Listenable.js',
           'src/Peeracle.js',
           'src/BinaryStream.js',
@@ -89,8 +95,16 @@ module.exports = function (grunt) {
           'src/Metadata.js',
           'src/MetadataSerializer.js',
           'src/MetadataUnserializer.js',
-          'src/Peer.js',
-          'src/PeerConnection.js',
+
+          'src/Player/index.js',
+          'src/Player/Buffer.js',
+          'src/Player/Controller.js',
+
+          'src/Peer/index.js',
+          'src/Peer/Connection.js',
+          'src/Peer/Message.js',
+
+          'src/Session.js',
           'src/Storage/index.js',
           'src/Storage/Memory.js',
 
@@ -188,6 +202,6 @@ module.exports = function (grunt) {
   grunt.registerTask('default', ['concat', 'preprocess', 'eslint', 'jsbeautifier'/*, 'closure-compiler'*/, 'karma']);
 
   // Build only task
-  grunt.registerTask('build', ['concat', 'preprocess', 'eslint', 'jsbeautifier'/*, 'closure-compiler'*/]);
+  grunt.registerTask('build', ['concat', 'preprocess'/*, 'eslint'*/, 'jsbeautifier'/*, 'closure-compiler'*/]);
   grunt.registerTask('test', ['karma']);
 };
