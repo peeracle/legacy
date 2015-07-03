@@ -23,8 +23,9 @@
 'use strict';
 
 // @exclude
+var Peeracle = {};
 var BinaryStream = require('./BinaryStream');
-var Crypto = require('./Crypto');
+Peeracle.Hash = require('./Hash');
 // @endexclude
 
 /**
@@ -34,17 +35,17 @@ var Crypto = require('./Crypto');
  */
 function MetadataSerializer() {
   /**
-   * @type {Crypto}
+   * @type {Peeracle.Hash}
    * @private
    */
-  this.crypto_ = null;
+  this.hash_ = null;
 
   /**
    * @type {BinaryStream}
    * @private
    */
   this.stream_ = null;
-}
+};
 
 /**
  *
@@ -58,11 +59,11 @@ MetadataSerializer.prototype.serializeSegment_ =
 
     this.stream_.writeUInt32(segment.timecode);
     this.stream_.writeUInt32(segment.length);
-    this.crypto_.serialize(segment.checksum, this.stream_);
+    // this.hash_.serialize(segment.checksum, this.stream_);
     this.stream_.writeUInt32(segment.chunks.length);
 
     for (ci = 0, cl = segment.chunks.length; ci < cl; ++ci) {
-      this.crypto_.serialize(segment.chunks[ci], this.stream_);
+      this.hash_.serialize(segment.chunks[ci], this.stream_);
     }
   };
 
@@ -133,14 +134,14 @@ MetadataSerializer.prototype.serializeTrackers_ =
  */
 MetadataSerializer.prototype.serializeHeader_ =
   function serializeHeader_(metadata) {
-    this.crypto_ = Crypto.createInstance(metadata.cryptoId);
-    if (!this.crypto_) {
-      throw 'Unknown checksum ' + metadata.cryptoId;
+    this.hash_ = Peeracle.Hash.createInstance(metadata.hashId);
+    if (!this.hash_) {
+      throw 'Unknown checksum ' + metadata.hashId;
     }
 
     this.stream_.writeUInt32(1347568460);
     this.stream_.writeUInt32(2);
-    this.stream_.writeString(metadata.cryptoId);
+    this.stream_.writeString(metadata.hashId);
     this.stream_.writeUInt32(metadata.timecodeScale);
     this.stream_.writeFloat8(metadata.duration);
   };
@@ -159,7 +160,7 @@ MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
   var stream;
   var streams;
   var segments;
-  var length = 4 + 4 + (metadata.cryptoId.length + 1) + 4 + 8;
+  var length = 4 + 4 + (metadata.hashId.length + 1) + 4 + 8;
 
   var trackers = metadata.trackers;
   length += 4;
@@ -179,7 +180,7 @@ MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
     length += 4;
 
     for (seg = 0; seg < segments.length; ++seg) {
-      length += 4 + 4 + (4);
+      length += 4 + (4);
 
       chunks = segments[seg].chunks;
       length += 4;

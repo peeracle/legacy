@@ -23,14 +23,14 @@
 'use strict';
 
 // @exclude
-var Crypto = require('./Crypto');
+var Peeracle = {};
+Peeracle.Hash = require('./Hash');
 // @endexclude
 
 /**
  * @typedef {Object} Segment
  * @property {number} timecode - Segment's timecode
  * @property {number} length - Segment's length
- * @property {*} checksum - Segment's checksum
  * @property {Array.<*>} chunks - Array of chunks' checksum
  */
 
@@ -52,7 +52,7 @@ var Crypto = require('./Crypto');
  * @typedef {Object} Header
  * @property {number} magic
  * @property {number} version
- * @property {string} cryptoId
+ * @property {string} hashId
  * @property {number} timecodeScale
  * @property {number} duration
  */
@@ -64,21 +64,21 @@ var Crypto = require('./Crypto');
  */
 function Metadata() {
   /**
-   * @member {*}
+   * @member {?string}
    * @readonly
    */
   this.id = null;
 
   /**
-   * @member {Crypto}
+   * @member {Peeracle.Hash}
    * @private
    */
-  this.crypto_ = null;
+  this.hash_ = null;
 
   /**
    * @member {string}
    */
-  this.cryptoId = 'crc32';
+  this.hashId = 'crc32';
 
   /**
    * @member {Array.<string>}
@@ -112,7 +112,7 @@ function Metadata() {
    * @member {Array.<Stream>}
    */
   this.streams = [];
-}
+};
 
 /**
  * @function
@@ -120,17 +120,40 @@ function Metadata() {
  * @return {number}
  */
 Metadata.prototype.getId = function getId() {
+  var stream;
+  var streamIndex;
+  var streamCount = this.streams.length;
+  var segment;
+  var segmentIndex;
+  var segmentCount;
+  var chunkIndex;
+  var chunkCount;
+  var checksum;
+
   if (this.id) {
     return this.id;
   }
 
-  if (!this.crypto_) {
-    this.crypto_ = Crypto.createInstance(this.cryptoId);
+  if (!this.hash_) {
+    this.hash_ = Peeracle.Hash.createInstance(this.hashId);
   }
 
-  this.crypto_.init();
-  // this.crypto_.update(this.initSegment);
-  this.id = this.crypto_.finish();
+  this.hash_.init();
+  for (streamIndex = 0; streamIndex < streamCount; ++streamIndex) {
+    stream = this.streams[streamIndex];
+    this.hash_.update(stream.init);
+    segmentCount = stream.segments.length;
+    for (segmentIndex = 0; segmentIndex < segmentCount; ++segmentIndex) {
+      segment = stream.segments[segmentIndex];
+      chunkCount = segment.chunks.length;
+      for (chunkIndex = 0; chunkIndex < chunkCount; ++chunkIndex) {
+        this.hash_.update(segment.chunks[chunkIndex]);
+      }
+    }
+  }
+
+  checksum = this.hash_.finish();
+  this.id = this.hash_.toString(checksum);
   return this.id;
 };
 
@@ -180,6 +203,7 @@ Metadata.prototype.addStreamNext_ =
 
       if (!bytes) {
         this.streams.push(stream);
+        this.getId();
         cb();
         return;
       }
@@ -187,22 +211,20 @@ Metadata.prototype.addStreamNext_ =
       clusterLength = bytes.length;
       chunkLength = stream.chunksize;
 
-      if (!this.crypto_) {
-        this.crypto_ = Crypto.createInstance(this.cryptoId);
+      if (!this.hash_) {
+        this.hash_ = Peeracle.Hash.createInstance(this.hashId);
       }
 
       cluster = {
         timecode: timecode,
         length: clusterLength,
-        checksum: this.crypto_.checksum(bytes),
         chunks: []
       };
 
       for (i = 0; i < clusterLength; i += chunkLength) {
         chunk = bytes.subarray(i, i + chunkLength);
 
-        cluster.chunks.push(this.crypto_.checksum(chunk));
-
+        cluster.chunks.push(this.hash_.checksum(chunk));
         if (clusterLength - i < chunkLength) {
           chunkLength = clusterLength - i;
         }
@@ -212,6 +234,7 @@ Metadata.prototype.addStreamNext_ =
 
       if (++currentCue >= numCues) {
         this.streams.push(stream);
+        this.getId();
         cb();
         return;
       }

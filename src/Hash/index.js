@@ -32,31 +32,31 @@ var Peeracle = require('../Peeracle');
  * @memberof Peeracle
  * @namespace
  */
-function Crypto() {
-}
+Peeracle.Hash = function Crypto() {
+};
 
 /* istanbul ignore next */
-Crypto.ERR_INVALID_ARGUMENT = 'Invalid argument';
+Peeracle.Hash.ERR_INVALID_ARGUMENT = 'Invalid argument';
 
 /**
  *
  * @param id
  * @returns {?Crypto}
  */
-Crypto.createInstance = function createInstance(id) {
+Peeracle.Hash.createInstance = function createInstance(id) {
   var c;
 
   if (typeof id !== 'string') {
-    throw new TypeError(Crypto.ERR_INVALID_ARGUMENT);
+    throw new TypeError(Peeracle.Hash.ERR_INVALID_ARGUMENT);
   }
 
-  for (c in Crypto) {
-    if (Crypto.hasOwnProperty(c) &&
-      Crypto[c].hasOwnProperty('prototype') &&
-      Crypto[c].prototype instanceof Crypto &&
-      Crypto[c].hasOwnProperty('IDENTIFIER') &&
-      Crypto[c].IDENTIFIER === id) {
-      return new Crypto[c]();
+  for (c in Peeracle.Hash) {
+    if (Peeracle.Hash.hasOwnProperty(c) &&
+      Peeracle.Hash[c].hasOwnProperty('prototype') &&
+      Peeracle.Hash[c].prototype instanceof Peeracle.Hash &&
+      Peeracle.Hash[c].hasOwnProperty('IDENTIFIER') &&
+      Peeracle.Hash[c].IDENTIFIER === id) {
+      return new Peeracle.Hash[c]();
     }
   }
 
@@ -70,14 +70,14 @@ Crypto.createInstance = function createInstance(id) {
  * @function
  * @param array
  */
-Crypto.prototype.checksum = function checksum(array) {
+Peeracle.Hash.prototype.checksum = function checksum(array) {
 };
 
 /* istanbul ignore next */
 /**
  * @function
  */
-Crypto.prototype.init = function init() {
+Peeracle.Hash.prototype.init = function init() {
 };
 
 /* istanbul ignore next */
@@ -85,14 +85,14 @@ Crypto.prototype.init = function init() {
  * @function
  * @param array
  */
-Crypto.prototype.update = function update(array) {
+Peeracle.Hash.prototype.update = function update(array) {
 };
 
 /* istanbul ignore next */
 /**
  * @function
  */
-Crypto.prototype.finish = function finish() {
+Peeracle.Hash.prototype.finish = function finish() {
 };
 
 /* istanbul ignore next */
@@ -101,7 +101,7 @@ Crypto.prototype.finish = function finish() {
  * @param value
  * @param {BinaryStream} binaryStream
  */
-Crypto.prototype.serialize = function serialize(value, binaryStream) {
+Peeracle.Hash.prototype.serialize = function serialize(value, binaryStream) {
 };
 
 /* istanbul ignore next */
@@ -109,14 +109,14 @@ Crypto.prototype.serialize = function serialize(value, binaryStream) {
  *
  * @param {BinaryStream} binaryStream
  */
-Crypto.prototype.unserialize = function unserialize(binaryStream) {
+Peeracle.Hash.prototype.unserialize = function unserialize(binaryStream) {
+};
+
+/* istanbul ignore next */
+Peeracle.Hash.prototype.toString = function toString() {
 };
 
 /* eslint-enable */
 // @exclude
-module.exports = Crypto;
-
-Crypto.Crc32 = require('./Crc32');
+module.exports = Peeracle.Hash;
 // @endexclude
-
-Peeracle.Crypto = Crypto;

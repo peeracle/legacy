@@ -23,8 +23,9 @@
 'use strict';
 
 // @exclude
-var Crypto = require('./');
-var Utils = require('./../Utils');
+var Peeracle = {};
+Peeracle.Hash = require('./');
+Peeracle.Utils = require('./../Utils');
 // @endexclude
 
 /**
@@ -32,10 +33,10 @@ var Utils = require('./../Utils');
  *
  * @class
  * @constructor
- * @memberof Peeracle.Crypto
- * @implements {Peeracle.Crypto}
+ * @memberof Peeracle.Hash
+ * @implements {Peeracle.Hash}
  */
-Crypto.Crc32 = function Crc32() {
+Peeracle.Hash.Crc32 = function Crc32() {
   /**
    * @type {number}
    * @private
@@ -49,11 +50,11 @@ Crypto.Crc32 = function Crc32() {
   this.crcTable_ = null;
 };
 
-Crypto.Crc32.prototype = Object.create(Crypto.prototype);
-Crypto.Crc32.prototype.constructor = Crypto.Crc32;
+Peeracle.Hash.Crc32.prototype = Object.create(Peeracle.Hash.prototype);
+Peeracle.Hash.Crc32.prototype.constructor = Peeracle.Hash.Crc32;
 
 /** @type {string} */
-Crypto.Crc32.IDENTIFIER = 'crc32';
+Peeracle.Hash.Crc32.IDENTIFIER = 'murmur3_x64_128';
 
 /**
  * Generate the crc32 table.
@@ -61,20 +62,21 @@ Crypto.Crc32.IDENTIFIER = 'crc32';
  * @function
  * @private
  */
-Crypto.Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
-  var c;
-  var n;
-  var k;
+Peeracle.Hash.Crc32.prototype.generateCrc32Table_ =
+  function generateCrc32Table_() {
+    var c;
+    var n;
+    var k;
 
-  this.crcTable_ = [];
-  for (n = 0; n < 256; n++) {
-    c = n;
-    for (k = 0; k < 8; k++) {
-      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+    this.crcTable_ = [];
+    for (n = 0; n < 256; n++) {
+      c = n;
+      for (k = 0; k < 8; k++) {
+        c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+      }
+      this.crcTable_[n] = c;
     }
-    this.crcTable_[n] = c;
-  }
-};
+  };
 
 /**
  * Retrieve the checksum of an entire array.
@@ -83,11 +85,11 @@ Crypto.Crc32.prototype.generateCrc32Table_ = function generateCrc32Table_() {
  * @param array
  * @returns {*}
  */
-Crypto.Crc32.prototype.checksum = function checksum(array) {
+Peeracle.Hash.Crc32.prototype.checksum = function checksum(array) {
   var arr = array;
 
   if (typeof arr === 'string') {
-    arr = Utils.stringToArray(arr);
+    arr = Peeracle.Utils.stringToArray(arr);
   }
 
   this.init();
@@ -100,7 +102,7 @@ Crypto.Crc32.prototype.checksum = function checksum(array) {
  *
  * @function
  */
-Crypto.Crc32.prototype.init = function init() {
+Peeracle.Hash.Crc32.prototype.init = function init() {
   if (!this.crcTable_) {
     this.generateCrc32Table_();
   }
@@ -114,13 +116,13 @@ Crypto.Crc32.prototype.init = function init() {
  * @function
  * @param array
  */
-Crypto.Crc32.prototype.update = function update(array) {
+Peeracle.Hash.Crc32.prototype.update = function update(array) {
   var i;
   var l;
   var arr = array;
 
   if (typeof arr === 'string') {
-    arr = Utils.stringToArray(arr);
+    arr = Peeracle.Utils.stringToArray(arr);
   }
 
   for (i = 0, l = arr.length; i < l; ++i) {
@@ -135,7 +137,7 @@ Crypto.Crc32.prototype.update = function update(array) {
  * @function
  * @returns {number}
  */
-Crypto.Crc32.prototype.finish = function finish() {
+Peeracle.Hash.Crc32.prototype.finish = function finish() {
   return (this.crc_ ^ (-1)) >>> 0;
 };
 
@@ -146,9 +148,20 @@ Crypto.Crc32.prototype.finish = function finish() {
  * @param value
  * @param {BinaryStream} binaryStream
  */
-Crypto.Crc32.prototype.serialize = function serialize(value, binaryStream) {
-  binaryStream.writeUInt32(value);
-};
+Peeracle.Hash.Crc32.prototype.serialize =
+  function serialize(value, binaryStream) {
+    var bytes;
+    var dv;
+
+    if (!binaryStream) {
+      bytes = new ArrayBuffer(4);
+      dv = new DataView(bytes);
+      dv.setUint32(0, value);
+      return new Uint8Array(bytes);
+    }
+
+    binaryStream.writeUInt32(value);
+  };
 
 /**
  * Read the checksum from bytes.
@@ -157,8 +170,22 @@ Crypto.Crc32.prototype.serialize = function serialize(value, binaryStream) {
  * {BinaryStream} binaryStream
  * @returns {*}
  */
-Crypto.Crc32.prototype.unserialize = function unserialize(binaryStream) {
-  return binaryStream.readUInt32();
+Peeracle.Hash.Crc32.prototype.unserialize =
+  function unserialize(binaryStream) {
+    return binaryStream.readUInt32();
+  };
+
+/**
+ * Convert the checksum into a readable string.
+ *
+ * @function
+ * {Number} value
+ * @returns {String}
+ */
+Peeracle.Hash.Crc32.prototype.toString = function toString(value) {
+  return value.toString(16);
 };
 
-module.exports = Crypto.Crc32;
+// @exclude
+module.exports = Peeracle.Hash.Crc32;
+// @endexclude

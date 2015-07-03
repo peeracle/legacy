@@ -62,8 +62,8 @@ module.exports = function (grunt) {
           'src/Peeracle.js',
           'src/BinaryStream.js',
 
-          'src/Crypto/index.js',
-          'src/Crypto/Crc32.js',
+          'src/Hash/index.js',
+          'src/Hash/Crc32.js',
 
           'src/DataSource/index.js',
           'src/DataSource/File.js',

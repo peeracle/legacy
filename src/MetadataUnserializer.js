@@ -23,7 +23,8 @@
 'use strict';
 
 // @exclude
-var Crypto = require('./Crypto');
+var Peeracle = {};
+Peeracle.Hash = require('./Hash');
 // @endexclude
 
 /**
@@ -33,17 +34,17 @@ var Crypto = require('./Crypto');
  */
 function MetadataUnserializer() {
   /**
-   * @type {Crypto}
+   * @type {Peeracle.Hash}
    * @private
    */
-  this.crypto_ = null;
+  this.hash_ = null;
 
   /**
    * @type {BinaryStream}
    * @private
    */
   this.stream_ = null;
-}
+};
 
 /**
  *
@@ -60,12 +61,12 @@ MetadataUnserializer.prototype.unserializeSegment_ =
 
     segment.timecode = this.stream_.readUInt32();
     segment.length = this.stream_.readUInt32();
-    segment.checksum = this.crypto_.unserialize(this.stream_);
+    // segment.checksum = this.hash_.unserialize(this.stream_);
 
     segment.chunks = [];
     numChunks = this.stream_.readUInt32();
     for (i = 0; i < numChunks; ++i) {
-      chunk = this.crypto_.unserialize(this.stream_);
+      chunk = this.hash_.unserialize(this.stream_);
       segment.chunks.push(chunk);
     }
 
@@ -173,11 +174,11 @@ MetadataUnserializer.prototype.unserializeHeader_ =
     }
 
     header.version = this.stream_.readUInt32();
-    header.cryptoId = this.stream_.readString();
+    header.hashId = this.stream_.readString();
 
-    this.crypto_ = Crypto.createInstance(header.cryptoId);
-    if (!this.crypto_) {
-      throw new Error('Unknown checksum ' + header.cryptoId);
+    this.hash_ = Peeracle.Hash.createInstance(header.hashId);
+    if (!this.hash_) {
+      throw new Error('Unknown checksum ' + header.hashId);
     }
 
     header.timecodeScale = this.stream_.readUInt32();
@@ -201,10 +202,12 @@ MetadataUnserializer.prototype.unserialize =
     trackers = this.unserializeTrackers_();
     streams = this.unserializeStreams_();
 
+    metadata.id = null;
     metadata.timecodeScale = header.timecodeScale;
     metadata.duration = header.duration;
     metadata.trackers = trackers;
     metadata.streams = streams;
+    metadata.getId();
   };
 
 module.exports = MetadataUnserializer;
