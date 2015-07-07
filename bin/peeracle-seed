@@ -3,103 +3,106 @@
 'use strict';
 
 var fs = require('fs');
-var sha3 = require('../sha3');
 var program = require('commander');
 var observatory = require('observatory').settings({
   prefix: ' - '
 });
+
 var Peeracle = require('../index');
+
+var mediaFile = null;
+var metadataFilename;
+var metadataBytes;
+
+/** @type {Peeracle.BinaryStream} */
+var metadataStream;
+
+/** @type {Peeracle} */
+var session;
+
+var metadataTask;
+var metadata;
+var unserializer;
+
+var mediaTask;
+var checkTask;
 
 program
   .usage('[options] <metadataFile>')
   .option('-m, --media <filename>', 'Media file associated to the metadata file')
   .parse(process.argv);
 
-var metadataFilename = program.args;
+metadataFilename = program.args;
 if (!metadataFilename.length) {
   program.outputHelp();
   process.exit(1);
 }
 
 try {
-  var metadataBytes = fs.readFileSync(metadataFilename[0]);
+  metadataBytes = fs.readFileSync(metadataFilename[0]);
 } catch (e) {
   console.error('Cannot read file \'' + metadataFilename[0] + '\': ' + e.message);
   process.exit(1);
 }
 
-var metadataTask = observatory.add('Loading metadata file');
-var metadata = new Peeracle.Metadata();
-var unserializer = new Peeracle.MetadataUnserializer();
+metadataTask = observatory.add('Loading metadata file');
+metadata = new Peeracle.Metadata();
+unserializer = new Peeracle.MetadataUnserializer();
 
 metadataTask.status('Reading');
-var metadataStream = new Peeracle.BinaryStream(metadataBytes);
+metadataStream = new Peeracle.DataStream.Memory(new Uint8Array(metadataBytes));
 
-metadataTask.details(i + ' / ' + l + ' bytes');
 metadataTask.status('Unserializing');
 unserializer.unserialize(metadataStream, metadata);
 metadataTask.done('Done');
 
-var node = new Peeracle.Node(metadata);
-var media = null;
-var mediaFile = null;
+session = new Peeracle();
 
-var mediaTask;
-function initCallback(init) {
-  var i = 0;
-  var numClusters = metadata.getMediaSegments().length;
-  mediaTask.status('Checking media segments');
-  media.getNextMediaSegment(function getCluster(cluster) {
-    if (!cluster) {
-      mediaTask.done('Done');
-      node.start(function (clusterIndex, chunkIndex, doneCb) {
-        media.getMediaSegmentAtIndex(clusterIndex, function (mediaSegment) {
-          var cluster = metadata.getMediaSegmentAt(clusterIndex);
-          var chunkSize = metadata.getChunkSize();
-          var start = chunkIndex * chunkSize;
-          var end = start + chunkSize;
-          if (end > cluster.length) {
-            end = cluster.length;
-          }
+session.on('connect', function (trackerUrl, id) {
+  console.log('connect', trackerUrl, id);
+});
 
-          doneCb(mediaSegment.bytes.subarray(start, end));
-        });
-      });
-      return;
-    }
+session.on('disconnect', function (trackerUrl) {
+  console.log('disconnect', trackerUrl);
+});
 
-    node.check(i, cluster.bytes);
-    mediaTask.details(++i + ' / ' + numClusters + ' clusters');
-    media.getNextMediaSegment(getCluster);
-  });
-}
+session.on('enter', function (trackerUrl, hash, peer) {
+  console.log('enter', trackerUrl, hash, peer);
+});
+
+session.on('leave', function (trackerUrl, hash, peer) {
+  console.log('leave', trackerUrl, hash, peer);
+});
+
+session.on('metadata', function (hash, got) {
+  console.log('metadata', hash, got);
+  session.start(hash);
+});
+
+session.on('send', function (hash, peer, bytes) {
+  console.log('send', hash, peer, bytes.length);
+});
+
+session.on('receive', function (hash, peer, bytes) {
+  console.log('receive', hash, peer, bytes.length);
+});
+
+session.on('segment', function (hash, index, bytes) {
+  console.log('segment', hash, index, bytes);
+});
 
 if (program.media) {
   mediaTask = observatory.add('Loading media file');
-  mediaFile = new Peeracle.File(program.media);
-  mediaFile.fetchBytes(4, function (bytes) {
-    for (var mediaFormat in Peeracle.Media) {
-      var header = Peeracle.Media[mediaFormat].getFileHeader();
-      if (header[0] === bytes[0] &&
-        header[1] === bytes[1] &&
-        header[2] === bytes[2] &&
-        header[3] === bytes[3]) {
-        media = Peeracle.Media[mediaFormat].create(mediaFile);
-        mediaTask.status('Getting init segment');
-        media.getInitSegment(initCallback);
-        break;
-      }
-    }
+  mediaFile = new Peeracle.DataSource.File(program.media);
+  Peeracle.Media.createInstance(mediaFile, function createInstance(media) {
+    mediaTask.done('Done');
+    checkTask = observatory.add('Checking media file');
+    session.addMetadata(metadata, media, function () {
+      checkTask.done('Done');
+    });
   });
 } else {
-  node.start();
-  var ci = 0;
-  node.retrieveCluster(ci, function () {
-  }, function received(bytes) {
-    bytes = null;
-    console.log('received cluster', ci++);
-    if (ci < metadata.getMediaSegments().length) {
-      node.retrieveCluster(ci, null, received);
-    }
+  session.addMetadata(metadata, null, function () {
+    session.retrieve(metadata.getId(), 1);
   });
 }
