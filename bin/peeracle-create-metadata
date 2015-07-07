@@ -31,7 +31,7 @@ if (!program.output) {
   process.exit(1);
 }
 
-var crypto = program.crypto || 'crc32';
+var crypto = program.crypto || 'murmur3_x86_128';
 var trackers = program.trackers || ['ws://127.0.0.1:8080'];
 
 function dumpMetadata() {
@@ -81,7 +81,7 @@ function processMedia(mediaFormat, file) {
 }
 
 var metadata = new Peeracle.Metadata();
-metadata.cryptoId = crypto;
+metadata.hashId = crypto;
 
 function createDataSource(handle) {
   if (typeof handle !== 'string') {
