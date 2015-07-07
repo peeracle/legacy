@@ -21,3 +21,111 @@
  */
 
 'use strict';
+
+// @exclude
+var Peeracle = {};
+// @endexclude
+
+/* istanbul ignore next */
+/**
+ * @interface
+ * @memberof Peeracle
+ * @param {*} handle
+ * @constructor
+ */
+Peeracle.DataStream = function DataStream(handle) {
+};
+
+/* eslint-disable */
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.read = function read(length) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.write = function write(bytes) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readByte = function readByte() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeByte = function writeByte(value) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readFloat4 = function readFloat4() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeFloat4 = function writeFloat4(value) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readFloat8 = function readFloat8() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeFloat8 = function writeFloat8(value) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readInt16 = function readInt16() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeInt16 = function writeInt16(value) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readInt32 = function readInt32() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeInt32 = function writeInt32(value) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readUInt16 = function readUInt16() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeUInt16 = function writeUInt16(value) {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.readUInt32 = function readUInt32() {
+};
+
+/* istanbul ignore next */
+Peeracle.DataStream.prototype.writeUInt32 = function writeUInt32(value) {
+};
+
+/**
+ * @param length
+ * @returns {string}
+ */
+Peeracle.DataStream.prototype.readString = function readString(length) {
+};
+
+/**
+ * @param {string} value
+ */
+Peeracle.DataStream.prototype.writeString = function writeString(value) {
+};
+
+/**
+ *
+ * @param value
+ */
+Peeracle.DataStream.prototype.seek = function seek(value) {
+};
+
+/* eslint-enable */
+
+// @exclude
+module.exports = Peeracle.DataStream;
+
+Peeracle.DataStream.Memory = require('./Memory');
+// @endexclude
