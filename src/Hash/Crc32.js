@@ -54,7 +54,7 @@ Peeracle.Hash.Crc32.prototype = Object.create(Peeracle.Hash.prototype);
 Peeracle.Hash.Crc32.prototype.constructor = Peeracle.Hash.Crc32;
 
 /** @type {string} */
-Peeracle.Hash.Crc32.IDENTIFIER = 'murmur3_x64_128';
+Peeracle.Hash.Crc32.IDENTIFIER = 'crc32';
 
 /**
  * Generate the crc32 table.
@@ -146,33 +146,33 @@ Peeracle.Hash.Crc32.prototype.finish = function finish() {
  *
  * @function
  * @param value
- * @param {BinaryStream} binaryStream
+ * @param {Peeracle.DataStream} stream
  */
 Peeracle.Hash.Crc32.prototype.serialize =
-  function serialize(value, binaryStream) {
+  function serialize(value, stream) {
     var bytes;
     var dv;
 
-    if (!binaryStream) {
+    if (!stream) {
       bytes = new ArrayBuffer(4);
       dv = new DataView(bytes);
       dv.setUint32(0, value);
       return new Uint8Array(bytes);
     }
 
-    binaryStream.writeUInt32(value);
+    stream.writeUInt32(value);
   };
 
 /**
  * Read the checksum from bytes.
  *
  * @function
- * {BinaryStream} binaryStream
+ * {Peeracle.DataStream} stream
  * @returns {*}
  */
 Peeracle.Hash.Crc32.prototype.unserialize =
-  function unserialize(binaryStream) {
-    return binaryStream.readUInt32();
+  function unserialize(stream) {
+    return stream.readUInt32();
   };
 
 /**

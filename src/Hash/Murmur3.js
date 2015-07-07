@@ -109,15 +109,15 @@ Peeracle.Hash.Murmur3.prototype.finish = function finish() {
  *
  * @function
  * @param {string} value
- * @param {Peeracle.BinaryStream} binaryStream
+ * @param {Peeracle.DataStream} stream
  */
 Peeracle.Hash.Murmur3.prototype.serialize =
-  function serialize(value, binaryStream) {
+  function serialize(value, stream) {
     var bytes;
     var dv;
     var i;
 
-    if (!binaryStream) {
+    if (!stream) {
       bytes = new ArrayBuffer(32);
       dv = new DataView(bytes);
       for (i = 0; i < 32; ++i) {
@@ -127,7 +127,7 @@ Peeracle.Hash.Murmur3.prototype.serialize =
     }
 
     for (i = 0; i < 16; ++i) {
-      binaryStream.writeByte(parseInt(value.substr(i * 2, 2), 16));
+      stream.writeByte(parseInt(value.substr(i * 2, 2), 16));
     }
   };
 
@@ -135,16 +135,16 @@ Peeracle.Hash.Murmur3.prototype.serialize =
  * Read the checksum from bytes.
  *
  * @function
- * @param {BinaryStream} binaryStream
+ * @param {Peeracle.DataStream} stream
  * @returns {*}
  */
 Peeracle.Hash.Murmur3.prototype.unserialize =
-  function unserialize(binaryStream) {
+  function unserialize(stream) {
     var i;
     var str = '';
 
     for (i = 0; i < 16; ++i) {
-      str += ('00' + binaryStream.readByte().toString(16)).slice(-2);
+      str += ('00' + stream.readByte().toString(16)).slice(-2);
     }
 
     return str;

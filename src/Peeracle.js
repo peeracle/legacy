@@ -35,12 +35,10 @@ Peeracle.prototype = Object.create(Listenable.prototype);
 Peeracle.prototype.constructor = Peeracle;
 
 // @exclude
-Peeracle.BinaryStream = require('./BinaryStream');
+Peeracle.DataStream = require('./DataStream');
 Peeracle.Hash = require('./Hash');
 Peeracle.Hash.Murmur3 = require('./Hash/Murmur3');
 
-Peeracle.DataSource = require('./DataSource');
-Peeracle.Downloader = require('./Downloader');
 Peeracle.Listenable = Listenable;
 Peeracle.Media = require('./Media');
 Peeracle.Metadata = require('./Metadata');
@@ -58,5 +56,3 @@ Peeracle.prototype.bind = function bind(parm) {
 // @exclude
 module.exports = Peeracle;
 // @endexclude
-
-Peeracle.Listenable = Listenable;

@@ -24,7 +24,7 @@
 
 // @exclude
 var Peeracle = {};
-Peeracle.BinaryStream = require('./BinaryStream');
+Peeracle.DataStream = require('./DataStream');
 Peeracle.Hash = require('./Hash');
 // @endexclude
 
@@ -41,7 +41,7 @@ Peeracle.MetadataSerializer = function MetadataSerializer() {
   this.hash_ = null;
 
   /**
-   * @type {Peeracle.BinaryStream}
+   * @type {Peeracle.DataStream}
    * @private
    */
   this.stream_ = null;
@@ -199,7 +199,7 @@ Peeracle.MetadataSerializer.prototype.allocate_ = function allocate_(metadata) {
  * @returns {Uint8Array}
  */
 Peeracle.MetadataSerializer.prototype.serialize = function serialize(metadata) {
-  this.stream_ = new Peeracle.BinaryStream(this.allocate_(metadata));
+  this.stream_ = new Peeracle.DataStream.Memory(this.allocate_(metadata));
 
   this.serializeHeader_(metadata);
   this.serializeTrackers_(metadata);

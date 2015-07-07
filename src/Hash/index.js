@@ -99,17 +99,17 @@ Peeracle.Hash.prototype.finish = function finish() {
 /**
  *
  * @param value
- * @param {BinaryStream} binaryStream
+ * @param {Peeracle.DataStream} stream
  */
-Peeracle.Hash.prototype.serialize = function serialize(value, binaryStream) {
+Peeracle.Hash.prototype.serialize = function serialize(value, stream) {
 };
 
 /* istanbul ignore next */
 /**
  *
- * @param {BinaryStream} binaryStream
+ * @param {Peeracle.DataStream} stream
  */
-Peeracle.Hash.prototype.unserialize = function unserialize(binaryStream) {
+Peeracle.Hash.prototype.unserialize = function unserialize(stream) {
 };
 
 /* istanbul ignore next */

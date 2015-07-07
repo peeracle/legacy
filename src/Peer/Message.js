@@ -24,7 +24,7 @@
 
 // @exclude
 var Peeracle = {
-  BinaryStream: require('./../BinaryStream'),
+  DataStream: require('./../DataStream'),
   Peer: {}
 };
 // @endexclude
@@ -86,10 +86,10 @@ Peeracle.Peer.Message.prototype.serializePing_ =
     /** @type {Uint8Array} */
     var bytes = new Uint8Array(1);
 
-    /** @type {Peeracle.BinaryStream} */
-    var bstream = new Peeracle.BinaryStream(bytes);
+    /** @type {Peeracle.DataStream.Memory} */
+    var stream = new Peeracle.DataStream.Memory(bytes);
 
-    bstream.writeByte(this.props.reply);
+    stream.writeByte(this.props.reply);
     return bytes;
   };
 
@@ -105,12 +105,12 @@ Peeracle.Peer.Message.prototype.serializeRequest_ =
     /** @type {Uint8Array} */
     var bytes = new Uint8Array(length);
 
-    /** @type {Peeracle.BinaryStream} */
-    var bstream = new Peeracle.BinaryStream(bytes);
+    /** @type {Peeracle.DataStream.Memory} */
+    var stream = new Peeracle.DataStream.Memory(bytes);
 
-    bstream.writeString(this.props.hash);
-    bstream.writeUInt32(this.props.cluster);
-    bstream.writeUInt32(this.props.chunk);
+    stream.writeString(this.props.hash);
+    stream.writeUInt32(this.props.cluster);
+    stream.writeUInt32(this.props.chunk);
     return bytes;
   };
 
@@ -152,18 +152,18 @@ Peeracle.Peer.Message.prototype.unserializeRequest_ =
 
 Peeracle.Peer.Message.prototype.unserialize_ =
   function unserialize_(bytes) {
-    var bstream = new Peeracle.BinaryStream(bytes);
+    var stream = new Peeracle.DataStream.Memory(bytes);
     var typeMap = {};
 
     typeMap[Peeracle.Peer.Message.Type.Ping] = this.unserializePing_;
     typeMap[Peeracle.Peer.Message.Type.Request] = this.unserializeRequest_;
 
-    this.props.type = bstream.readByte();
+    this.props.type = stream.readByte();
     if (!typeMap.hasOwnProperty(this.props.type)) {
       return null;
     }
 
-    typeMap[this.props.type].bind(this)(bstream);
+    typeMap[this.props.type].bind(this)(stream);
   };
 
 // @exclude

@@ -40,7 +40,7 @@ Peeracle.MetadataUnserializer = function MetadataUnserializer() {
   this.hash_ = null;
 
   /**
-   * @type {Peeracle.BinaryStream}
+   * @type {Peeracle.DataStream.Memory}
    * @private
    */
   this.stream_ = null;
@@ -187,8 +187,8 @@ Peeracle.MetadataUnserializer.prototype.unserializeHeader_ =
   };
 
 /**
- * @param {BinaryStream} stream
- * @param {Metadata} metadata
+ * @param {Peeracle.DataStream} stream
+ * @param {Peeracle.Metadata} metadata
  */
 Peeracle.MetadataUnserializer.prototype.unserialize =
   function unserialize(stream, metadata) {
